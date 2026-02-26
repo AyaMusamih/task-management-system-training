@@ -11,7 +11,7 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  url      =env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
 enum Role {
@@ -118,7 +118,6 @@ model Sprint {
 model Label {
   id      Int           @id @default(autoincrement())
   name    String        @unique @db.VarChar(50)
-  color   String?       @db.VarChar(7)
 
   tickets TicketLabel[]
 
@@ -157,8 +156,8 @@ model AuditLog {
   ticketId  Int
   userId   Int
   action    String   @db.VarChar(255) 
-  oldValue String?  @db.VarChar(255) 
-  newValue   String?  @db.VarChar(255)
+  oldValue Json?
+  newValue Json?
   createdAt DateTime @default(now())
 
   ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
