@@ -46,7 +46,7 @@ const Sidebar = ({ user }) => {
             </nav>
 
             <div className="mt-6 border-t pt-4">
-                <button className="text-red-500 hover:underline">
+                <button className="text-red-500 hover:underline cursor-pointer">
                     Logout
                 </button>
             </div>
