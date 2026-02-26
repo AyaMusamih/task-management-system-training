@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const Sidebar = ({ user }) => {
 
@@ -47,7 +48,7 @@ const Sidebar = ({ user }) => {
 
             <div className="mt-6 border-t pt-4">
                 <button className="text-red-500 hover:underline cursor-pointer">
-                    Logout
+                    <Link to="/login" >Logout</Link>
                 </button>
             </div>
         </aside>
