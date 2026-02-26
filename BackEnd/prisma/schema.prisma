@@ -14,3 +14,157 @@ datasource db {
   url      =env("DATABASE_URL")
 }
 
+enum Role {
+  ADMIN
+  USER
+}
+
+enum TicketStatus {
+  SCOPED_BACKLOG
+  SPRINT_BACKLOG
+  TODO
+  IN_PROGRESS
+  DONE
+  TESTED
+  STAGED
+  DEPLOYED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(100)
+  email     String   @unique @db.VarChar(255)
+  password  String   @db.VarChar(255) 
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  refreshTokens  RefreshToken[]
+  assignedTickets Ticket[]      @relation("AssignedTickets")
+  createdTickets  Ticket[]      @relation("CreatedTickets")
+  comments       Comment[]
+  auditLogs      AuditLog[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        Int       @id @default(autoincrement())
+  token     String    @unique @db.VarChar(512)
+  userId    Int
+  expiresAt DateTime
+  revokedAt DateTime? // null = active, non-null = revoked
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model Ticket {
+  id          Int          @id @default(autoincrement())
+  title       String       @db.VarChar(255)
+  description String?      @db.Text
+  status      TicketStatus @default(SCOPED_BACKLOG)
+  priority    Priority     @default(MEDIUM)
+  deadline    DateTime?
+
+  isDeleted   Boolean      @default(false)
+  deletedAt   DateTime?
+  assigneeId  Int?
+  createdById Int
+  sprintId    Int?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  assignee    User?        @relation("AssignedTickets", fields: [assigneeId], references: [id], onDelete: SetNull)
+  createdBy   User         @relation("CreatedTickets", fields: [createdById], references: [id])
+  sprint      Sprint?      @relation(fields: [sprintId], references: [id], onDelete: SetNull)
+  
+  labels      TicketLabel[]
+  comments    Comment[]
+  auditLogs   AuditLog[]
+
+  @@index([assigneeId])
+  @@index([createdById])
+  @@index([sprintId])
+  @@index([status])
+  @@index([isDeleted])
+  @@map("tickets")
+}
+
+model Sprint {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(100)
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tickets Ticket[]
+
+  @@map("sprints")
+}
+
+model Label {
+  id      Int           @id @default(autoincrement())
+  name    String        @unique @db.VarChar(50)
+  color   String?       @db.VarChar(7)
+
+  tickets TicketLabel[]
+
+  @@map("labels")
+}
+
+model TicketLabel {
+  ticketId Int
+  labelId  Int
+
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  label  Label  @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@id([ticketId, labelId])
+  @@map("ticket_labels")
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  content   String   @db.Text
+  ticketId  Int
+  authorId  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  author User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@index([authorId])
+  @@map("comments")
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  ticketId  Int
+  userId   Int
+  action    String   @db.VarChar(255) 
+  oldValue String?  @db.VarChar(255) 
+  newValue   String?  @db.VarChar(255)
+  createdAt DateTime @default(now())
+
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@index([userId])
+  @@map("audit_logs")
+}
