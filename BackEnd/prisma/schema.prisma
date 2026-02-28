@@ -38,10 +38,10 @@ enum Priority {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
+  id        BigInt     @id @default(autoincrement())
   name      String   @db.VarChar(100)
   email     String   @unique @db.VarChar(255)
-  password  String   @db.VarChar(255) 
+  passwordHash  String   @db.VarChar(255) 
   role      Role     @default(USER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -56,9 +56,9 @@ model User {
 }
 
 model RefreshToken {
-  id        Int       @id @default(autoincrement())
-  token     String    @unique @db.VarChar(512)
-  userId    Int
+  id        BigInt       @id @default(autoincrement())
+  tokenHash     String    @unique @db.VarChar(512)
+  userId    BigInt
   expiresAt DateTime
   revokedAt DateTime? // null = active, non-null = revoked
   createdAt DateTime  @default(now())
@@ -70,18 +70,17 @@ model RefreshToken {
 }
 
 model Ticket {
-  id          Int          @id @default(autoincrement())
+  id          BigInt          @id @default(autoincrement())
   title       String       @db.VarChar(255)
   description String?      @db.Text
   status      TicketStatus @default(SCOPED_BACKLOG)
   priority    Priority     @default(MEDIUM)
   deadline    DateTime?
 
-  isDeleted   Boolean      @default(false)
   deletedAt   DateTime?
-  assigneeId  Int?
-  createdById Int
-  sprintId    Int?
+  assigneeId  BigInt?
+  createdById BigInt
+  sprintId    BigInt?
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
@@ -97,12 +96,11 @@ model Ticket {
   @@index([createdById])
   @@index([sprintId])
   @@index([status])
-  @@index([isDeleted])
   @@map("tickets")
 }
 
 model Sprint {
-  id        Int      @id @default(autoincrement())
+  id        BigInt      @id @default(autoincrement())
   name      String   @db.VarChar(100)
   startDate DateTime
   endDate   DateTime
@@ -115,31 +113,11 @@ model Sprint {
   @@map("sprints")
 }
 
-model Label {
-  id      Int           @id @default(autoincrement())
-  name    String        @unique @db.VarChar(50)
-
-  tickets TicketLabel[]
-
-  @@map("labels")
-}
-
-model TicketLabel {
-  ticketId Int
-  labelId  Int
-
-  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  label  Label  @relation(fields: [labelId], references: [id], onDelete: Cascade)
-
-  @@id([ticketId, labelId])
-  @@map("ticket_labels")
-}
-
 model Comment {
-  id        Int      @id @default(autoincrement())
+  id        BigInt      @id @default(autoincrement())
   content   String   @db.Text
-  ticketId  Int
-  authorId  Int
+  ticketId  BigInt
+  authorId  BigInt
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -152,9 +130,9 @@ model Comment {
 }
 
 model AuditLog {
-  id        Int      @id @default(autoincrement())
-  ticketId  Int
-  userId   Int
+  id        BigInt      @id @default(autoincrement())
+  ticketId  BigInt
+  userId   BigInt
   action    String   @db.VarChar(255) 
   oldValue Json?
   newValue Json?
@@ -167,3 +145,27 @@ model AuditLog {
   @@index([userId])
   @@map("audit_logs")
 }
+
+// Phase 2 – not active yet
+model Label {
+  id      BigInt           @id @default(autoincrement())
+  name    String        @unique @db.VarChar(50)
+
+  tickets TicketLabel[]
+
+  @@map("labels")
+}
+
+// Phase 2 – not active yet
+model TicketLabel {
+  ticketId BigInt
+  labelId  BigInt
+
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  label  Label  @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@id([ticketId, labelId])
+  @@map("ticket_labels")
+}
+
+
