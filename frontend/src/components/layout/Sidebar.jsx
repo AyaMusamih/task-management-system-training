@@ -14,6 +14,7 @@ const Sidebar = ({ user }) => {
         { name: "Home", path: "/" },
         { name: "Dashboard", path: "/dashboard" },
         { name: "All Tickets", path: "/all-tickets" },
+        { name: "Deleted Tickets", path: "/deleted-tickets" },
         { name: "Task Management", path: "/task-management" },
         { name: "Reports", path: "/reports" },
         { name: "Profile", path: "/profile" },
