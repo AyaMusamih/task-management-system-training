@@ -25,8 +25,20 @@ const hashedPassword = await bcrypt.hash(password, 10);
     }
 };
 
-const login = async (req, res) => {
-
+const login = async (req, res, next) => {
+try {
+    const { accessToken, refreshToken, user } = await authService.login(
+      req.body.email,
+      req.body.password,
+    );
+    res.status(200).json({
+      success: true,
+      message: "Login Successful",
+      data: { user, accessToken, refreshToken },
+    });
+  } catch (err) {
+    next(err);
+  }
 };
 
 module.exports = {
