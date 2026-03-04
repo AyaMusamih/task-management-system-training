@@ -1,41 +1,36 @@
-const { ZodError } = require("zod");
+/**
+ * validation middleware for body, query, and params.
+ * @param {Object} schemas - Map of request locations to Zod schemas
+ * @example validate({ body: userSchema, query: filterSchema })
+ */
+const validate = (schemas) => {
+  return (req, res, next) => {
+    const errors = [];
 
-const validateBody = (schema) => {
-    return (req, res, next) => {
-        if (!req.body || Object.keys(req.body).length === 0) {
-            return res.status(400).json({
-                success: false,
-                errors: [
-                    { param: "body", msg: "Request body is required and cannot be empty", location: "body" }
-                ],
-            });
-        }
+    for (const [location, schema] of Object.entries(schemas)) {
+      const result = schema.safeParse(req[location]);
 
-        const result = schema.safeParse(req.body);
+      if (!result.success) {
+        const formatted = result.error.issues.map((e) => ({
+          param: e.path.length > 0 ? e.path.join(".") : location,
+          msg: e.message,
+          location: location,
+        }));
 
-        if (!result.success) {
-            const formattedErrors = (result.error instanceof ZodError && Array.isArray(result.error.issues))
-                ? result.error.issues.map((e) => ({
-                    param: e.path?.[0] || "body",
-                    msg: e.message || "Invalid input",
-                    location: "body",
-                }))
-                : [
-                    {
-                        param: "body",
-                        msg: result.error?.message || "Invalid input",
-                        location: "body",
-                    }
-                ];
+        errors.push(...formatted);
+      } else {
+        req[location] = result.data;
+      }
+    }
+    if (errors.length > 0) {
+      return res.status(400).json({
+        success: false,
+        errors: errors,
+      });
+    }
 
-            return res.status(400).json({
-                success: false,
-                errors: formattedErrors,
-            });
-        }
-
-        next();
-    };
+    next();
+  };
 };
 
-module.exports = validateBody;
+module.exports = validate;
