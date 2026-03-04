@@ -33,7 +33,6 @@ try {
     );
     res.status(200).json({
       success: true,
-      message: "Login Successful",
       data: { user, accessToken, refreshToken },
     });
   } catch (err) {
