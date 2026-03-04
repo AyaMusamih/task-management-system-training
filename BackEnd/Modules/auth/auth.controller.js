@@ -1,10 +1,11 @@
 const authService = require('./auth.service');
+const userService = require('../user/user.service')
 const bcrypt = require('bcrypt');
 
 const register = async (req, res , next) => {
     const { name, email, password } = req.body;
     try {
-        const existingUser = await authService.findUserByEmail(email);
+        const existingUser = await userService.findUserByEmail(email);
         if(existingUser) {
             return res.status(409).json({
                 success: false,
