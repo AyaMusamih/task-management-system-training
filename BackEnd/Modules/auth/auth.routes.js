@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authController = require('./auth.controller');
 const validateBody = require("../Middlewares/validation");
-const registerUserSchema = require("../zodSchemas/RegisterUser");
+const registerUserSchema = require("./schema/RegisterUser");
 
 router.post('/register', validateBody(registerUserSchema) , authController.register )
 
