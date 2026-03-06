@@ -1,1 +1,47 @@
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Inter:wght@400&display=swap");
+
 @import "tailwindcss";
+
+@theme {
+  /* Colors */
+  --color-background: #080b12;
+  --color-card-left: #0d1117;
+  --color-card-right: #0a0e18;
+  --color-input-bg: #111827;
+  --color-accent-blue: #3b82f6;
+  --color-accent-indigo: #6366f1;
+  --color-success-green: #22c55e;
+  --color-success-dark: #16a34a;
+  --color-error-red: #ef4444;
+  --color-error-dark: #dc2626;
+  --color-loading-dark: #1d4ed8;
+  --color-text-primary: #edf1fa;
+  --color-white-btn: #ffffff;
+  --color-text-secondary: rgba(237, 241, 250, 0.65);
+  --color-text-placeholder: rgba(237, 241, 250, 0.22);
+  --color-text-filled: rgba(237, 241, 250, 0.9);
+  --color-text-hint: rgba(237, 241, 250, 0.35);
+  --color-link: rgba(96, 165, 250, 0.8);
+  --color-divider: #49475a;
+
+  /* Fonts */
+  --font-poppins: "Poppins", sans-serif;
+  --font-inter: "Inter", sans-serif;
+}
+
+@layer utilities {
+  .text-logo              { font-size: 17px; font-weight: 600; font-family: var(--font-poppins); }
+  .text-heading           { font-size: 32px; font-weight: 500; font-family: var(--font-poppins); }
+  .text-subtitle          { font-size: 16px; font-weight: 400; font-family: var(--font-poppins); }
+  .text-field-label       { font-size: 16px; font-weight: 400; font-family: var(--font-poppins); }
+  .text-field-placeholder { font-size: 16px; font-weight: 500; font-family: var(--font-poppins); }
+  .text-field-typed       { font-size: 16px; font-weight: 500; font-family: var(--font-poppins); }
+  .text-btn-text          { font-size: 20px; font-weight: 500; font-family: var(--font-poppins); }
+  .text-hint              { font-size: 12px; font-weight: 400; font-family: var(--font-inter);   }
+  .text-error-text        { font-size: 11px; font-weight: 400; font-family: var(--font-inter);   }
+  .text-success-text      { font-size: 13px; font-weight: 400; font-family: var(--font-inter);   }
+  .text-checkbox          { font-size: 12px; font-weight: 400; font-family: var(--font-inter);   }
+  .text-divider-text      { font-size: 24px; font-weight: 400; font-family: var(--font-poppins); }
+  .text-google-btn        { font-size: 20px; font-weight: 400; font-family: var(--font-poppins); }
+
+}
