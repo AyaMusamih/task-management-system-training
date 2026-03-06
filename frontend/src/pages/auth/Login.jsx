@@ -77,7 +77,7 @@ export default function Login() {
                 />
 
                 <div className="flex justify-end">
-                    <span className="font-inter text-hint text-link cursor-pointer underline">
+                    <span className="text-hint text-link cursor-pointer underline">
                         Forgot password?
                     </span>
                 </div>
@@ -89,7 +89,7 @@ export default function Login() {
                     loading={loading}
                     disabled={!email || !password || loading}
                 >
-                    Login
+                    {loading ? "Logging in…" : "Login"}
                 </Button>
 
             </form>

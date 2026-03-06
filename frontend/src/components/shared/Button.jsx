@@ -40,7 +40,7 @@ export default function Button({
         ${className}
       `}
     >
-      {loading ? "Logging in…" : children}
+      {children}
     </button>
   );
 }
