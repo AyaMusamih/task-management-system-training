@@ -1,5 +1,6 @@
 import './App.css'
 import { Routes, Route } from 'react-router-dom';
+import { ToastContainer } from "react-toastify";
 import MainLayout from './layouts/MainLayout';
 import Home from './pages/Home';
 import Login from './pages/auth/Login'
@@ -42,6 +43,7 @@ function App() {
         </Route>
         <Route path='*' element={<NotFound />} />
       </Routes>
+      <ToastContainer position="top-right" autoClose={3000} />
     </div >
   );
 }

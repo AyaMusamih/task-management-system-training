@@ -1,10 +1,11 @@
 import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import Input from "../../components/shared/Input";
 import Button from "../../components/shared/Button";
 import GoogleIcon from "../../assets/images/GoogleIcon.png";
-import { Link, useNavigate } from "react-router-dom";
 import axiosInstance from "../../api/axiosInstance";
 import AuthLayout from "./AuthLayout";
+import { CircleAlert } from 'lucide-react';
 
 export default function Login() {
     const navigate = useNavigate();
@@ -12,39 +13,69 @@ export default function Login() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
+    const [errors, setErrors] = useState({});
+    const [success, setSuccess] = useState(false);
+    const [submitted, setSubmitted] = useState(false);
+
+    const validateForm = () => {
+        const newErrors = {};
+        if (!/\S+@\S+\.\S{2,}/.test(email)) newErrors.email = "Invalid email format";
+        if (password.length < 8) newErrors.password = "Password must be at least 8 characters";
+        return newErrors;
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setSubmitted(true);
+
+        const validationErrors = validateForm();
+        if (Object.keys(validationErrors).length > 0) {
+            setErrors(validationErrors);
+            return;
+        }
 
         try {
             setLoading(true);
-            setError("");
+            setErrors({});
+            
+            const response = await axiosInstance.post("/auth/login", { email, password });
+            const { accessToken, user } = response.data.data;
 
-            const response = await axiosInstance.post("/auth/login", {
-                email,
-                password,
-            });
-
-            const { accessToken } = response.data.data;
             localStorage.setItem("accessToken", accessToken);
-            navigate("/dashboard");
+            localStorage.setItem("user", JSON.stringify(user));
+
+            setSuccess(true);
+
+            setTimeout(() => {
+                if (user?.role === "ADMIN") {
+                    navigate("/admin/dashboard", { state: { success: "Logged in successfully!" } });
+                } else if (user?.role === "USER") {
+                    navigate("/user/dashboard", { state: { success: "Logged in successfully!" } });
+                }
+            }, 1500);
 
         } catch (err) {
-            setError(
-                err.response?.data?.error || "Login failed. Please try again."
-            );
+            const data = err.response?.data;
+
+            if (data?.errors) {
+                const formatted = {};
+                data.errors.forEach((err) => {
+                    formatted[err.param] = err.msg;
+                });
+                setErrors(formatted);
+            } else if (data?.error) {
+                setErrors({ general: data.error });
+            } else {
+                setErrors({ general: "Login failed. Please try again." });
+            }
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <AuthLayout>
-
-            <h1 className="text-heading text-text-primary mb-1">
-                Welcome back
-            </h1>
+        <AuthLayout type="login">
+            <h1 className="text-heading text-text-primary mb-1">Welcome back</h1>
 
             <p className="text-subtitle text-text-secondary mb-8">
                 Don't have an account?{" "}
@@ -53,31 +84,47 @@ export default function Login() {
                 </Link>
             </p>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            {errors.general && (
+                <div className="flex items-center gap-2 px-4 py-4 rounded-xl mb-3 text-error-text bg-[#ef444410] border border-[#ef444430] text-error-red">
+                    < CircleAlert className="error-icon" />{errors.general}
+                </div>
+            )}
 
+            <form onSubmit={handleSubmit} className="space-y-4">
                 <Input
-                    label="Email*"
+                    label="Email"
                     type="email"
                     placeholder="Enter your email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                        setEmail(e.target.value);
+                        setErrors((prev) => ({ ...prev, email: undefined }));
+                        setSubmitted(false)
+                    }}
                     disabled={loading}
-                    error={!!error}
+                    error={errors.email}
+                    success={email && !errors.emai && submitted}
+                    className="input-field"
                 />
 
                 <Input
-                    label="Password*"
+                    label="Password"
                     type="password"
                     placeholder="Enter your password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                        setPassword(e.target.value);
+                        setErrors((prev) => ({ ...prev, password: undefined }));
+                        setSubmitted(false)
+                    }}
                     disabled={loading}
-                    error={!!error}
-                    helperText={error}
+                    error={errors.password}
+                    success={password && !errors.password && submitted}
+                    className="input-field"
                 />
 
                 <div className="flex justify-end">
-                    <span className="text-hint text-link cursor-pointer underline">
+                    <span className="text-hint text-link cursor-pointer font-medium underline">
                         Forgot password?
                     </span>
                 </div>
@@ -85,40 +132,35 @@ export default function Login() {
                 <Button
                     type="submit"
                     size="lg"
-                    className="w-full"
+                    page="login"
                     loading={loading}
-                    disabled={!email || !password || loading}
+                    disabled={!email || !password}
+                    className="primary-button w-full text-btn-text"
+                    success={success}
+                    error={errors && submitted}
                 >
-                    {loading ? "Logging in…" : "Login"}
+                    {loading ? "Logging in…" : success ? "Login successfully!" : "Login"}
                 </Button>
 
+                {/* Divider */}
+                <div className="flex items-center gap-5">
+                    <div className="flex-1 h-px bg-divider" />
+                    <span className="text-[20px] text-text-primary">Or</span>
+                    <div className="flex-1 h-px bg-divider" />
+                </div>
+
+                {/* Google Button */}
+                <Button
+                    variant="secondary"
+                    type="button"
+                    className="google-button w-full flex items-center justify-center gap-3 text-google-btn bg-input-bg"
+                    disabled={loading}
+                    onClick={() => console.log("Google login")}
+                >
+                    <img src={GoogleIcon} alt="Google" className="w-5 h-5" />
+                    Continue with Google
+                </Button>
             </form>
-
-            {/* Divider */}
-            <div className="relative my-6">
-                <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-divider" />
-                </div>
-                <div className="relative flex justify-center">
-                    <span className="px-3 bg-card-left text-divider-text text-text-primary">
-                        Or
-                    </span>
-                </div>
-            </div>
-
-            {/* Google Button */}
-            <Button
-                variant="ghost"
-                size="lg"
-                type="button"
-                className="w-full flex items-center justify-center gap-3 text-google-btn"
-                disabled={loading}
-                onClick={() => console.log("Google login")}
-            >
-                <img src={GoogleIcon} alt="Google" className="w-5 h-5" />
-                Continue with Google
-            </Button>
-
         </AuthLayout>
     );
 }
