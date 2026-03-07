@@ -19,8 +19,12 @@ const registerUserSchema = z.object({
         .string()
         .trim()
         .nonempty({ message: "Password is required" })
-        .min(6, { message: "Password must be at least 6 characters" })
-        .max(100, { message: "Password is too long" }),
+        .min(8, { message: "Password must be at least 8 characters" })
+        .max(100, { message: "Password is too long" })
+        .regex(
+            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).+$/,
+            { message: "Password must contain uppercase, lowercase, number and special character" }
+        ),
 }).strict();
 
 module.exports = registerUserSchema;

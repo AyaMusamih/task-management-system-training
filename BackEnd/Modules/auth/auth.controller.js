@@ -14,11 +14,11 @@ const register = async (req, res , next) => {
         }
 const hashedPassword = await bcrypt.hash(password, 10);
 
-        const user = await authService.registerUser(name, email, hashedPassword);
+        const { user, accessToken, refreshToken } = await authService.registerUser(name, email, hashedPassword);
 
         res.status(201).json({
             success: true,
-            data: user
+            data: { user, accessToken, refreshToken },
         });
     }catch (error) {
         next(error);

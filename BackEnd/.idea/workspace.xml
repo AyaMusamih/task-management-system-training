@@ -4,14 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="10973ceb-7568-4f4e-bb78-355b7a7437f8" name="Changes" comment="Update BE1 &#10;add /health route &#10;add .env.example&#10;split scripts into run &amp;dev&#10;add real DB connection">
+    <list default="true" id="10973ceb-7568-4f4e-bb78-355b7a7437f8" name="Changes" comment="feat(auth): implement secure register endpoint with bcrypt and unique email">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Modules/auth/auth.controller.js" beforeDir="false" afterPath="$PROJECT_DIR$/Modules/auth/auth.controller.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Modules/auth/auth.routes.js" beforeDir="false" afterPath="$PROJECT_DIR$/Modules/auth/auth.routes.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Modules/auth/auth.service.js" beforeDir="false" afterPath="$PROJECT_DIR$/Modules/auth/auth.service.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.js" beforeDir="false" afterPath="$PROJECT_DIR$/app.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Modules/auth/schema/RegisterUser.js" beforeDir="false" afterPath="$PROJECT_DIR$/Modules/auth/schema/RegisterUser.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -26,6 +22,11 @@
     </option>
   </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$/.." value="BE1–Register-Endpoint" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
   </component>
   <component name="GitHubPullRequestSearchHistory">{
@@ -57,7 +58,7 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
     "com.codeium.enabled": "true",
-    "git-widget-placeholder": "develop",
+    "git-widget-placeholder": "#8 on BE2-login-auth",
     "last_opened_file_path": "C:/Users/GIGABYTE/WebstormProjects/TaskManagementSystem/task-management-system-training/BackEnd",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
@@ -84,7 +85,9 @@
       <updated>1772037000492</updated>
       <workItem from="1772037001802" duration="6455000" />
       <workItem from="1772299712854" duration="5041000" />
-      <workItem from="1772550165457" duration="11069000" />
+      <workItem from="1772550165457" duration="12427000" />
+      <workItem from="1772629147892" duration="334000" />
+      <workItem from="1772909787706" duration="2772000" />
     </task>
     <task id="LOCAL-00001" summary="BE1 – Express Setup + DB + Error Middleware">
       <option name="closed" value="true" />
@@ -102,7 +105,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772303476633</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="feat(auth): implement secure register endpoint with bcrypt and unique email">
+      <option name="closed" value="true" />
+      <created>1772586467730</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1772586467730</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -111,6 +122,7 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="BE1 – Express Setup + DB + Error Middleware" />
     <MESSAGE value="Update BE1 &#10;add /health route &#10;add .env.example&#10;split scripts into run &amp;dev&#10;add real DB connection" />
-    <option name="LAST_COMMIT_MESSAGE" value="Update BE1 &#10;add /health route &#10;add .env.example&#10;split scripts into run &amp;dev&#10;add real DB connection" />
+    <MESSAGE value="feat(auth): implement secure register endpoint with bcrypt and unique email" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(auth): implement secure register endpoint with bcrypt and unique email" />
   </component>
 </project>
