@@ -112,7 +112,7 @@ export default function Input({
 
             {/* Error / helperText */}
             {error ? (
-                <div className="flex items-center gap-1 mt-1">
+                <div className="flex items-start gap-1 mt-1">
                     < CircleAlert className="error-icon text-error-red" />
                     <span className="text-error-text text-error-red">
                         {error}
