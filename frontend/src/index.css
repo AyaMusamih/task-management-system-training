@@ -147,7 +147,7 @@ input[type="password"]::-webkit-credentials-auto-fill-button {
 
   .page-canvas {
     width: 100%;
-    max-width: 1440px;
+    /* max-width: 1440px; */
     min-height: 100dvh;
     margin: 0 auto;
     /* padding: 64px 40px; */

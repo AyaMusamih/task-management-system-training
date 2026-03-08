@@ -37,7 +37,7 @@ export default function Login() {
         try {
             setLoading(true);
             setErrors({});
-            
+
             const response = await axiosInstance.post("/auth/login", { email, password });
             const { accessToken, user } = response.data.data;
 
@@ -85,7 +85,7 @@ export default function Login() {
             </p>
 
             {errors.general && (
-                <div className="flex items-center gap-2 px-4 py-4 rounded-xl mb-3 text-error-text bg-[#ef444410] border border-[#ef444430] text-error-red">
+                <div className="flex items-start gap-2 px-4 py-4 rounded-xl mb-3 text-error-text bg-[#ef444410] border border-[#ef444430] text-error-red">
                     < CircleAlert className="error-icon" />{errors.general}
                 </div>
             )}
@@ -103,7 +103,7 @@ export default function Login() {
                     }}
                     disabled={loading}
                     error={errors.email}
-                    success={email && !errors.emai && submitted}
+                    success={email && !errors.emai && submitted && !errors.general}
                     className="input-field"
                 />
 
@@ -119,7 +119,7 @@ export default function Login() {
                     }}
                     disabled={loading}
                     error={errors.password}
-                    success={password && !errors.password && submitted}
+                    success={password && !errors.password && submitted && !errors.general}
                     className="input-field"
                 />
 
@@ -137,7 +137,7 @@ export default function Login() {
                     disabled={!email || !password}
                     className="primary-button w-full text-btn-text"
                     success={success}
-                    error={errors && submitted}
+                    error={errors && submitted && errors.general}
                 >
                     {loading ? "Logging in…" : success ? "Login successfully!" : "Login"}
                 </Button>

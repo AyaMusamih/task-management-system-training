@@ -45,8 +45,15 @@ export default function Signup() {
   const validateForm = () => {
     const newErrors = {};
     if (form.name.length < 2) newErrors.name = "Name must be at least 2 characters";
+    else if (form.name.length > 100) newErrors.name = "Name is too long"
     if (!/\S+@\S+\.\S{2,}/.test(form.email)) newErrors.email = "Invalid email format";
-    if (form.password.length < 8) newErrors.password = "Password must be at least 8 characters";
+    else if (form.email.length > 255) newErrors.email = "Email is too long"
+    if (form.password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters";
+    } else if (passwordStrength === "weak" || passwordStrength === "medium") {
+      newErrors.password = "Password must contain uppercase, lowercase, number and special character";
+    }
+    else if (form.password.length > 100) newErrors.password = "Password is too long";
     if (!agree) newErrors.agree = "You must agree to the terms and policies";
     return newErrors;
   };
@@ -117,7 +124,7 @@ export default function Signup() {
       </p>
 
       {errors.general && (
-        <div className="flex items-center gap-2 px-4 py-4 rounded-xl mb-3 text-error-text bg-[#ef444410] border border-[#ef444430] text-error-red">
+        <div className="flex items-start gap-2 px-4 py-4 rounded-xl mb-3 text-error-text bg-[#ef444410] border border-[#ef444430] text-error-red">
           < CircleAlert className="error-icon" />{errors.general}
         </div>
       )}
@@ -132,7 +139,7 @@ export default function Signup() {
           onChange={handleChange}
           error={errors.name}
           disabled={loading}
-          success={form.name && !errors.name && submitted}
+          success={form.name && !errors.name && submitted && !errors.general}
           className="input-field"
         />
 
@@ -145,7 +152,7 @@ export default function Signup() {
           onChange={handleChange}
           error={errors.email}
           disabled={loading}
-          success={form.email && !errors.email && submitted}
+          success={form.email && !errors.email && submitted && !errors.general}
           className="input-field"
         />
 
@@ -158,27 +165,27 @@ export default function Signup() {
           onChange={handleChange}
           error={errors.password}
           disabled={loading}
-          success={form.password && !errors.password && submitted}
+          success={form.password && !errors.password && submitted && !errors.general}
           helperText={
             form.password ? (
               passwordStrength === "strong" ? (
-                <span className="text-success-green flex items-center gap-1">
+                <span className="text-success-green flex  items-start  gap-1">
                   <CircleCheck className="password-strength-icon" />
                   Password strength: Strong
                 </span>
               ) : passwordStrength === "medium" ? (
-                <span className="text-yellow-500 flex items-center gap-1">
+                <span className="text-yellow-500 flex  items-start  gap-1">
                   <ShieldAlert className="w-3.5 h-3.5" />
                   Password strength: Medium
                 </span>
               ) : (
-                <span className="text-error-red flex items-center gap-1">
+                <span className="text-error-red flex items-start gap-1">
                   <ShieldAlert className="w-3.5 h-3.5" />
                   Password strength: Weak
                 </span>
               )
             ) : (
-              <span className="text-text-secondary flex items-center gap-1">
+              <span className="text-text-secondary flex items-start gap-1">
                 <ShieldCheck className="w-3.5 h-3.5" />
                 Must contain 8+ characters, uppercase, lowercase, number and symbol
               </span>
@@ -215,7 +222,7 @@ export default function Signup() {
           }
           disabled={loading}
           error={errors.agree}
-          success={agree && !errors.agree && submitted}
+          success={agree && !errors.agree && submitted && !errors.general}
           className="checkbox"
         />
 
@@ -227,7 +234,7 @@ export default function Signup() {
           loading={loading}
           success={success}
           disabled={isButtonDisabled}
-          error={errors && submitted}
+          error={errors && submitted && errors.general}
         >
           {loading ? "Creating account…" : success ? "Account created!" : "Create an account"}
         </Button>
