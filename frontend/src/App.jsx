@@ -1,17 +1,19 @@
 import './App.css'
 import { Routes, Route } from 'react-router-dom';
+import { ToastContainer } from "react-toastify";
 import MainLayout from './layouts/MainLayout';
 import Home from './pages/Home';
-import Login from './pages/Login'
-import Signup from './pages/Signup';
-import Dashboard from './pages/Dashboard';
+import Login from './pages/auth/Login'
+import Signup from './pages/auth/Signup';
 import Profile from './pages/Profile';
 import ChangePassword from './pages/ChangePassword';
 import Reports from './pages/admin/Reports';
 import AllTickets from './pages/admin/AllTickets';
 import TaskManagement from './pages/admin/TaskManagement';
 import DeletedTickets from './pages/admin/DeletedTickets ';
+import AdminDashboard from './pages/admin/AdminDashboard';
 import MyTasks from './pages/user/MyTasks';
+import UserDashboard from './pages/user/UserDashboard';
 import TicketDetailsModal from './components/TicketDetailsModal';
 import NotFound from './pages/NotFound';
 
@@ -24,7 +26,10 @@ function App() {
         <Route path='/signup' element={<Signup />} />
         <Route element={<MainLayout />}>
           <Route path='/' element={<Home />} />
-          <Route path='/dashboard' element={<Dashboard />} >
+          <Route path='/user/dashboard' element={<UserDashboard />} >
+            <Route path='tickets/:id' element={<TicketDetailsModal />} />
+          </Route>
+          <Route path='/admin/dashboard' element={<AdminDashboard />} >
             <Route path='tickets/:id' element={<TicketDetailsModal />} />
           </Route>
           <Route path='/profile' element={<Profile />} />
@@ -42,6 +47,7 @@ function App() {
         </Route>
         <Route path='*' element={<NotFound />} />
       </Routes>
+      <ToastContainer position="top-right" autoClose={3000} />
     </div >
   );
 }

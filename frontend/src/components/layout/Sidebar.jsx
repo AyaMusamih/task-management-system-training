@@ -20,14 +20,14 @@ const Sidebar = ({ user }) => {
         { name: "Profile", path: "/profile" },
     ];
 
-    const links = user.role === "admin" ? adminLinks : userLinks;
+    const links = user?.role === "ADMIN" ? adminLinks : userLinks;
 
     return (
         <aside className="w-64 bg-white shadow-md p-5">
 
             <div className="mb-6 border-b pb-3">
-                <p className="font-semibold">{user.username}</p>
-                <p className="text-sm text-gray-500 capitalize">{user.role}</p>
+                <p className="font-semibold">{user?.name}</p>
+                <p className="text-sm text-gray-500 capitalize">{user?.role}</p>
             </div>
 
             <nav className="flex flex-col gap-2">
