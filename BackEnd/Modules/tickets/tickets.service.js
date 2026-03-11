@@ -5,6 +5,7 @@ const getTickets = async (user, view, status, assignee, priority, startDate, end
 
     if (user.role !== "ADMIN") {
         where.OR = [
+            {sprintId: {not: null}},
             { status: "SCOPED_BACKLOG" },  
         ];
     }
