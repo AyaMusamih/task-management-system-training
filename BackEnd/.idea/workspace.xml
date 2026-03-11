@@ -6,8 +6,8 @@
   <component name="ChangeListManager">
     <list default="true" id="10973ceb-7568-4f4e-bb78-355b7a7437f8" name="Changes" comment="feat(auth): implement secure register endpoint with bcrypt and unique email">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Modules/auth/auth.controller.js" beforeDir="false" afterPath="$PROJECT_DIR$/Modules/auth/auth.controller.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Modules/auth/schema/RegisterUser.js" beforeDir="false" afterPath="$PROJECT_DIR$/Modules/auth/schema/RegisterUser.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Modules/prismaClient.js" beforeDir="false" afterPath="$PROJECT_DIR$/Modules/prismaClient.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app.js" beforeDir="false" afterPath="$PROJECT_DIR$/app.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -58,7 +58,7 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.git.unshallow": "true",
     "com.codeium.enabled": "true",
-    "git-widget-placeholder": "#8 on BE2-login-auth",
+    "git-widget-placeholder": "develop",
     "last_opened_file_path": "C:/Users/GIGABYTE/WebstormProjects/TaskManagementSystem/task-management-system-training/BackEnd",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
@@ -69,6 +69,11 @@
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\GIGABYTE\WebstormProjects\TaskManagementSystem\task-management-system-training\BackEnd\Modules\tickets" />
+    </key>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
