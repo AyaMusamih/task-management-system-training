@@ -1,7 +1,13 @@
 const prisma = require("../prismaClient");
 
-const getTickets = async (view, status, assignee, priority, startDate, endDate, page, limit, sortBy ,search) => {
+const getTickets = async (user, view, status, assignee, priority, startDate, endDate, page, limit, sortBy ,search) => {
     const where = { deletedAt: null };
+
+    if (user.role !== "ADMIN") {
+        where.OR = [
+            { status: "SCOPED_BACKLOG" },  
+        ];
+    }
 
     if (view === "sprint") {
         where.sprintId = { not: null };

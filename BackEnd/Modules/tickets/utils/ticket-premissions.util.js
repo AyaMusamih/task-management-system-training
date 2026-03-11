@@ -1,7 +1,8 @@
-
 const getTicketFlags = (ticket, user) => {
   const isAdmin = user.role === "ADMIN";
-  const isAssignedToMe = ticket.assigneeId?.toString() === user.id.toString();
+  const isAssignedToMe =
+    ticket.assigneeId?.toString() === user.id.toString() ||
+    ticket.assignee?.id?.toString() === user.id.toString();
 
   return {
     canEdit: isAdmin,
