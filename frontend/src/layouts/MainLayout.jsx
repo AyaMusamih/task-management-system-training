@@ -4,16 +4,25 @@ import Navbar from '../components/layout/Navbar';
 import Footer from '../components/layout/Footer';
 import Sidebar from '../components/layout/Sidebar';
 import Modal from "../components/shared/Modal";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const MainLayout = () => {
     const [modalContent, setModalContent] = useState(null);
-
+    const navigate = useNavigate();
+    const location = useLocation();
     const openModal = (content) => { setModalContent(content) };
-    const closeModal = () => { setModalContent(null) };
-
-    const storedUser = JSON.parse(localStorage.getItem("user"));
-    const isLoggedIn = !!storedUser;
-    const user = storedUser || null;
+    const closeModal = () => {
+        setModalContent(null);
+        if (location.pathname.includes("/tickets/")) {
+            if (location.pathname.startsWith("/user")) {
+                navigate("/user/dashboard");
+            } else if (location.pathname.startsWith("/admin")) {
+                navigate("/admin/dashboard");
+            }
+        }
+    };
+    const isLoggedIn = localStorage.getItem("accessToken");
+    const user = JSON.parse(localStorage.getItem("user")) || null;
 
     return (
         <div className="min-h-screen flex flex-col">
