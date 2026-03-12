@@ -1,7 +1,7 @@
 import { LoaderCircle } from 'lucide-react'
 import { Check } from 'lucide-react';
 
-export default function Button({
+const Button = ({
   children,
   page,
   type = "button",
@@ -14,7 +14,7 @@ export default function Button({
   success,
   error,
   style
-}) {
+}) => {
   const baseStyle =
     "text-btn-text rounded-full transition duration-200 focus:outline-none";
 
@@ -63,7 +63,7 @@ export default function Button({
           children
         )}
       </button>
-      {success && page === "signup" && type === "submit" &&( 
+      {success && page === "signup" && type === "submit" && (
         <p className="text-success-text text-success-green text-center">
           Welcome! Redirecting to Dashboard...
         </p>
@@ -71,3 +71,5 @@ export default function Button({
     </>
   );
 }
+
+export default Button;

@@ -7,7 +7,7 @@ import GoogleIcon from "../../assets/images/GoogleIcon.png";
 import AuthLayout from "./AuthLayout";
 import { CircleAlert } from 'lucide-react';
 
-export default function Login() {
+const Login = () => {
     const navigate = useNavigate();
 
     const [email, setEmail] = useState("");
@@ -152,3 +152,5 @@ export default function Login() {
         </AuthLayout>
     );
 }
+
+export default Login;

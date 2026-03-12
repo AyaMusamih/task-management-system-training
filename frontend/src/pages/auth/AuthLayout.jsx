@@ -1,6 +1,6 @@
 import AuthIllustration from "../../assets/images/AuthIllustration.png";
 
-export default function AuthLayout({ children }) {
+const AuthLayout = ({ children }) => {
     return (
         <div className="flex justify-center items-start xl:items-center bg-background p-4 page-canvas">
 
@@ -49,3 +49,4 @@ export default function AuthLayout({ children }) {
         </div>
     );
 }
+export default AuthLayout;

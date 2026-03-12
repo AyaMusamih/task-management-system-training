@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { CircleAlert, Check } from 'lucide-react';
 
-export default function Input({
+const Input = ({
     label,
     type = "text",
     value,
@@ -15,7 +15,7 @@ export default function Input({
     helperText,
     disabled = false,
     className = "",
-}) {
+}) => {
     const [showPassword, setShowPassword] = useState(false);
 
     const isPassword = type === "password";
@@ -65,7 +65,7 @@ export default function Input({
                                 ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
                         >
                             {checked && (
-                                <Check className="w-12 h-12 text-white-btn stroke-3"/>
+                                <Check className="w-12 h-12 text-white-btn stroke-3" />
                             )}
                         </div>
                     </div>
@@ -128,3 +128,5 @@ export default function Input({
         </div>
     );
 }
+
+export default Input;

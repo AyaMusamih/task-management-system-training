@@ -7,7 +7,7 @@ import AuthLayout from "./AuthLayout";
 import GoogleIcon from "../../assets/images/GoogleIcon.png";
 import { CircleAlert, CircleCheck, ShieldAlert, ShieldCheck } from 'lucide-react';
 
-export default function Signup() {
+const Signup = () => {
   const navigate = useNavigate();
 
   const [form, setForm] = useState({ name: "", email: "", password: "" });
@@ -247,3 +247,5 @@ export default function Signup() {
     </AuthLayout>
   );
 }
+
+export default Signup;
