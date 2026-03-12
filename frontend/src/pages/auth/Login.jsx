@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { loginUser } from "../../services/auth.service";
 import Input from "../../components/shared/Input";
 import Button from "../../components/shared/Button";
 import GoogleIcon from "../../assets/images/GoogleIcon.png";
-import axiosInstance from "../../api/axiosInstance";
 import AuthLayout from "./AuthLayout";
 import { CircleAlert } from 'lucide-react';
 
@@ -38,8 +38,7 @@ export default function Login() {
             setLoading(true);
             setErrors({});
 
-            const response = await axiosInstance.post("/auth/login", { email, password });
-            const { accessToken, user } = response.data.data;
+            const { accessToken, user } = await loginUser(email, password);
 
             localStorage.setItem("accessToken", accessToken);
             localStorage.setItem("user", JSON.stringify(user));
@@ -55,19 +54,8 @@ export default function Login() {
             }, 1500);
 
         } catch (err) {
-            const data = err.response?.data;
-
-            if (data?.errors) {
-                const formatted = {};
-                data.errors.forEach((err) => {
-                    formatted[err.param] = err.msg;
-                });
-                setErrors(formatted);
-            } else if (data?.error) {
-                setErrors({ general: data.error });
-            } else {
-                setErrors({ general: "Login failed. Please try again." });
-            }
+            if (err.type === "validation") setErrors(err.errors);
+            else setErrors({ general: err.message });
         } finally {
             setLoading(false);
         }

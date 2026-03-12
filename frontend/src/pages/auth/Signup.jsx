@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { signupUser } from "../../services/auth.service";
 import Input from "../../components/shared/Input";
 import Button from "../../components/shared/Button";
 import AuthLayout from "./AuthLayout";
-import axiosInstance from "../../api/axiosInstance";
 import GoogleIcon from "../../assets/images/GoogleIcon.png";
 import { CircleAlert, CircleCheck, ShieldAlert, ShieldCheck } from 'lucide-react';
 
@@ -72,9 +72,7 @@ export default function Signup() {
       setLoading(true);
       setErrors({});
 
-      const res = await axiosInstance.post("/auth/register", form);
-
-      const { accessToken, user } = res.data.data;
+      const { accessToken, user } = await signupUser(form);
 
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("user", JSON.stringify(user));
@@ -90,21 +88,8 @@ export default function Signup() {
       }, 1500);
 
     } catch (err) {
-      const data = err.response?.data;
-
-      if (data?.errors) {
-        const backendErrors = {};
-        data.errors.forEach(err => {
-          backendErrors[err.param] = err.msg;
-        });
-        setErrors(backendErrors);
-      } else if (data?.error) {
-        console.log(data?.error);
-        setErrors({ general: data.error });
-
-      } else {
-        setErrors({ general: "Something went wrong" });
-      }
+      if (err.type === "validation") setErrors(err.errors);
+      else setErrors({ general: err.message });
     } finally {
       setLoading(false);
     }
