@@ -6,14 +6,15 @@ const getTickets = async (req, res, next) => {
         const {
             view, status, assignee, priority, startDate, endDate, page, limit, sortBy, search
         } = req.query;
+
         const result = await ticketService.getTickets(
            req.user, view, status, assignee, priority, startDate, endDate, page, limit, sortBy,search
         );
-        const resuleWithFlags = attachPermissionFlags(result, req.user)
+        const resultWithFlags = attachPermissionFlags(result, req.user)
         
         res.status(200).json({
             success: true,
-            ...resuleWithFlags
+            ...resultWithFlags
         })
     } catch (error) {
         next(error)
