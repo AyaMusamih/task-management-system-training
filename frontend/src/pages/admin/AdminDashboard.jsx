@@ -51,7 +51,7 @@ const AdminDashboard = () => {
 
     useEffect(() => {
         if (id && tickets.length) {
-            const ticket = tickets.find(t => t.id === id);
+            const ticket = tickets.find(t => String(t.id) === String(id));
             if (ticket) openModal(<TicketDetailsModal ticket={ticket} />);
         }
     }, [id, tickets]);

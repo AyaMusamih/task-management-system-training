@@ -10,20 +10,14 @@ const MainLayout = () => {
     const [modalContent, setModalContent] = useState(null);
     const navigate = useNavigate();
     const location = useLocation();
+    const isLoggedIn = localStorage.getItem("accessToken");
+    const user = JSON.parse(localStorage.getItem("user")) || null;
     const openModal = (content) => { setModalContent(content) };
     const closeModal = () => {
         setModalContent(null);
-        if (location.pathname.includes("/tickets/")) {
-            if (location.pathname.startsWith("/user")) {
-                navigate("/user/dashboard");
-            } else if (location.pathname.startsWith("/admin")) {
-                navigate("/admin/dashboard");
-            }
-        }
+        const role = user?.role === "ADMIN" ? "admin" : "user";
+        navigate(`/${role}/dashboard`);
     };
-    const isLoggedIn = localStorage.getItem("accessToken");
-    const user = JSON.parse(localStorage.getItem("user")) || null;
-
     return (
         <div className="min-h-screen flex flex-col">
             <Navbar isLoggedIn={isLoggedIn} />
