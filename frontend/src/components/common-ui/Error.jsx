@@ -14,7 +14,7 @@ const Error = ({
                 <img
                     src={icon}
                     alt="error"
-                    className="w-20 mb-6"
+                    className="w-25 mb-6"
                 />
             )}
 
@@ -23,14 +23,14 @@ const Error = ({
             </p>
 
             {description && (
-                <p className="text-text-secondary mb-6">
+                <p className="text-[#64748B] mb-6">
                     {description}
                 </p>
             )}
 
             {onRetry && (
                 <Button
-                    className="px-8 py-1 bg-accent-blue text-white rounded-lg hover:bg-blue-400 transition duration-100 cursor-pointer"
+                    className="px-8 bg-accent-blue text-white rounded-lg hover:bg-blue-400 transition duration-100 cursor-pointer"
                     onClick={onRetry}>
                     Retry
                 </Button>

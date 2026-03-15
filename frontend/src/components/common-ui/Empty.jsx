@@ -14,7 +14,7 @@ const Empty = ({
         <img
           src={icon}
           alt="empty"
-          className="w-24 mb-6 opacity-70"
+          className="w-40 mb-6 opacity-70"
         />
       )}
 
@@ -23,7 +23,7 @@ const Empty = ({
       </p>
 
       {description && (
-        <p className="text-text-secondary mb-4 max-w-sm">
+        <p className="text-[#64748B] mb-4 max-w-sm">
           {description}
         </p>
       )}
