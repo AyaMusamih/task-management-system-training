@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import DashboardView from "../../components/dashboard/DashboardView";
+import DashboardView from "../../components/dashboard/Dashboardview";
 
 const UserDashboard = () => {
     const userHeader = (

@@ -23,6 +23,13 @@ const STAGES = [
     { key: "DEPLOYED", label: "Deployed" },
 ];
 
+const STAGE_GROUPS = [
+    { key: "needs_action", label: "Needs Action", statuses: ["TODO", "IN_PROGRESS"] },
+    { key: "in_review", label: "In Review", statuses: ["TESTED", "STAGED"] },
+    { key: "completed", label: "Completed", statuses: ["DONE", "DEPLOYED"] },
+    { key: "backlog", label: "Backlog", statuses: ["SCOPED_BACKLOG", "SPRINT_BACKLOG"] },
+];
+
 const STAGE_CHIP_STYLES = {
     SCOPED_BACKLOG: "border border-[#6B7280]/60 text-[#6B7280] bg-transparent hover:bg-[#6B7280]/10",
     SPRINT_BACKLOG: "border border-[#A78BFA]/60 text-[#A78BFA] bg-transparent hover:bg-[#A78BFA]/10",
@@ -47,7 +54,7 @@ const STAGE_CHIP_ACTIVE = {
 
 const PRIORITY_OPTIONS = ["CRITICAL", "HIGH", "MEDIUM", "LOW"];
 
-const FilterDropdown = ({ label, options, value, onChange, raw }) => {
+const FilterDropdown = ({ label, options, value, onChange }) => {
     const [open, setOpen] = useState(false);
     const ref = useRef(null);
 
@@ -64,17 +71,14 @@ const FilterDropdown = ({ label, options, value, onChange, raw }) => {
             <button
                 onClick={() => setOpen((v) => !v)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-hint transition-colors duration-150 bg-[#6B7280]/10
-    ${value
-                        ? "text-accent-blue"
-                        : "text-[#9CA3AF]"
-                    }`}
+                    ${value ? "text-accent-blue" : "text-[#9CA3AF]"}`}
             >
                 {label}
                 {value && <span className="text-hint opacity-70">: {value}</span>}
                 <ChevronDown className="w-3.5 h-3.5 opacity-60" />
             </button>
             {open && (
-                <div className="absolute top-full mt-1 left-0 z-50 bg-input-bg border border-divider/50 rounded-lg py-1 min-w-32 shadow-xl">
+                <div className="absolute top-full mt-1 left-0 z-50 bg-input-bg border border-divider/50 rounded-lg py-1 min-w-36 shadow-xl">
                     <button
                         onClick={() => { onChange(null); setOpen(false); }}
                         className="w-full text-left px-3 py-1.5 text-hint text-text-hint hover:bg-white/5"
@@ -83,12 +87,12 @@ const FilterDropdown = ({ label, options, value, onChange, raw }) => {
                     </button>
                     {options.map((opt) => (
                         <button
-                            key={opt}
-                            onClick={() => { onChange(opt); setOpen(false); }}
+                            key={opt.value ?? opt}
+                            onClick={() => { onChange(opt.value ?? opt); setOpen(false); }}
                             className={`w-full text-left px-3 py-1.5 text-hint hover:bg-white/5
-                                ${value === opt ? "text-accent-blue" : "text-text-secondary"}`}
+                                ${value === (opt.label ?? opt) ? "text-accent-blue" : "text-text-secondary"}`}
                         >
-                            {opt.charAt(0) + opt.slice(1).toLowerCase()}
+                            {opt.label ?? (opt.charAt(0) + opt.slice(1).toLowerCase())}
                         </button>
                     ))}
                 </div>
@@ -102,15 +106,15 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, userHeader }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const { id } = useParams();
-    const { openModal, closeModal } = useOutletContext();
+    const { openModal } = useOutletContext();
 
-    // tabs: sprint | scoped | all (admin only gets all)
     const TABS = isAdmin
         ? [{ key: "sprint", label: "Sprint" }, { key: "scoped", label: "Scoped" }, { key: "all", label: "All" }]
         : [{ key: "sprint", label: "Sprint" }, { key: "scoped", label: "Scoped" }];
 
     const activeTab = searchParams.get("view") || "sprint";
-    const activeStage = searchParams.get("stage") || null;
+    const activeStageGroup = searchParams.get("stageGroup") || null;
+    const activeStatus = searchParams.get("status") || null;
     const activePriority = searchParams.get("priority") || null;
     const activeAssignee = searchParams.get("assignee") || null;
     const searchQuery = searchParams.get("search") || "";
@@ -121,9 +125,10 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, userHeader }) => {
     const [pagination, setPagination] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
     const allAssigneesRef = useRef([]);
 
-    // show success toast on redirect from login
+    // Show success toast on redirect from login
     useEffect(() => {
         if (location.state?.success) {
             toast.success(location.state.success);
@@ -136,12 +141,12 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, userHeader }) => {
         setError(null);
         try {
             const params = { view: activeTab, page: currentPage };
+            if (activeStatus) params.status = activeStatus;
             if (activePriority) params.priority = activePriority;
             if (activeAssignee && isAdmin) params.assignee = activeAssignee;
             if (searchQuery) params.search = searchQuery;
 
             const res = await getTickets(params);
-            console.log("Data from Backend:", res);
             setAllTickets(res.items || res);
             setPagination(res.paginationMeta || null);
         } catch (err) {
@@ -150,57 +155,64 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, userHeader }) => {
         } finally {
             setLoading(false);
         }
-    }, [activeTab, activePriority, activeAssignee, searchQuery, currentPage]);
+    }, [activeTab, activeStatus, activePriority, activeAssignee, searchQuery, currentPage, isAdmin]);
 
     useEffect(() => {
         fetchTickets();
     }, [fetchTickets]);
 
     useEffect(() => {
-        if (!activeStage) {
+        if (!activeStageGroup) {
             setTickets(allTickets);
-        } else {
-            setTickets(allTickets.filter((t) => t.status === activeStage));
+            return;
         }
-    }, [allTickets, activeStage]);
+        const group = STAGE_GROUPS.find((g) => g.key === activeStageGroup);
+        setTickets(
+            group ? allTickets.filter((t) => group.statuses.includes(t.status)) : allTickets
+        );
+    }, [allTickets, activeStageGroup]);
 
     useEffect(() => {
-        if (id && allTickets.length) {
-            const ticket = allTickets.find((t) => String(t.id) === String(id));
-            if (ticket) openModal(<TicketDetailsModal ticket={ticket} />);
-        }
-    }, [id, allTickets]);
+        if (activeAssignee) return;
 
-    const currentViewAssignees = allTickets
-        .filter(t => t.assignee)
-        .map(t => t.assignee);
+        const incoming = allTickets.filter((t) => t.assignee).map((t) => t.assignee);
+        if (incoming.length === 0) return;
+
+        const map = new Map();
+        allAssigneesRef.current.forEach((a) => map.set(String(a.id), a));
+        incoming.forEach((a) => map.set(String(a.id), a));
+        allAssigneesRef.current = Array.from(map.values());
+    }, [allTickets, activeAssignee]);
+
+    // Open ticket details modal
+    const hasOpenedModal = useRef(false);
 
     useEffect(() => {
-        if (currentViewAssignees.length > 0) {
-            const map = new Map();
-            allAssigneesRef.current.forEach(a => map.set(a.id, a));
-            currentViewAssignees.forEach(a => map.set(a.id, a));
-            allAssigneesRef.current = Array.from(map.values());
+        if (!id) {
+            hasOpenedModal.current = false;
+            return;
         }
-    }, [allTickets]);
+        if (!allTickets.length || hasOpenedModal.current) return;
+        const ticket = allTickets.find((t) => String(t.id) === String(id));
+        if (!ticket) return;
+        hasOpenedModal.current = true;
+        openModal(<TicketDetailsModal ticket={ticket} />);
+    }, [id, allTickets, openModal]);
 
-    const assignees = allAssigneesRef.current.filter(a => {
-        const existsInCurrentView = currentViewAssignees.some(curr => curr.id === a.id);
-        const isCurrentlySelected = String(a.id) === String(activeAssignee);
+    // Assignee dropdown options
+    const assignees = activeAssignee
+        ? allAssigneesRef.current
+        : allAssigneesRef.current.filter((a) =>
+            allTickets.some((t) => t.assignee && String(t.assignee.id) === String(a.id))
+        );
 
-        return existsInCurrentView || isCurrentlySelected;
-    });
-    const currentSprint = allTickets.find(t => t.sprint)?.sprint;
-
-    const handleRowClick = (ticket) => {
-    navigate(`${basePath}/tickets/${ticket.id}${location.search}`);
-};
+    const currentSprint = allTickets.find((t) => t.sprint)?.sprint;
 
     const setParam = (key, value) => {
         const next = new URLSearchParams(searchParams);
         if (value) next.set(key, value);
         else next.delete(key);
-        next.delete("page"); 
+        next.delete("page");
         setSearchParams(next);
     };
 
@@ -210,8 +222,23 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, userHeader }) => {
         setSearchParams(next);
     };
 
-    const handleStageChip = (stageKey) => {
-        setParam("stage", activeStage === stageKey ? null : stageKey);
+    const handleStageGroupChange = (groupKey) => {
+        const next = new URLSearchParams(searchParams);
+        if (groupKey) next.set("stageGroup", groupKey);
+        else next.delete("stageGroup");
+        next.delete("status");
+        next.delete("page");
+        setSearchParams(next);
+    };
+
+    const handleStatusChip = (statusKey) => {
+        const next = new URLSearchParams(searchParams);
+        const isSame = activeStatus === statusKey;
+        if (isSame) next.delete("status");
+        else next.set("status", statusKey);
+        next.delete("stageGroup");
+        next.delete("page");
+        setSearchParams(next);
     };
 
     const handleSearch = (e) => {
@@ -234,13 +261,19 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, userHeader }) => {
             : "All Tickets";
 
     const total = pagination?.total ?? 0;
-    const limit = pagination?.limit ?? 20;
     const totalPages = pagination?.totalPages ?? 1;
+
+    const activeStageGroupLabel = STAGE_GROUPS.find((g) => g.key === activeStageGroup)?.label ?? null;
+    const stageGroupOptions = STAGE_GROUPS.map((g) => ({ value: g.key, label: g.label }));
+
+    const activeAssigneeName = activeAssignee
+        ? allAssigneesRef.current.find((a) => String(a.id) === String(activeAssignee))?.name ?? null
+        : null;
 
     return (
         <div className="flex flex-col h-full bg-card-left">
 
-            {/* User header (user dashboard only) */}
+            {/* User header */}
             {userHeader && (
                 <div className="pl-[16px] pt-[16px] pb-[4px]">
                     {userHeader}
@@ -266,13 +299,10 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, userHeader }) => {
                 </div>
 
                 <div className="flex items-center gap-3">
-                    {/* User dashboard: sprint badge */}
                     {!isAdmin && userHeader && (
-                        <div className="flex items-center gap-2">
-                            <span className="px-3 py-1 rounded-full text-hint border border-[#60A5FA]/60 text-[#60A5FA] bg-[#60A5FA]/10 mt-[-110px] mr-[10px]">
-                                {currentSprint ? currentSprint.name : "No Sprint"}
-                            </span>
-                        </div>
+                        <span className="px-3 py-1 rounded-full text-hint border border-[#60A5FA]/60 text-[#60A5FA] bg-[#60A5FA]/10 mt-[-110px] mr-[10px]">
+                            {currentSprint ? currentSprint.name : "No Sprint"}
+                        </span>
                     )}
 
                     {isAdmin && (
@@ -286,35 +316,37 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, userHeader }) => {
                     )}
                 </div>
             </div>
+
             <div className="border-b border-divider/40 mx-[33px]" />
+
             {/* Filters row */}
             <div className="mx-[16px] mt-[16px] mb-[7px] rounded-[10px] bg-background border border-[#49475a]/50">
                 <div className="flex items-center justify-between pl-[16px] pr-[132px] py-[10px] gap-3">
-                    <div className="flex items-center gap-2 ">
+                    <div className="flex items-center gap-2">
+
                         <FilterDropdown
                             label="Stage"
-                            options={STAGES.map((s) => s.key)}
-                            value={activeStage}
-                            onChange={(v) => setParam("stage", v)}
+                            options={stageGroupOptions}
+                            value={activeStageGroupLabel}
+                            onChange={handleStageGroupChange}
                         />
+
                         {isAdmin && (
                             <FilterDropdown
                                 label="Assignee"
-                                options={assignees.map(a => a.name)}
-                                value={activeAssignee ? assignees.find(a => String(a.id) === String(activeAssignee))?.name : null}
-                                onChange={(name) => {
-                                    const selected = assignees.find(a => a.name === name);
-                                    setParam("assignee", selected ? selected.id : null);
-                                }}
-                                raw
+                                options={assignees.map((a) => ({ value: String(a.id), label: a.name }))}
+                                value={activeAssigneeName}
+                                onChange={(id) => setParam("assignee", id)}
                             />
                         )}
+
                         <FilterDropdown
                             label="Priority"
                             options={PRIORITY_OPTIONS}
                             value={activePriority}
                             onChange={(v) => setParam("priority", v)}
                         />
+
                         <FilterDropdown
                             label="Date"
                             options={[]}
@@ -337,23 +369,20 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, userHeader }) => {
                 </div>
             </div>
 
-
             {/* Content area */}
             <div className="mx-[16px] my-[7px] bg-background rounded-[10px] flex flex-col flex-1 border border-[#49475a]/50">
-
                 <div className="flex-1 pt-4 pb-0">
 
-                    {/* Section heading + stage chips */}
                     <h2 className="font-poppins font-semibold text-[20px] text-text-primary pl-[16px] mb-[2px]">Tickets</h2>
 
-                    {/* Stage chips */}
+                    {/* Status chips */}
                     <div className="flex flex-wrap gap-2 pl-[16px] mb-[12px]">
                         {STAGES.map(({ key, label }) => (
                             <button
                                 key={key}
-                                onClick={() => handleStageChip(key)}
+                                onClick={() => handleStatusChip(key)}
                                 className={`px-3 py-1 rounded-full text-hint font-medium border transition-colors duration-150
-                                ${activeStage === key
+                                    ${activeStatus === key
                                         ? STAGE_CHIP_ACTIVE[key]
                                         : STAGE_CHIP_STYLES[key]
                                     }`}
@@ -385,7 +414,9 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, userHeader }) => {
                             basePath={basePath}
                             showAssignee={showAssignee}
                             showContext={showContext}
-                            onRowClick={handleRowClick}
+                            onRowClick={(ticket) =>
+                                navigate(`${basePath}/tickets/${ticket.id}${location.search}`)
+                            }
                         />
                     )}
                 </div>
@@ -395,19 +426,21 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, userHeader }) => {
                     <span className="text-hint text-text-hint">
                         {loading
                             ? "Loading..."
-                            : `Showing ${tickets.length} of ${total} tasks`}
+                            : error
+                                ? "—"
+                                : `Showing ${tickets.length} of ${total} tasks`}
                     </span>
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => handlePageChange(currentPage - 1)}
-                            disabled={currentPage <= 1 || loading}
+                            disabled={currentPage <= 1 || loading || !!error}
                             className="w-7 h-7 flex items-center justify-center rounded-full bg-[#49475a]/50 text-text-primary hover:bg-[#49475a]/70 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         >
                             <ChevronLeft className="w-4 h-4" />
                         </button>
                         <button
                             onClick={() => handlePageChange(currentPage + 1)}
-                            disabled={currentPage >= totalPages || loading}
+                            disabled={currentPage >= totalPages || loading || !!error}
                             className="w-7 h-7 flex items-center justify-center rounded-full bg-[#49475a]/50 text-text-primary hover:bg-[#49475a]/70 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         >
                             <ChevronRight className="w-4 h-4" />

@@ -16,7 +16,6 @@ const Sidebar = ({ user }) => {
         { name: "Dashboard", path: "/user/dashboard", icon: LayoutDashboard },
         { name: "Projects", path: "/projects", icon: FolderOpen },
         { name: "Tickets", path: "/my-tickets", icon: Ticket },
-        { name: "Reports", path: "/reports", icon: BarChart2 },
         { name: "Settings", path: "/settings", icon: Settings },
     ];
 
