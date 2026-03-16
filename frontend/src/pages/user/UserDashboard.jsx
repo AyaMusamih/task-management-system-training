@@ -2,7 +2,7 @@ import { Outlet } from "react-router-dom";
 import DashboardView from "../../components/dashboard/Dashboardview";
 
 const UserDashboard = () => {
-    const userHeader = (
+    const header = (
         <div>
             <h1 className="font-poppins font-semibold text-[24px] text-text-primary leading-tight">Project Dashboard</h1>
             <p className="text-success-text text-[#64748B] mt-1">
@@ -16,7 +16,7 @@ const UserDashboard = () => {
             <DashboardView
                 isAdmin={false}
                 basePath="/user/dashboard"
-                userHeader={userHeader}
+                header={header}
             />
             <Outlet />
         </>
