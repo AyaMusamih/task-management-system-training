@@ -300,12 +300,6 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, header }) => {
                         <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
                     </button>
 
-                    {/* Profile */}
-                    {isAdmin && (<div className="w-9 h-9 rounded-full bg-admin-btn/50 hover:bg-admin-btn/60 transition-colors cursor-pointer flex items-center justify-center">
-                        <User className="w-4 h-4 text-text-primary" />
-                    </div>
-                    )}
-
                 </div>
             </div>
 

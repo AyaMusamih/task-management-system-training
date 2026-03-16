@@ -22,7 +22,7 @@ const AuthLayout = ({ children }) => {
                 </div>
 
                 {/* Right — banner */}
-                <div className="flex-1 hidden md:flex flex-col items-center justify-center bg-card-right p-8 md:p-10 gap-6 text-center shadow-lg">
+                <div className="flex-1 hidden md:flex flex-col items-center justify-center rounded-2xl bg-card-right p-8 md:p-10 gap-6 text-center shadow-lg">
                     <img
                         src={AuthIllustration}
                         alt="Banner"
