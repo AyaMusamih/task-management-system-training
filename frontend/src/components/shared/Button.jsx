@@ -35,7 +35,21 @@ const Button = ({
     disabled ? "bg-input-bg opacity-50 cursor-not-allowed pointer-events-none" : loading ? "bg-loading-dark cursor-not-allowed pointer-events-none" : success ? "bg-success-green hover:bg-success-dark" : error ? "bg-error-red hover:bg-error-dark" : "";
 
   return (
-    <>
+    <div className="relative w-full group">
+      {disabled && (page === "signup" || page === "login") && (
+        <div
+          className="
+      absolute -top-3 left-1/2 -translate-x-1/2
+      bg-accent-indigo text-white-btn text-hint
+      px-2 rounded-full whitespace-nowrap
+      opacity-0 group-hover:opacity-100
+      transition-opacity duration-200
+      pointer-events-none
+      "
+        >
+          Fill in all required fields
+        </div>
+      )}
       <button
         type={type}
         onClick={onClick}
@@ -68,7 +82,7 @@ const Button = ({
           Welcome! Redirecting to Dashboard...
         </p>
       )}
-    </>
+    </div>
   );
 }
 

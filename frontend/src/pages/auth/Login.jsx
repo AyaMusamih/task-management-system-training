@@ -128,7 +128,7 @@ const Login = () => {
                     page="login"
                     loading={loading}
                     disabled={!email || !password}
-                    className="primary-button w-full mt-1 text-btn-text"
+                    className="primary-button w-full mt-2 text-btn-text"
                     success={success}
                     error={errors && submitted && errors.general}
                 >
