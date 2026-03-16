@@ -13,7 +13,6 @@ import AllTickets from './pages/admin/AllTickets';
 import TaskManagement from './pages/admin/TaskManagement';
 import DeletedTickets from './pages/admin/DeletedTickets ';
 import AdminDashboard from './pages/admin/AdminDashboard';
-import MyTasks from './pages/user/MyTasks';
 import UserDashboard from './pages/user/UserDashboard';
 import TicketDetailsModal from './components/tickets/TicketDetailsModal';
 import NotFound from './pages/NotFound';
@@ -26,11 +25,6 @@ function App() {
         <Route path='/login' element={<Login />} />
         <Route path='/signup' element={<Signup />} />
         <Route element={<MainLayout />}>
-          <Route path='/' element={
-            <ProtectedRoute>
-              <Home />
-            </ProtectedRoute>
-          } />
           <Route path='/profile' element={
             <ProtectedRoute>
               <Profile />
@@ -47,13 +41,6 @@ function App() {
               <UserDashboard />
             </ProtectedRoute>
           }>
-            <Route path='tickets/:id' element={<TicketDetailsModal />} />
-          </Route>
-          <Route path='/my-tickets' element={
-            <ProtectedRoute role="USER">
-              <MyTasks />
-            </ProtectedRoute>
-          } >
             <Route path='tickets/:id' element={<TicketDetailsModal />} />
           </Route>
 
