@@ -50,12 +50,12 @@ const Button = ({
         style={style}
       >
         {loading ? (
-          <span className="flex items-center justify-center gap-2">
+          <span className="flex items-center justify-center gap-1">
             <LoaderCircle className="w-4 h-4 animate-spin" />
             {children}
           </span>
         ) : success ? (
-          <span className="flex items-center justify-center gap-2">
+          <span className="flex items-center justify-center gap-1">
             <Check className="checkmark-icon" />
             {children}
           </span>

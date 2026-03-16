@@ -3,7 +3,6 @@ import { Routes, Route } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import MainLayout from './layouts/MainLayout';
-import Home from './pages/Home';
 import Login from './pages/auth/Login'
 import Signup from './pages/auth/Signup';
 import Profile from './pages/Profile';
@@ -57,13 +56,13 @@ function App() {
               <Reports />
             </ProtectedRoute>
           } />
-          <Route path='/all-tickets' element={
+          {/* <Route path='/all-tickets' element={
             <ProtectedRoute role="ADMIN">
               <AllTickets />
             </ProtectedRoute>
           } >
             <Route path='tickets/:id' element={<TicketDetailsModal />} />
-          </Route>
+          </Route> */}
           <Route path='/task-management' element={
             <ProtectedRoute role="ADMIN">
               <TaskManagement />

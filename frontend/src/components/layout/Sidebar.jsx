@@ -6,16 +6,12 @@ const Sidebar = ({ user }) => {
     const navigate = useNavigate();
 
     const userLinks = [
-        { name: "Home", path: "/" },
         { name: "Dashboard", path: "/user/dashboard" },
-        { name: "My Tasks", path: "/my-tickets" },
         { name: "Profile", path: "/profile" },
     ];
 
     const adminLinks = [
-        { name: "Home", path: "/" },
         { name: "Dashboard", path: "/admin/dashboard" },
-        { name: "All Tickets", path: "/all-tickets" },
         { name: "Deleted Tickets", path: "/deleted-tickets" },
         { name: "Task Management", path: "/task-management" },
         { name: "Reports", path: "/reports" },
@@ -30,7 +26,7 @@ const Sidebar = ({ user }) => {
     const links = user?.role === "ADMIN" ? adminLinks : userLinks;
 
     return (
-        <aside className="w-64 bg-white shadow-md p-5">
+        <aside className="w-64 bg-white shadow-md p-6">
 
             <div className="mb-6 border-b pb-3">
                 <p className="font-semibold">{user?.name}</p>

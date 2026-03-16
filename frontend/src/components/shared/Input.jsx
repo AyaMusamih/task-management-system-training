@@ -5,6 +5,7 @@ import { CircleAlert, Check } from 'lucide-react';
 const Input = ({
     label,
     type = "text",
+    page,
     value,
     checked,
     name,
@@ -31,19 +32,19 @@ const Input = ({
     const disabledStyles = disabled ? "opacity-50 cursor-not-allowed" : "";
 
     return (
-        <div className="flex flex-col gap-1 mb-2.5">
+        <div className="flex flex-col gap-1 mb-4">
 
             {/* Label */}
             {label && !isCheckbox && (
-                <label className="text-field-label text-text-secondary mb-1">
+                <label className="text-field-label text-text-secondary">
                     {label}{'*'}
                 </label>
             )}
 
             {/* Checkbox */}
             {isCheckbox ? (
-                <div className="flex items-start gap-2.5">
-                    <div className="relative flex items-center justify-center mt-0.5">
+                <div className="flex items-start gap-2">
+                    <div className="relative flex items-center justify-center">
                         <input
                             type="checkbox"
                             name={name}
@@ -89,7 +90,7 @@ const Input = ({
                         onChange={onChange}
                         placeholder={placeholder}
                         disabled={disabled}
-                        className={`input-field text-field-typed text-text-filled text-field-placeholder placeholder:text-text-placeholder bg-input-bg border outline-none transition-all duration-200 ${borderColor} ${disabledStyles} ${isPassword ? "pr-12" : ""} ${className}`}
+                        className={`input-field text-text-filled text-field-placeholder placeholder:text-text-placeholder bg-input-bg border outline-none transition-all duration-200 ${borderColor} ${disabledStyles} ${isPassword ? "pr-16" : ""} ${className}`}
                     />
 
                     {/* Toggle password */}
@@ -98,6 +99,7 @@ const Input = ({
                             type="button"
                             onClick={() => setShowPassword((prev) => !prev)}
                             disabled={disabled}
+                            aria
                             className="absolute right-4 top-1/2 -translate-y-1/2 focus:outline-none"
                         >
                             {showPassword ? (
@@ -112,15 +114,27 @@ const Input = ({
 
             {/* Error / helperText */}
             {error ? (
-                <div className="flex items-start gap-1 mt-1">
-                    < CircleAlert className="error-icon text-error-red" />
-                    <span className="text-error-text text-error-red">
-                        {error}
-                    </span>
-                </div>
+                helperText && page === "login" ? (
+                    <div className="flex justify-between">
+                        <div className="flex items-start gap-1">
+                            <CircleAlert className="error-icon text-error-red" />
+                            <span className="text-error-text text-error-red">
+                                {error}
+                            </span>
+                        </div>
+                            {helperText}
+                    </div>
+                ) : (
+                    <div className="flex items-start gap-1">
+                        <CircleAlert className="error-icon text-error-red" />
+                        <span className="text-error-text text-error-red">
+                            {error}
+                        </span>
+                    </div>
+                )
             ) : (
                 helperText && (
-                    <span className="text-hint text-text-hint mt-0.5 mb-2">
+                    <span className="text-hint text-text-hint mb-1">
                         {helperText}
                     </span>
                 )

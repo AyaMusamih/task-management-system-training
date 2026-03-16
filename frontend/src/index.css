@@ -65,18 +65,17 @@ input[type="password"]::-webkit-credentials-auto-fill-button {
     font-size: 17px;
     font-weight: 600;
     font-family: var(--font-poppins);
-    /* letter-spacing: 0.3px; */
   }
 
   .text-heading {
-    font-size: 30px;
+    font-size: 32px;
     font-weight: 500;
     font-family: var(--font-poppins);
     line-height: 1.25;
   }
 
   .text-subtitle {
-    font-size: 13.5px;
+    font-size: 14px;
     font-weight: 400;
     font-family: var(--font-poppins);
     line-height: 1.6;
@@ -89,8 +88,8 @@ input[type="password"]::-webkit-credentials-auto-fill-button {
   }
 
   .text-field-placeholder::placeholder {
-    font-size: .5.5px;
-    font-weight: 400;
+    font-size: 14px;
+    font-weight: 500;
     font-family: var(--font-poppins);
   }
 
@@ -147,10 +146,8 @@ input[type="password"]::-webkit-credentials-auto-fill-button {
 
   .page-canvas {
     width: 100%;
-    /* max-width: 1440px; */
     min-height: 100dvh;
     margin: 0 auto;
-    /* padding: 64px 40px; */
   }
 
 
@@ -174,7 +171,7 @@ input[type="password"]::-webkit-credentials-auto-fill-button {
     max-width: 460px;
     display: flex;
     flex-direction: column;
-    gap: 26px;
+    gap: 24px;
   }
 
 
@@ -182,11 +179,10 @@ input[type="password"]::-webkit-credentials-auto-fill-button {
 
   .input-field {
     width: 100%;
-    max-width: 460px;
+    max-width: 493px;
     height: 48px;
-    border-radius: 14px;
-    padding-left: 20px;
-    padding-right: 20px;
+    border-radius: 12px;
+    padding-left: 16px;
   }
 
 
@@ -195,7 +191,7 @@ input[type="password"]::-webkit-credentials-auto-fill-button {
   .primary-button {
     width: 100%;
     max-width: 460px;
-    height: 55px;
+    height: 56px;
     border-radius: 40px;
     cursor: pointer;
   }
@@ -203,7 +199,7 @@ input[type="password"]::-webkit-credentials-auto-fill-button {
   .google-button {
     width: 100%;
     max-width: 460px;
-    height: 55px;
+    height: 56px;
     border-radius: 40px;
     cursor: pointer;
   }
