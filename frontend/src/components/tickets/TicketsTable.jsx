@@ -55,92 +55,143 @@ const Chip = ({ label, className }) => (
     </span>
 );
 
+const getContext = (ticket) => {
+    if (ticket.sprint) return "Sprint";
+    if (ticket.status === "SCOPED_BACKLOG") return "Scoped";
+    return "—";
+};
+
 const TicketsTable = ({ tickets, showAssignee = true, showContext = false, onRowClick }) => {
 
     const handleRowClick = (ticket) => {
         if (onRowClick) onRowClick(ticket);
     };
 
-    const getContext = (ticket) => {
-        if (ticket.sprint) return "Sprint";
-        if (ticket.status === "SCOPED_BACKLOG") return "Scoped";
-        return "—";
-    };
 
     return (
-        <table className="w-full rounded-[10px] overflow-hidden ">
-            <thead className="bg-input-bg">
-                <tr>
-                    <th className="text-left py-3 px-4 text-hint text-text-hint font-medium w-[28%]">Task Name</th>
-                    <th className="text-left py-3 px-4 text-hint text-text-hint font-medium w-[30%]">Description</th>
-                    <th className="text-left py-3 px-4 text-hint text-text-hint font-medium w-[12%]">Priority</th>
-                    {showAssignee && (
-                        <th className="text-left py-3 px-4 text-hint text-text-hint font-medium w-[12%]">Assignee</th>
-                    )}
-                    {showContext && (
-                        <th className="text-left py-3 px-4 text-hint text-text-hint font-medium w-[10%]">Context</th>
-                    )}
-                    <th className="text-left py-3 px-4 text-hint text-text-hint font-medium w-[14%]">Status</th>
-                </tr>
-            </thead>
-            <tbody>
+        <>
+            <div className="md:hidden flex flex-col divide-y divide-divider/20">
                 {tickets.map((ticket) => (
-                    <tr
+                    <div
                         key={ticket.id}
                         onClick={() => handleRowClick(ticket)}
-                        className="border-b border-divider/20 hover:bg-white/[0.02] cursor-pointer transition-colors duration-100"
+                        className="px-4 py-3 hover:bg-white/[0.02] cursor-pointer transition-colors duration-100"
                     >
-                        <td className="py-3 px-4">
-                            <span className="text-field-label text-text-primary font-medium">
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                            <span className="text-field-label text-text-primary font-medium leading-snug flex-1 min-w-0">
                                 {ticket.title}
                             </span>
-                        </td>
-                        <td className="py-3 px-4">
-                            <span className="text-field-label text-text-secondary truncate block max-w-xs">
-                                {ticket.description || "—"}
-                            </span>
-                        </td>
-                        <td className="py-3 px-4">
-                            {ticket.priority ? (
+                            {ticket.status && (
+                                <Chip
+                                    label={STATUS_LABELS[ticket.status] || ticket.status}
+                                    className={`shrink-0 ${STATUS_STYLES[ticket.status] || "bg-slate-700/50 text-slate-300"}`}
+                                />
+                            )}
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                            {ticket.priority && (
                                 <Chip
                                     label={ticket.priority.charAt(0) + ticket.priority.slice(1).toLowerCase()}
                                     className={PRIORITY_STYLES[ticket.priority] || "bg-slate-700/50 text-slate-300"}
                                 />
-                            ) : <span className="text-text-hint text-hint">—</span>}
-                        </td>
-                        {showAssignee && (
-                            <td className="py-3 px-4">
-                                {ticket.assignee ? (
+                            )}
+                            {showContext && (
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-hint border border-divider/40 text-text-secondary bg-white/5">
+                                    {getContext(ticket)}
+                                </span>
+                            )}
+                            {showAssignee && ticket.assignee && (
+                                <div className="flex items-center gap-1.5 ml-auto">
                                     <div
-                                        className={`w-7 h-7 rounded-full flex items-center justify-center text-hint font-semibold text-white-btn ${getAvatarColor(ticket.assignee.name)}`}
+                                        className={`w-6 h-6 rounded-full flex items-center justify-center text-hint font-semibold text-white-btn ${getAvatarColor(ticket.assignee.name)}`}
                                         title={ticket.assignee.name}
                                     >
                                         {getInitials(ticket.assignee.name)}
                                     </div>
-                                ) : (
-                                    <span className="text-text-hint text-hint">—</span>
-                                )}
-                            </td>
-                        )}
-                        {showContext && (
-                            <td className="py-3 px-4">
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-hint border border-divider/40 text-text-secondary bg-white/5">
-                                    {getContext(ticket)}
-                                </span>
-                            </td>
-                        )}
-                        <td className="py-3 px-4">
-                            {ticket.status ? (
-                                <Chip
-                                    label={STATUS_LABELS[ticket.status] || ticket.status}
-                                    className={STATUS_STYLES[ticket.status] || "bg-slate-700/50 text-slate-300"}
-                                />
-                            ) : <span className="text-text-hint text-hint">—</span>}
-                        </td>
-                    </tr>
+                                    <span className="text-hint text-text-hint">{ticket.assignee.name}</span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 ))}
-            </tbody>
-        </table>
+            </div>
+
+            <div className="hidden md:block overflow-x-auto">
+                <table className="w-full rounded-[10px] overflow-hidden min-w-[540px]">
+                    <thead className="bg-input-bg">
+                        <tr>
+                            <th className="text-left py-3 px-4 text-hint text-text-hint font-medium w-[30%]">Task Name</th>
+                            <th className="text-left py-3 px-4 text-hint text-text-hint font-medium w-[28%] hidden lg:table-cell">Description</th>
+                            <th className="text-left py-3 px-4 text-hint text-text-hint font-medium w-[12%]">Priority</th>
+                            {showAssignee && (
+                                <th className="text-left py-3 px-4 text-hint text-text-hint font-medium w-[12%]">Assignee</th>
+                            )}
+                            {showContext && (
+                                <th className="text-left py-3 px-4 text-hint text-text-hint font-medium w-[10%] hidden lg:table-cell">Context</th>
+                            )}
+                            <th className="text-left py-3 px-4 text-hint text-text-hint font-medium w-[14%]">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {tickets.map((ticket) => (
+                            <tr
+                                key={ticket.id}
+                                onClick={() => handleRowClick(ticket)}
+                                className="border-b border-divider/20 hover:bg-white/[0.02] cursor-pointer transition-colors duration-100"
+                            >
+                                <td className="py-3 px-4">
+                                    <span className="text-field-label text-text-primary font-medium">
+                                        {ticket.title}
+                                    </span>
+                                </td>
+                                <td className="py-3 px-4 hidden lg:table-cell">
+                                    <span className="text-field-label text-text-secondary truncate block max-w-xs">
+                                        {ticket.description || "—"}
+                                    </span>
+                                </td>
+                                <td className="py-3 px-4">
+                                    {ticket.priority ? (
+                                        <Chip
+                                            label={ticket.priority.charAt(0) + ticket.priority.slice(1).toLowerCase()}
+                                            className={PRIORITY_STYLES[ticket.priority] || "bg-slate-700/50 text-slate-300"}
+                                        />
+                                    ) : <span className="text-text-hint text-hint">—</span>}
+                                </td>
+                                {showAssignee && (
+                                    <td className="py-3 px-4">
+                                        {ticket.assignee ? (
+                                            <div
+                                                className={`w-7 h-7 rounded-full flex items-center justify-center text-hint font-semibold text-white-btn ${getAvatarColor(ticket.assignee.name)}`}
+                                                title={ticket.assignee.name}
+                                            >
+                                                {getInitials(ticket.assignee.name)}
+                                            </div>
+                                        ) : (
+                                            <span className="text-text-hint text-hint">—</span>
+                                        )}
+                                    </td>
+                                )}
+                                {showContext && (
+                                    <td className="py-3 px-4 hidden lg:table-cell">
+                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-hint border border-divider/40 text-text-secondary bg-white/5">
+                                            {getContext(ticket)}
+                                        </span>
+                                    </td>
+                                )}
+                                <td className="py-3 px-4">
+                                    {ticket.status ? (
+                                        <Chip
+                                            label={STATUS_LABELS[ticket.status] || ticket.status}
+                                            className={STATUS_STYLES[ticket.status] || "bg-slate-700/50 text-slate-300"}
+                                        />
+                                    ) : <span className="text-text-hint text-hint">—</span>}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </>
     );
 };
 

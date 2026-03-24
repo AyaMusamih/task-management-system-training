@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate, useParams, useOutletContext, useLocation } from "react-router-dom";
-import { Search, ChevronDown, Plus, ChevronLeft, ChevronRight, Bell, User } from "lucide-react";
+import { Search, ChevronDown, Plus, ChevronLeft, ChevronRight, Bell, X } from "lucide-react";
 import { toast } from "react-toastify";
 import { getTickets } from "../../services/tickets.service";
 import TicketsTable from "../tickets/TicketsTable";
@@ -73,7 +73,7 @@ const FilterDropdown = ({ label, options, value, onChange }) => {
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-hint transition-colors duration-150 bg-[#6B7280]/10 cursor-pointer
                     ${value ? "text-accent-blue" : "text-[#9CA3AF]"}`}
             >
-                {label}
+                <span>{label}</span>
                 {value && <span className="text-hint opacity-70">: {value}</span>}
                 <ChevronDown className="w-3.5 h-3.5 opacity-60" />
             </button>
@@ -128,7 +128,6 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, header }) => {
 
     const allAssigneesRef = useRef([]);
 
-    // Show success toast on redirect from login
     useEffect(() => {
         if (location.state?.success) {
             toast.success(location.state.success);
@@ -147,6 +146,7 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, header }) => {
             if (searchQuery) params.search = searchQuery;
 
             const res = await getTickets(params);
+            console.log("Backend response:", res);
             setAllTickets(res.items || res);
             setPagination(res.paginationMeta || null);
         } catch (err) {
@@ -157,41 +157,27 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, header }) => {
         }
     }, [activeTab, activeStatus, activePriority, activeAssignee, searchQuery, currentPage, isAdmin]);
 
-    useEffect(() => {
-        fetchTickets();
-    }, [fetchTickets]);
+    useEffect(() => { fetchTickets(); }, [fetchTickets]);
 
     useEffect(() => {
-        if (!activeStageGroup) {
-            setTickets(allTickets);
-            return;
-        }
+        if (!activeStageGroup) { setTickets(allTickets); return; }
         const group = STAGE_GROUPS.find((g) => g.key === activeStageGroup);
-        setTickets(
-            group ? allTickets.filter((t) => group.statuses.includes(t.status)) : allTickets
-        );
+        setTickets(group ? allTickets.filter((t) => group.statuses.includes(t.status)) : allTickets);
     }, [allTickets, activeStageGroup]);
 
     useEffect(() => {
         if (activeAssignee) return;
-
         const incoming = allTickets.filter((t) => t.assignee).map((t) => t.assignee);
         if (incoming.length === 0) return;
-
         const map = new Map();
         allAssigneesRef.current.forEach((a) => map.set(String(a.id), a));
         incoming.forEach((a) => map.set(String(a.id), a));
         allAssigneesRef.current = Array.from(map.values());
     }, [allTickets, activeAssignee]);
 
-    // Open ticket details modal
     const hasOpenedModal = useRef(false);
-
     useEffect(() => {
-        if (!id) {
-            hasOpenedModal.current = false;
-            return;
-        }
+        if (!id) { hasOpenedModal.current = false; return; }
         if (!allTickets.length || hasOpenedModal.current) return;
         const ticket = allTickets.find((t) => String(t.id) === String(id));
         if (!ticket) return;
@@ -199,16 +185,7 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, header }) => {
         openModal(<TicketDetailsModal ticket={ticket} />);
     }, [id, allTickets, openModal]);
 
-    // Assignee dropdown options
-    // const assignees = activeAssignee
-    //     ? allAssigneesRef.current
-    //     : allAssigneesRef.current.filter((a) =>
-    //         allTickets.some((t) => t.assignee && String(t.assignee.id) === String(a.id))
-    //     );
-
-    // Assignee dropdown options
     const assignees = allAssigneesRef.current;
-
     const currentSprint = allTickets.find((t) => t.sprint)?.sprint;
 
     const setParam = (key, value) => {
@@ -244,10 +221,7 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, header }) => {
         setSearchParams(next);
     };
 
-    const handleSearch = (e) => {
-        setParam("search", e.target.value || null);
-    };
-
+    const handleSearch = (e) => { setParam("search", e.target.value || null); };
     const handlePageChange = (page) => {
         const next = new URLSearchParams(searchParams);
         next.set("page", page);
@@ -257,18 +231,12 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, header }) => {
     const showContext = activeTab === "all" && isAdmin;
     const showAssignee = isAdmin;
 
-    const viewLabel = activeTab === "sprint"
-        ? "Sprint"
-        : activeTab === "scoped"
-            ? "Scoped"
-            : "All Tickets";
-
+    const viewLabel = activeTab === "sprint" ? "Sprint" : activeTab === "scoped" ? "Scoped" : "All Tickets";
     const total = pagination?.total ?? 0;
     const totalPages = pagination?.totalPages ?? 1;
 
     const activeStageGroupLabel = STAGE_GROUPS.find((g) => g.key === activeStageGroup)?.label ?? null;
     const stageGroupOptions = STAGE_GROUPS.map((g) => ({ value: g.key, label: g.label }));
-
     const activeAssigneeName = activeAssignee
         ? allAssigneesRef.current.find((a) => String(a.id) === String(activeAssignee))?.name ?? null
         : null;
@@ -276,44 +244,35 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, header }) => {
     return (
         <div className="flex flex-col h-full bg-card-left">
 
-            {/* header */}
-            <div className="flex items-start justify-between pl-[16px] pr-[32px] pt-[16px] pb-[4px]">
-
-                {/* left side */}
-                <div>
+            {/* Header */}
+            <div className="flex items-start justify-between px-4 sm:px-6 lg:px-[16px] lg:pr-[32px] pt-4 sm:pt-[16px] pb-1">
+                <div className="flex-1 min-w-0">
                     {header}
                 </div>
-
-                {/* right side */}
-                <div className="flex items-center gap-3">
-
-                    {/* Sprint for user */}
-                    {!isAdmin && (
-                        <span className="px-3 py-1 rounded-full text-hint border border-[#60A5FA]/60 text-[#60A5FA] bg-[#60A5FA]/10">
-                            {currentSprint ? currentSprint.name : "No Sprint"}
+                <div className="flex items-center gap-2 ml-3 shrink-0">
+                    {/* Sprint chip - user only */}
+                    {!isAdmin && currentSprint && (
+                        <span className="hidden sm:inline-flex px-3 py-1 rounded-full text-hint border border-[#60A5FA]/60 text-[#60A5FA] bg-[#60A5FA]/10">
+                            {currentSprint.name}
                         </span>
                     )}
-
-                    {/* Bell */}
                     <button className="relative w-9 h-9 flex items-center justify-center rounded-md bg-admin-btn/40 hover:bg-admin-btn/60 transition-colors cursor-pointer">
                         <Bell className="w-4 h-4 text-text-primary" />
-                        <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                        <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
                     </button>
-
                 </div>
             </div>
 
-
-            {/* Tabs row + Create button */}
-            <div className="flex items-center justify-between pr-[32px] py-[16px]">
+            {/* Tabs + Create button */}
+            <div className="flex items-center justify-between px-2 sm:px-4 lg:px-0 lg:pr-[32px] py-3 sm:py-[16px]">
                 <div className="flex gap-1">
                     {TABS.map(({ key, label }) => (
                         <button
                             key={key}
                             onClick={() => handleTabChange(key)}
-                            className={`ml-2 px-3 py-1 mb-[-1px] font-inter font-medium text-[16px] transition-colors duration-150 relative cursor-pointer
+                            className={`ml-2 px-3 py-1 mb-[-1px] font-inter font-medium text-[14px] sm:text-[16px] transition-colors duration-150 relative cursor-pointer
                                 ${activeTab === key
-                                    ? "text-text-primary after:absolute after:bottom-0 after:top-11.5 after:left-0 after:right-0 after:h-0.5 after:bg-accent-blue"
+                                    ? "text-text-primary after:absolute after:bottom-0 after:top-10 sm:after:top-11.5 after:left-0 after:right-0 after:h-0.5 after:bg-accent-blue"
                                     : "text-text-hint hover:text-text-primary"
                                 }`}
                         >
@@ -322,35 +281,34 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, header }) => {
                     ))}
                 </div>
 
-                <div className="flex items-center gap-3">
-
+                <div className="flex items-center gap-2 shrink-0">
                     {isAdmin && (
-                        <Button
-                            onClick={onCreateTicket}
-                            className="flex items-center justify-center gap-1.5 cursor-pointer bg-admin-btn/40 hover:bg-admin-btn/60  transition-colors !rounded-lg"
-                        >
-                            <Plus className="w-4 h-4 text-text-primary" />
-                            <span className="text-white-btn font-inter text-[13.5px] font-medium">Create Ticket</span>
-                        </Button>
+                        <>
+                            <Button
+                                onClick={onCreateTicket}
+                                className="flex items-center justify-center gap-1.5 cursor-pointer bg-admin-btn/40 hover:bg-admin-btn/60 transition-colors !rounded-lg"
+                            >
+                                <Plus className="w-4 h-4 text-text-primary" />
+                                <span className="text-white-btn font-inter text-[12px] sm:text-[13.5px] font-medium">Create Ticket</span>
+                            </Button>
+                        </>
                     )}
                 </div>
             </div>
 
-            <div className="border-b border-divider/40 mx-[20px]" />
+            <div className="border-b border-divider/40 mx-3 sm:mx-[20px]" />
 
-            {/* Filters row */}
-            <div className="mx-[16px] mt-[16px] mb-[7px] rounded-[10px] bg-background border border-[#49475a]/50">
-                <div className="flex items-center justify-between px-[16px] py-[10px]">
-                    {/* Left side */}
-                    <div className="flex items-center gap-2">
+            {/* Filters */}
+            <div className="mx-3 sm:mx-[16px] mt-3 sm:mt-[16px] mb-[7px] rounded-[10px] bg-background border border-[#49475a]/50">
 
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-4 py-[10px] gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                         <FilterDropdown
                             label="Stage"
                             options={stageGroupOptions}
                             value={activeStageGroupLabel}
                             onChange={handleStageGroupChange}
                         />
-
                         {isAdmin && (
                             <FilterDropdown
                                 label="Assignee"
@@ -359,14 +317,12 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, header }) => {
                                 onChange={(id) => setParam("assignee", id)}
                             />
                         )}
-
                         <FilterDropdown
                             label="Priority"
                             options={PRIORITY_OPTIONS}
                             value={activePriority}
                             onChange={(v) => setParam("priority", v)}
                         />
-
                         <FilterDropdown
                             label="Date"
                             options={[]}
@@ -374,9 +330,7 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, header }) => {
                             onChange={() => { }}
                         />
                     </div>
-
-                    {/* Search */}
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-card-left border border-divider/50 rounded-lg w-[442px] shrink-0">
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-card-left border border-divider/50 rounded-lg w-full sm:w-[280px] lg:w-[442px]">
                         <Search className="w-3.5 h-3.5 text-[#6B7280] shrink-0" />
                         <input
                             type="text"
@@ -390,22 +344,21 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, header }) => {
             </div>
 
             {/* Content area */}
-            <div className="mx-[16px] my-[7px] bg-background rounded-[10px] flex flex-col flex-1 border border-[#49475a]/50">
-                <div className="flex-1 pt-4 pb-0">
+            <div className="mx-3 sm:mx-[16px] my-[7px] bg-background rounded-[10px] flex flex-col flex-1 border border-[#49475a]/50 min-h-0">
+                <div className="flex-1 pt-4 pb-0 min-h-0">
 
-                    <h2 className="font-poppins font-semibold text-[20px] text-text-primary pl-[16px] mb-[2px]">Tickets</h2>
+                    <div className="flex items-center px-4 sm:px-[16px] mb-2">
+                        <h2 className="font-poppins font-semibold text-[18px] sm:text-[20px] text-text-primary">Tickets</h2>
+                    </div>
 
                     {/* Status chips */}
-                    <div className="flex flex-wrap gap-2 pl-[16px] mb-[12px]">
+                    <div className="flex gap-2 px-3 sm:px-[16px] mb-3 overflow-x-auto scrollbar-none pb-3">
                         {STAGES.map(({ key, label }) => (
                             <button
                                 key={key}
                                 onClick={() => handleStatusChip(key)}
-                                className={`px-3 py-1 rounded-full text-hint font-medium border transition-colors duration-150 cursor-pointer
-                                    ${activeStatus === key
-                                        ? STAGE_CHIP_ACTIVE[key]
-                                        : STAGE_CHIP_STYLES[key]
-                                    }`}
+                                className={`px-3 py-1 rounded-full text-hint font-medium border transition-colors duration-150 cursor-pointer whitespace-nowrap shrink-0
+                                    ${activeStatus === key ? STAGE_CHIP_ACTIVE[key] : STAGE_CHIP_STYLES[key]}`}
                             >
                                 {label}
                             </button>
@@ -442,26 +395,26 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, header }) => {
                 </div>
 
                 {/* Footer: count + pagination */}
-                <div className="flex items-center justify-between px-6 py-4 mt-auto">
-                    <span className="text-hint text-text-hint">
-                        {loading
-                            ? "Loading..."
-                            : error
-                                ? "—"
-                                : `Showing ${tickets.length} of ${total} tasks`}
+                <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 mt-auto border-t border-divider/20">
+                    <span className="text-hint text-text-hint hidden sm:inline">
+                        {loading ? "Loading..." : error ? "—" : `Showing ${tickets.length} of ${total} tasks`}
+                    </span>
+                    <span className="text-hint text-text-hint sm:hidden">
+                        {!loading && !error && `${tickets.length} / ${total}`}
                     </span>
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => handlePageChange(currentPage - 1)}
                             disabled={currentPage <= 1 || loading || !!error}
-                            className="w-7 h-7 flex items-center justify-center rounded-full bg-[#49475a]/50 text-text-primary hover:bg-[#49475a]/70 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                            className="w-8 h-8 flex items-center justify-center rounded-full bg-[#49475a]/50 text-text-primary hover:bg-[#49475a]/70 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         >
                             <ChevronLeft className="w-4 h-4" />
                         </button>
+                        <span className="text-hint text-text-hint px-1">{currentPage} / {totalPages}</span>
                         <button
                             onClick={() => handlePageChange(currentPage + 1)}
                             disabled={currentPage >= totalPages || loading || !!error}
-                            className="w-7 h-7 flex items-center justify-center rounded-full bg-[#49475a]/50 text-text-primary hover:bg-[#49475a]/70 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                            className="w-8 h-8 flex items-center justify-center rounded-full bg-[#49475a]/50 text-text-primary hover:bg-[#49475a]/70 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                         >
                             <ChevronRight className="w-4 h-4" />
                         </button>
