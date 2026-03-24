@@ -11,14 +11,18 @@ const checkUpdatePermission = async (req, res, next) => {
       select: { id: true, assigneeId: true },
     });
 
-    if (!ticket) return res.status(404).json({ message: "Ticket Not Found" });
+    if (!ticket) {
+      const err = new Error("Ticket Not Found");
+      err.status = 404;
+      next(err);
+    }
 
     const { canUpdateStatus } = getTicketFlags(ticket, user);
 
     if (!canUpdateStatus) {
-      return res.status(403).json({
-        message: "You can only update status for tickets assgined to you",
-      });
+     const err = new Error("You can only update status for tickets assgined to you");
+     err.status = 401;
+     next(err)
     }
     req.ticket = ticket;
     next();
