@@ -1,5 +1,5 @@
-const { getTicketFlags } = require("../tickets/utils/ticket-premissions.util");
-const prisma = require("../prismaClient");
+const { getTicketFlags } = require("../utils/ticket-premissions.util");
+const prisma = require("../../prismaClient");
 
 const checkUpdatePermission = async (req, res, next) => {
   try {

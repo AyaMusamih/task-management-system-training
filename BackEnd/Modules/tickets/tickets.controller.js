@@ -21,7 +21,12 @@ const getTickets = async (req, res, next) => {
     }
 }
 
+const addTicket = async (req, res, next) => {
+
+}
+
 
 module.exports = {
-    getTickets
+    getTickets, 
+    addTicket
 }
