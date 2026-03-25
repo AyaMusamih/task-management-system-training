@@ -1,21 +1,22 @@
 const { z } = require("zod");
-const {addTicketSchema} = require("./addTicket.schema")
+const { addTicketSchema } = require("./addTicket.schema");
 const { bigIntIdSchema } = require("../utils/schema.utils");
 const { TicketStatus } = require("../../../prisma/generated");
-
 const updateTicketSchema = addTicketSchema.partial();
-const updateTicktParamSchema = z.object({
-    id: bigIntIdSchema 
-}).strict();
-const updateStatusSchema = z.object({
-  status: z.enum(Object.values(TicketStatus), {
-    required_error: "Status is required",
-    invalid_type_error: "Invalid status value"
+const updateTicketParamSchema = z
+  .object({
+    id: bigIntIdSchema,
   })
-}).strict();
+  .strict();
+
+const updateTicketStatusSchema = z
+  .object({
+    status: z.enum(Object.values(TicketStatus)),
+  })
+  .strict();
 
 module.exports = {
-    updateTicketSchema,
-    updateTicktParamSchema,
-    updateStatusSchema
-}
+  updateTicketSchema,
+  updateTicketParamSchema,
+  updateTicketStatusSchema,
+};

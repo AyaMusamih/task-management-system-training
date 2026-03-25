@@ -6,8 +6,12 @@ const { getTicketsSchema } = require("../tickets/schema/getTicketsSchema");
 const { addTicketSchema } = require("./schema/addTicket.schema");
 const {
   updateTicketSchema,
-  updateTicktParamSchema,
+  updateTicketParamSchema,
+  updateTicketStatusSchema,
 } = require("./schema/updateTicket.schema");
+const {
+  checkUpdatePermission,
+} = require("./middlewares/ticketAuth.middleware");
 const ticketController = require("./tickets.controller");
 const authMiddleware = require("../Middlewares/auth.middleware");
 
@@ -25,10 +29,17 @@ router.post(
   ticketController.addTicket,
 );
 router.patch(
+  "/status/:id",
+  checkUpdatePermission,
+  validate({ params: updateTicketParamSchema, body: updateTicketStatusSchema }),
+  ticketController.updateTicketStatus,
+);
+
+router.patch(
   "/:id",
   isAdmin,
-  validate({ params: updateTicktParamSchema, body: updateTicketSchema }),
+  validate({ params: updateTicketParamSchema, body: updateTicketSchema }),
   ticketController.updateTicket,
-);
+); 
 
 module.exports = router;

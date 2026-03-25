@@ -14,7 +14,7 @@ const checkUpdatePermission = async (req, res, next) => {
     if (!ticket) {
       const err = new Error("Ticket Not Found");
       err.status = 404;
-      next(err);
+      return next(err);
     }
 
     const { canUpdateStatus } = getTicketFlags(ticket, user);
@@ -22,7 +22,7 @@ const checkUpdatePermission = async (req, res, next) => {
     if (!canUpdateStatus) {
      const err = new Error("You can only update status for tickets assgined to you");
      err.status = 401;
-     next(err)
+     return next(err)
     }
     req.ticket = ticket;
     next();

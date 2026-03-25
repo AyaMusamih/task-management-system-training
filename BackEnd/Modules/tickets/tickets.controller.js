@@ -80,15 +80,29 @@ const updateTicket = async (req, res, next) => {
       ...data,
       deadline: deadline ? new Date(deadline) : deadline,
     };
-    const updatedTicket = await ticketService.updateTicket(id, payload);
-    res.status(200).json({ success: true, data: updatedTicket });
+    const updated = await ticketService.updateTicket(id, payload);
+    res.status(200).json({ success: true, data: updated });
   } catch (err) {
     next(err);
   }
 };
 
+const updateTicketStatus = async (req, res, next) => {
+    try{
+        const {id} = req.params;
+        const {status} = req.body;
+        const updated = await ticketService.updateTicketStatus(id, status)
+
+        res.status(200).json({success: true, data: updated})
+    }
+    catch(err){
+        next(err);
+    }
+}
+
 module.exports = {
   getTickets,
   addTicket,
-  updateTicket
+  updateTicket,
+  updateTicketStatus
 };

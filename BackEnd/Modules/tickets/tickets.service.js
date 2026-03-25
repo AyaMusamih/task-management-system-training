@@ -101,9 +101,9 @@ const createTicket = async (payload, userId) => {
 
 const updateTicket = async (id, payload) => {
   const { assigneeId, sprintId, ...data } = payload;
-  
-    const ticket = await prisma.ticket.findUnique({ where: { id } });
-  
+
+  const ticket = await prisma.ticket.findUnique({ where: { id } });
+
   if (!ticket) {
     const err = new Error("Ticket not found");
     err.status = 404;
@@ -124,10 +124,20 @@ const updateTicket = async (id, payload) => {
   return await prisma.ticket.update({
     where: { id },
     data: data,
+    include: {
+      assignee: {
+        select: { id: true, name: true, email: true },
+      },
+    },
   });
+};
+
+const updateTicketStatus = async (id, status) => {
+  return await prisma.ticket.update({ where: { id: BigInt(id)}, data: {status} });
 };
 module.exports = {
   getTickets,
   createTicket,
   updateTicket,
+  updateTicketStatus,
 };
