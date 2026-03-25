@@ -8,7 +8,7 @@ const checkUpdatePermission = async (req, res, next) => {
 
     const ticket = await prisma.ticket.findUnique({
       where: { id: BigInt(id) },
-      select: { id: true, assigneeId: true },
+      select: { id: true, assigneeId: true, status: true },
     });
 
     if (!ticket) {

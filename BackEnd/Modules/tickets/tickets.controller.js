@@ -91,7 +91,7 @@ const updateTicketStatus = async (req, res, next) => {
     try{
         const {id} = req.params;
         const {status} = req.body;
-        const updated = await ticketService.updateTicketStatus(id, status)
+        const updated = await ticketService.updateTicketStatus(id, status, req.ticket, req.user.role)
 
         res.status(200).json({success: true, data: updated})
     }

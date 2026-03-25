@@ -132,8 +132,31 @@ const updateTicket = async (id, payload) => {
   });
 };
 
-const updateTicketStatus = async (id, status) => {
-  return await prisma.ticket.update({ where: { id: BigInt(id)}, data: {status} });
+const updateTicketStatus = async (id, status, ticket, userRole) => {
+  if (ticket.status === status) {
+    const err = new Error("Ticket is already in this status");
+    err.status = 400;
+    throw err;
+  }
+
+  if (userRole !== "ADMIN") {
+    const allowed = {
+      TODO: ["IN_PROGRESS", "DONE"],
+      IN_PROGRESS: ["DONE"],
+    };
+
+    if (!allowed[ticket.status]?.includes(status)) {
+      const err = new Error(
+        `Cannot transition from ${ticket.status} to ${status}`,
+      );
+      err.status = 409;
+      throw err;
+    }
+  }
+  return await prisma.ticket.update({
+    where: { id: BigInt(id) },
+    data: { status },
+  });
 };
 module.exports = {
   getTickets,
