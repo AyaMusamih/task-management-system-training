@@ -1,7 +1,8 @@
 const prisma = require("../prismaClient");
 const bcrypt = require("bcrypt");
 const { findUserByEmail } = require("../user/user.service");
-const { generateAuthSession } = require("./utils/auth.util");
+const { generateAuthSession, hashToken } = require("./utils/auth.util");
+const { verifyRefreshToken } = require("./utils/jwt.util");
 
 const registerUser = async (name, email, hashedPassword) => {
   const newUser = await prisma.user.create({
@@ -58,7 +59,37 @@ const login = async (email, password) => {
   };
 };
 
+const refresh = async (token) => {
+  const decoded = verifyRefreshToken(token);
+  if (!decoded) {
+    const err = new Error("Invalid Token");
+    err.status = 401;
+    throw err;
+  }
+  const tokenHash = hashToken(token);
+  const storedToken = await prisma.refreshToken.findUnique({
+    where: { tokenHash },
+  });
+
+  if (!storedToken) {
+    await prisma.refreshToken.deleteMany({ where: { userId: decoded.id } });
+    const err = new Error("Invalid Token");
+    err.status = 401;
+    throw err;
+  }
+  if (storedToken.expiresAt < new Date()) {
+    await prisma.refreshToken.delete({ where: { tokenHash } });
+    const err = new Error("Refresh token expired");
+    err.status = 401;
+    throw err;
+  }
+  await prisma.refreshToken.delete({ where: { tokenHash } });
+  const user = await findUserByEmail(decoded.email);
+  return await generateAuthSession(user);
+};
+
 module.exports = {
   login,
   registerUser,
+  refresh,
 };
