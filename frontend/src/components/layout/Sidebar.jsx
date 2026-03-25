@@ -89,17 +89,24 @@ const Sidebar = ({ user, isOpen, onClose }) => {
     const userLinks = [
         { name: "Dashboard", path: "/user/dashboard", icon: LayoutDashboard },
         { name: "Projects", path: "/projects", icon: FolderOpen },
-        { name: "Tickets", path: "/my-tickets", icon: Ticket },
         { name: "Settings", path: "/settings", icon: Settings },
-    ];
+        ];
 
     const adminLinks = [
         { name: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard },
         { name: "Projects", path: "/projects", icon: FolderOpen },
-        { name: "Tickets", path: "/all-tickets", icon: Ticket },
+//         { name: "Tickets", path: "/all-tickets", icon: Ticket },
         { name: "Reports", path: "/reports", icon: BarChart2 },
         { name: "Settings", path: "/settings", icon: Settings },
-    ];
+        ];
+
+//     const adminLinks = [
+//         { name: "Dashboard", path: "/admin/dashboard" },
+//         { name: "Deleted Tickets", path: "/deleted-tickets" },
+//         { name: "Task Management", path: "/task-management" },
+//         { name: "Reports", path: "/reports" },
+//         { name: "Profile", path: "/profile" },
+//     ];
 
     const handleLogout = () => {
         logoutUser();

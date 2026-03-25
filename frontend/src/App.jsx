@@ -3,7 +3,6 @@ import { Routes, Route } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import MainLayout from './layouts/MainLayout';
-import Home from './pages/Home';
 import Login from './pages/auth/Login'
 import Signup from './pages/auth/Signup';
 import Profile from './pages/Profile';
@@ -13,7 +12,6 @@ import AllTickets from './pages/admin/AllTickets';
 import TaskManagement from './pages/admin/TaskManagement';
 import DeletedTickets from './pages/admin/DeletedTickets ';
 import AdminDashboard from './pages/admin/AdminDashboard';
-import MyTasks from './pages/user/MyTasks';
 import UserDashboard from './pages/user/UserDashboard';
 import NotFound from './pages/NotFound';
 
@@ -26,13 +24,8 @@ function App() {
         <Route path='/signup' element={<Signup />} />
 
         <Route element={<MainLayout />}>
-
-          {/* Shared */}
-          <Route path='/' element={
-            <ProtectedRoute>
-              <Home />
-            </ProtectedRoute>
-          } />
+          
+         {/* Shared */}
           <Route path='/profile' element={
             <ProtectedRoute>
               <Profile />
@@ -45,38 +38,47 @@ function App() {
           } />
 
           {/* User */}
-          <Route path='/user/dashboard' element={
+//           <Route path='/user/dashboard' element={
+//             <ProtectedRoute role="USER">
+//               <UserDashboard />
+//             </ProtectedRoute>
+//           }>
+//             <Route path='tickets/:id' element={<TicketDetailsModal />} />
+//           </Route>
+
+         <Route path='/user/dashboard' element={
             <ProtectedRoute role="USER">
               <UserDashboard />
             </ProtectedRoute>
           } />
+           
           <Route path='/user/dashboard/tickets/:id' element={
             <ProtectedRoute role="USER">
               <UserDashboard />
             </ProtectedRoute>
           } />
-          <Route path='/my-tickets' element={
-            <ProtectedRoute role="USER">
-              <MyTasks />
-            </ProtectedRoute>
-          } />
-          <Route path='/my-tickets/tickets/:id' element={
-            <ProtectedRoute role="USER">
-              <MyTasks />
-            </ProtectedRoute>
-          } />
-
+                   
           {/* Admin */}
-          <Route path='/admin/dashboard' element={
+//           <Route path='/admin/dashboard' element={
+//             <ProtectedRoute role="ADMIN">
+//               <AdminDashboard />
+//             </ProtectedRoute>
+//           } >
+//             <Route path='tickets/:id' element={<TicketDetailsModal />} />
+//           </Route>
+
+         <Route path='/admin/dashboard' element={
             <ProtectedRoute role="ADMIN">
               <AdminDashboard />
             </ProtectedRoute>
           } />
+           
           <Route path='/admin/dashboard/tickets/:id' element={
             <ProtectedRoute role="ADMIN">
               <AdminDashboard />
             </ProtectedRoute>
           } />
+            
           <Route path='/all-tickets' element={
             <ProtectedRoute role="ADMIN">
               <AllTickets />
@@ -87,16 +89,27 @@ function App() {
               <AllTickets />
             </ProtectedRoute>
           } />
+            
+            {/* <Route path='/all-tickets' element={
+            <ProtectedRoute role="ADMIN">
+              <AllTickets />
+            </ProtectedRoute>
+          } >
+            <Route path='tickets/:id' element={<TicketDetailsModal />} />
+          </Route> */}
+
           <Route path='/reports' element={
             <ProtectedRoute role="ADMIN">
               <Reports />
             </ProtectedRoute>
           } />
+
           <Route path='/task-management' element={
             <ProtectedRoute role="ADMIN">
               <TaskManagement />
             </ProtectedRoute>
           } />
+            
           <Route path='/deleted-tickets' element={
             <ProtectedRoute role="ADMIN">
               <DeletedTickets />
