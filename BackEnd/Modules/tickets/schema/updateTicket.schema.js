@@ -6,7 +6,7 @@ const { TicketStatus } = require("../../../prisma/generated");
 const updateTicketSchema = addTicketSchema.partial();
 const updateTicktParamSchema = z.object({
     id: bigIntIdSchema 
-});
+}).strict();
 const updateStatusSchema = z.object({
   status: z.enum(Object.values(TicketStatus), {
     required_error: "Status is required",

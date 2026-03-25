@@ -14,7 +14,7 @@ const addTicketSchema = z.object({
     .nullable(),
   assigneeId: bigIntIdSchema.optional().nullable(),
   sprintId: bigIntIdSchema.optional().nullable(),
-});
+}) .strict();
 
 module.exports = {
     addTicketSchema,
