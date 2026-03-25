@@ -72,7 +72,7 @@ const refresh = async (token) => {
   });
 
   if (!storedToken) {
-    await prisma.refreshToken.deleteMany({ where: { userId: decoded.id } });
+    await prisma.refreshToken.deleteMany({ where: { userId: BigInt(decoded.id) } });
     const err = new Error("Invalid Token");
     err.status = 401;
     throw err;
