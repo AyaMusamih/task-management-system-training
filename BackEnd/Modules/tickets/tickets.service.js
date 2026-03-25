@@ -85,21 +85,49 @@ const createTicket = async (payload, userId) => {
       ...details,
       createdBy: {
         connect: {
-          id: user_id,
+          id: BigInt(userId),
         },
       },
-      assignee: assigneeId ? { connect: { assigneeId } } : undefined,
-      sprint: sprintId ? { connect: sprintId } : undefined,
+      assignee: assigneeId ? { connect: { id: assigneeId } } : undefined,
+      sprint: sprintId ? { connect: { id: sprintId } } : undefined,
     },
     include: {
       assignee: {
         select: { id: true, name: true, email: true },
       },
-      sprint: true,
     },
+  });
+};
+
+const updateTicket = async (id, payload) => {
+  const { assigneeId, sprintId, ...data } = payload;
+  
+    const ticket = await prisma.ticket.findUnique({ where: { id } });
+  
+  if (!ticket) {
+    const err = new Error("Ticket not found");
+    err.status = 404;
+    throw err;
+  }
+
+  if (assigneeId === null) {
+    data.assignee = { disconnect: true };
+  } else if (assigneeId) {
+    data.assignee = { connect: { id: assigneeId } };
+  }
+
+  if (sprintId === null) {
+    data.sprint = { disconnect: true };
+  } else if (sprintId) {
+    data.sprint = { connect: { id: sprintId } };
+  }
+  return await prisma.ticket.update({
+    where: { id },
+    data: data,
   });
 };
 module.exports = {
   getTickets,
   createTicket,
+  updateTicket,
 };

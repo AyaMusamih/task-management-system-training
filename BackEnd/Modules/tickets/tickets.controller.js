@@ -1,3 +1,4 @@
+const { success } = require("zod");
 const ticketService = require("./tickets.service");
 const { attachPermissionFlags } = require("./utils/ticket-premissions.util");
 
@@ -57,16 +58,30 @@ const addTicket = async (req, res, next) => {
       status,
       priority,
       deadline: deadline ? new Date(deadline) : null,
-      assigneeId: assigneeId ?? null,
-      sprintId: sprintId ?? null,
+      assigneeId,
+      sprintId,
     };
 
-    const newTicket = await ticketService.createTicket(payload, req.user.id)
+    const newTicket = await ticketService.createTicket(payload, req.user.id);
     res.status(201).json({
-      message: "Ticket created successfully",
+      success: true,
       data: newTicket,
     });
+  } catch (err) {
+    next(err);
+  }
+};
 
+const updateTicket = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const {deadline, ...data } = req.body;
+    const payload = {
+      ...data,
+      deadline: deadline ? new Date(deadline) : deadline,
+    };
+    const updatedTicket = await ticketService.updateTicket(id, payload);
+    res.status(200).json({ success: true, data: updatedTicket });
   } catch (err) {
     next(err);
   }
@@ -75,4 +90,5 @@ const addTicket = async (req, res, next) => {
 module.exports = {
   getTickets,
   addTicket,
+  updateTicket
 };
