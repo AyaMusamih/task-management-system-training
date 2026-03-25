@@ -1,5 +1,4 @@
 const prisma = require("../prismaClient");
-const { connect } = require("./tickets.route");
 
 const getTickets = async (
   user,

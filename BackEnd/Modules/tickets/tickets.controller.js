@@ -1,6 +1,5 @@
-const { success } = require("zod");
 const ticketService = require("./tickets.service");
-const { attachPermissionFlags } = require("./utils/ticket-premissions.util");
+const { attachPermissionFlags } = require("./utils/ticket-permissions.util");
 
 const getTickets = async (req, res, next) => {
   try {
@@ -75,6 +74,7 @@ const addTicket = async (req, res, next) => {
 const updateTicket = async (req, res, next) => {
   try {
     const { id } = req.params;
+    console.log("jeeee"); console.log(typeof(id))
     const {deadline, ...data } = req.body;
     const payload = {
       ...data,
