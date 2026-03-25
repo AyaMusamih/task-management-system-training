@@ -13,5 +13,7 @@ router.post('/login', validate({body: loginSchema}), authController.login);
 
 router.post('/refresh', validate({body: refreshSchema}), authController.refresh)
 
+router.post('/logout', validate({ body: refreshSchema }), authController.logout);
+
 module.exports = router;
 

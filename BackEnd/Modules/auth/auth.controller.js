@@ -57,8 +57,21 @@ const refresh = async (req, res, next) => {
   }
 };
 
+const logout = async (req, res, next) => {
+  try {
+    await authService.logout(req.body.refreshToken);
+    res.status(200).json({
+      success: true,
+      data: null,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   register,
   login,
   refresh,
+  logout,
 };

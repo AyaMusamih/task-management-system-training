@@ -72,7 +72,9 @@ const refresh = async (token) => {
   });
 
   if (!storedToken) {
-    await prisma.refreshToken.deleteMany({ where: { userId: BigInt(decoded.id) } });
+    await prisma.refreshToken.deleteMany({
+      where: { userId: BigInt(decoded.id) },
+    });
     const err = new Error("Invalid Token");
     err.status = 401;
     throw err;
@@ -88,8 +90,21 @@ const refresh = async (token) => {
   return await generateAuthSession(user);
 };
 
+const logout = async (token) => {
+  const tokenHash = hashToken(token);
+  const storedToken = await prisma.refreshToken.findUnique({
+    where: { tokenHash },
+  });
+  if (!storedToken) {
+    return;
+  }
+
+  await prisma.refreshToken.deleteMany({ where: { tokenHash } });
+};
+
 module.exports = {
   login,
   registerUser,
   refresh,
+  logout,
 };
