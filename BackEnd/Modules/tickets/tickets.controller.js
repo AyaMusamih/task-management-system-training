@@ -99,10 +99,20 @@ const updateTicketStatus = async (req, res, next) => {
         next(err);
     }
 }
+const deleteTicket = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    await ticketService.deleteTicket(id);
+    res.status(200).json({ success: true, message: "Ticket deleted successfully" });
+  } catch (err) {
+    next(err);
+  }
+};
 
 module.exports = {
   getTickets,
   addTicket,
   updateTicket,
-  updateTicketStatus
+  updateTicketStatus,
+  deleteTicket
 };

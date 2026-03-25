@@ -42,4 +42,11 @@ router.patch(
   ticketController.updateTicket,
 ); 
 
+router.delete(
+  "/:id",
+  isAdmin,
+  validate({ params: updateTicketParamSchema }),
+  ticketController.deleteTicket,
+);
+
 module.exports = router;

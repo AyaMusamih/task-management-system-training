@@ -21,7 +21,7 @@ const checkUpdatePermission = async (req, res, next) => {
 
     if (!canUpdateStatus) {
      const err = new Error("You can only update status for tickets assgined to you");
-     err.status = 401;
+     err.status = 403;
      return next(err)
     }
     req.ticket = ticket;

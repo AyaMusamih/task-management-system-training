@@ -158,9 +158,32 @@ const updateTicketStatus = async (id, status, ticket, userRole) => {
     data: { status },
   });
 };
+
+const deleteTicket = async (id) => {
+  const ticket = await prisma.ticket.findUnique({ where: { id: BigInt(id) } });
+  
+  if (!ticket) {
+    const err = new Error("Ticket not found");
+    err.status = 404;
+    throw err;
+  }
+
+  if (ticket.deletedAt) {
+    const err = new Error("Ticket already deleted");
+    err.status = 400;
+    throw err;
+  }
+
+  return await prisma.ticket.update({
+    where: { id: BigInt(id) },
+    data: { deletedAt: new Date() },
+  });
+};
+
 module.exports = {
   getTickets,
   createTicket,
   updateTicket,
   updateTicketStatus,
+  deleteTicket
 };
