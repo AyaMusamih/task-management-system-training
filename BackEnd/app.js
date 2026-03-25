@@ -14,6 +14,7 @@ app.use(cors());
 
 const healthRouter = require('./Modules/health');
 const authRouter = require('./Modules/auth/auth.routes');
+const ticketsRouter = require('./Modules/tickets/tickets.route');
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -27,6 +28,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('', healthRouter);
 app.use('/auth', authRouter);
+app.use('/tickets', ticketsRouter);
 
 
 
