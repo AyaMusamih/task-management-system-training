@@ -1,51 +1,65 @@
-import { Outlet } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useState } from "react";
-import Navbar from '../components/layout/Navbar';
-import Footer from '../components/layout/Footer';
 import Sidebar from '../components/layout/Sidebar';
 import Modal from "../components/shared/Modal";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Menu } from "lucide-react";
 
 const MainLayout = () => {
     const [modalContent, setModalContent] = useState(null);
-    const navigate = useNavigate();
-    const location = useLocation();
+    const [sidebarOpen, setSidebarOpen] = useState(false);
     const isLoggedIn = localStorage.getItem("accessToken");
     const user = JSON.parse(localStorage.getItem("user")) || null;
-    const openModal = (content) => { setModalContent(content) };
+
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    const openModal = (content) => setModalContent(content);
     const closeModal = () => {
         setModalContent(null);
-        const role = user?.role === "ADMIN" ? "admin" : "user";
-        navigate(`/${role}/dashboard`);
+        const path = location.pathname.replace(/\/tickets\/[^/]+$/, "");
+        navigate(path + location.search, { replace: true });
     };
-    return (
-        <div className="min-h-screen flex flex-col">
-            <Navbar isLoggedIn={isLoggedIn} />
 
-            {/* Main content area */}
-            <div className="flex-1 flex">
-                {isLoggedIn && <Sidebar isLoggedIn={isLoggedIn} user={user} />}
-                <main className="flex-1 p-6 bg-gray-100">
-                    {user?.role === "ADMIN" && (
-                        <div>Admin Controls / Widgets</div>
-                    )}
-                    {user?.role === "USER" && (
-                        <div>User Content / Limited Widgets</div>
-                    )}
+    return (
+        <div className="min-h-screen flex flex-col bg-background">
+
+            {isLoggedIn && (
+                <header className="lg:hidden flex items-center justify-between px-4 py-3 bg-card-left border-b border-divider/30 shrink-0 z-30">
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setSidebarOpen(true)}
+                            className="w-9 h-9 flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"
+                        >
+                            <Menu className="w-5 h-5" />
+                        </button>
+                        <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 bg-accent-blue rounded-md" />
+                            <span className="text-logo text-text-primary text-[15px]">Task Flow</span>
+                        </div>
+                    </div>
+                </header>
+            )}
+
+            <div className="flex flex-1 overflow-hidden">
+                {isLoggedIn && (
+                    <Sidebar
+                        user={user}
+                        isOpen={sidebarOpen}
+                        onClose={() => setSidebarOpen(false)}
+                    />
+                )}
+                <main className="flex-1 overflow-y-auto bg-background min-w-0">
                     <Outlet context={{ openModal, closeModal }} />
                 </main>
             </div>
 
-            <Footer />
-
-            {/* Global Modal */}
             {modalContent && (
                 <Modal isOpen={!!modalContent} onClose={closeModal}>
                     {modalContent}
                 </Modal>
             )}
         </div>
-    )
-}
+    );
+};
 
-export default MainLayout
+export default MainLayout;

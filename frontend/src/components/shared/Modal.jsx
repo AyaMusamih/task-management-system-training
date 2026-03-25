@@ -12,7 +12,7 @@ const Modal = ({
             onClick={onClose}
         >
             <div
-                className="bg-white p-6 rounded-2xl shadow-lg w-96 transition duration-200"
+                className="bg-white p-6 rounded-2xl shadow-lg w-110 transition duration-200"
                 onClick={(e) => e.stopPropagation()}
             >
                 {title && (

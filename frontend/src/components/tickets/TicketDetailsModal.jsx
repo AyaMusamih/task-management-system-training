@@ -1,8 +1,11 @@
 import TicketIndicators from "./TicketIndicators";
+import Button from "../shared/Button";
 
 const TicketDetailsModal = ({ ticket }) => {
+    if (!ticket) return null;
+
     return (
-        <div className=" w-100 p-4">
+        <div className="w-100 p-4">
 
             <h2 className="text-2xl font-bold mb-4">
                 {ticket.title}
@@ -41,6 +44,27 @@ const TicketDetailsModal = ({ ticket }) => {
                 <p className="text-gray-600 font-medium">
                     {ticket.description || "No description"}
                 </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 pt-4 border-t border-gray-200">
+                <Button
+                    variant="primary"
+                    size="sm"
+                    disabled={!ticket.permissions?.canEdit}
+                    className="flex-1"
+                >
+                    Edit Ticket
+                </Button>
+
+                <Button
+                    variant="secondary"
+                    size="sm"
+                    disabled={!ticket.permissions?.canUpdateStatus}
+                    className="flex-1"
+                >
+                    Update Status
+                </Button>
             </div>
 
         </div>

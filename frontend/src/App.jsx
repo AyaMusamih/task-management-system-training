@@ -13,7 +13,6 @@ import TaskManagement from './pages/admin/TaskManagement';
 import DeletedTickets from './pages/admin/DeletedTickets ';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import UserDashboard from './pages/user/UserDashboard';
-import TicketDetailsModal from './components/tickets/TicketDetailsModal';
 import NotFound from './pages/NotFound';
 
 function App() {
@@ -23,7 +22,10 @@ function App() {
         {/* Routes without layout */}
         <Route path='/login' element={<Login />} />
         <Route path='/signup' element={<Signup />} />
+
         <Route element={<MainLayout />}>
+          
+         {/* Shared */}
           <Route path='/profile' element={
             <ProtectedRoute>
               <Profile />
@@ -34,50 +36,92 @@ function App() {
               <ChangePassword />
             </ProtectedRoute>
           } />
+
           {/* User */}
-          <Route path='/user/dashboard' element={
+//           <Route path='/user/dashboard' element={
+//             <ProtectedRoute role="USER">
+//               <UserDashboard />
+//             </ProtectedRoute>
+//           }>
+//             <Route path='tickets/:id' element={<TicketDetailsModal />} />
+//           </Route>
+
+         <Route path='/user/dashboard' element={
             <ProtectedRoute role="USER">
               <UserDashboard />
             </ProtectedRoute>
-          }>
-            <Route path='tickets/:id' element={<TicketDetailsModal />} />
-          </Route>
-
+          } />
+           
+          <Route path='/user/dashboard/tickets/:id' element={
+            <ProtectedRoute role="USER">
+              <UserDashboard />
+            </ProtectedRoute>
+          } />
+                   
           {/* Admin */}
-          <Route path='/admin/dashboard' element={
+//           <Route path='/admin/dashboard' element={
+//             <ProtectedRoute role="ADMIN">
+//               <AdminDashboard />
+//             </ProtectedRoute>
+//           } >
+//             <Route path='tickets/:id' element={<TicketDetailsModal />} />
+//           </Route>
+
+         <Route path='/admin/dashboard' element={
             <ProtectedRoute role="ADMIN">
               <AdminDashboard />
             </ProtectedRoute>
-          } >
-            <Route path='tickets/:id' element={<TicketDetailsModal />} />
-          </Route>
-          <Route path='/reports' element={
+          } />
+           
+          <Route path='/admin/dashboard/tickets/:id' element={
             <ProtectedRoute role="ADMIN">
-              <Reports />
+              <AdminDashboard />
             </ProtectedRoute>
           } />
-          {/* <Route path='/all-tickets' element={
+            
+          <Route path='/all-tickets' element={
+            <ProtectedRoute role="ADMIN">
+              <AllTickets />
+            </ProtectedRoute>
+          } />
+          <Route path='/all-tickets/tickets/:id' element={
+            <ProtectedRoute role="ADMIN">
+              <AllTickets />
+            </ProtectedRoute>
+          } />
+            
+            {/* <Route path='/all-tickets' element={
             <ProtectedRoute role="ADMIN">
               <AllTickets />
             </ProtectedRoute>
           } >
             <Route path='tickets/:id' element={<TicketDetailsModal />} />
           </Route> */}
+
+          <Route path='/reports' element={
+            <ProtectedRoute role="ADMIN">
+              <Reports />
+            </ProtectedRoute>
+          } />
+
           <Route path='/task-management' element={
             <ProtectedRoute role="ADMIN">
               <TaskManagement />
             </ProtectedRoute>
           } />
+            
           <Route path='/deleted-tickets' element={
             <ProtectedRoute role="ADMIN">
               <DeletedTickets />
             </ProtectedRoute>
           } />
+
         </Route>
+
         <Route path='*' element={<NotFound />} />
       </Routes>
       <ToastContainer position="top-right" autoClose={3000} />
-    </div >
+    </div>
   );
 }
 

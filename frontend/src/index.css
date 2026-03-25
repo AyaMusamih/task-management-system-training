@@ -45,6 +45,8 @@ input[type="password"]::-webkit-credentials-auto-fill-button {
   --color-loading-dark: #1d4ed8;
   --color-text-primary: #edf1fa;
   --color-white-btn: #ffffff;
+  --color-admin-btn: #EDF1FA33;
+  --color-dashboard:#EDF1FA20;
   --color-text-secondary: rgba(237, 241, 250, 0.65);
   --color-text-placeholder: rgba(237, 241, 250, 0.22);
   --color-text-filled: rgba(237, 241, 250, 0.9);
