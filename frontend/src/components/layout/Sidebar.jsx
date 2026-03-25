@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { logoutUser } from "../../services/auth.service";
+import { Link } from 'react-router-dom';
 import {
     Layers,
     LayoutDashboard,
@@ -70,7 +71,7 @@ const SidebarContent = ({ links, initials, user, onClose, handleLogout }) => (
 
             <div className="border-b border-divider/30 mb-2" />
 
-            <div className="flex items-center gap-2 px-2">
+            <Link to="/profile" className="flex items-center gap-2 px-2">
                 <div className="w-8 h-8 rounded-full bg-accent-indigo flex items-center justify-center text-hint font-semibold text-white-btn shrink-0">
                     {initials}
                 </div>
@@ -78,7 +79,8 @@ const SidebarContent = ({ links, initials, user, onClose, handleLogout }) => (
                     <p className="text-field-label text-text-primary leading-tight">{user?.name}</p>
                     <p className="text-hint text-text-hint capitalize">{user?.role?.toLowerCase()}</p>
                 </div>
-            </div>
+            </Link>
+
         </div>
     </div>
 );
@@ -90,23 +92,23 @@ const Sidebar = ({ user, isOpen, onClose }) => {
         { name: "Dashboard", path: "/user/dashboard", icon: LayoutDashboard },
         { name: "Projects", path: "/projects", icon: FolderOpen },
         { name: "Settings", path: "/settings", icon: Settings },
-        ];
+    ];
 
     const adminLinks = [
         { name: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard },
         { name: "Projects", path: "/projects", icon: FolderOpen },
-//         { name: "Tickets", path: "/all-tickets", icon: Ticket },
+        //         { name: "Tickets", path: "/all-tickets", icon: Ticket },
         { name: "Reports", path: "/reports", icon: BarChart2 },
         { name: "Settings", path: "/settings", icon: Settings },
-        ];
+    ];
 
-//     const adminLinks = [
-//         { name: "Dashboard", path: "/admin/dashboard" },
-//         { name: "Deleted Tickets", path: "/deleted-tickets" },
-//         { name: "Task Management", path: "/task-management" },
-//         { name: "Reports", path: "/reports" },
-//         { name: "Profile", path: "/profile" },
-//     ];
+    //     const adminLinks = [
+    //         { name: "Dashboard", path: "/admin/dashboard" },
+    //         { name: "Deleted Tickets", path: "/deleted-tickets" },
+    //         { name: "Task Management", path: "/task-management" },
+    //         { name: "Reports", path: "/reports" },
+    //         { name: "Profile", path: "/profile" },
+    //     ];
 
     const handleLogout = () => {
         logoutUser();
