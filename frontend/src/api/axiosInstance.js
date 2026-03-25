@@ -29,7 +29,8 @@ axiosInstance.interceptors.response.use(
 
     if (error.response?.status === 401 && !isAuthRoute) {
       localStorage.removeItem("accessToken");
-      window.location.href = "/login";
+      // window.location.href = "/login";
+      window.location.replace("/login");
     }
 
     return Promise.reject(error);

@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { loginUser } from "../../services/auth.service";
 import Input from "../../components/shared/Input";
 import Button from "../../components/shared/Button";
 import GoogleIcon from "../../assets/images/GoogleIcon.png";
-import axiosInstance from "../../api/axiosInstance";
 import AuthLayout from "./AuthLayout";
 import { CircleAlert } from 'lucide-react';
 
-export default function Login() {
+const Login = () => {
     const navigate = useNavigate();
 
     const [email, setEmail] = useState("");
@@ -38,8 +38,7 @@ export default function Login() {
             setLoading(true);
             setErrors({});
 
-            const response = await axiosInstance.post("/auth/login", { email, password });
-            const { accessToken, user } = response.data.data;
+            const { accessToken, user } = await loginUser(email, password);
 
             localStorage.setItem("accessToken", accessToken);
             localStorage.setItem("user", JSON.stringify(user));
@@ -55,19 +54,8 @@ export default function Login() {
             }, 1500);
 
         } catch (err) {
-            const data = err.response?.data;
-
-            if (data?.errors) {
-                const formatted = {};
-                data.errors.forEach((err) => {
-                    formatted[err.param] = err.msg;
-                });
-                setErrors(formatted);
-            } else if (data?.error) {
-                setErrors({ general: data.error });
-            } else {
-                setErrors({ general: "Login failed. Please try again." });
-            }
+            if (err.type === "validation") setErrors(err.errors);
+            else setErrors({ general: err.message });
         } finally {
             setLoading(false);
         }
@@ -75,20 +63,23 @@ export default function Login() {
 
     return (
         <AuthLayout type="login">
-            <h1 className="text-heading text-text-primary mb-1">Welcome back</h1>
+            <div className="mb-6">
+                <h1 className="text-heading text-text-primary mb-1">Welcome back</h1>
 
-            <p className="text-subtitle text-text-secondary mb-8">
-                Don't have an account?{" "}
-                <Link to="/signup" className="text-link font-medium underline">
-                    Sign up
-                </Link>
-            </p>
+                <p className="text-subtitle text-text-secondary">
+                    Don't have an account?{" "}
+                    <Link to="/signup" className="text-link font-medium underline">
+                        Sign up
+                    </Link>
+                </p>
 
-            {errors.general && (
-                <div className="flex items-start gap-2 px-4 py-4 rounded-xl mb-3 text-error-text bg-[#ef444410] border border-[#ef444430] text-error-red">
-                    < CircleAlert className="error-icon" />{errors.general}
-                </div>
-            )}
+
+                {errors.general && (
+                    <div className="flex items-start gap-2 mt-4 px-4 py-4 rounded-xl text-error-text bg-[#ef444410] border border-[#ef444430] text-error-red">
+                        < CircleAlert className="error-icon" />{errors.general}
+                    </div>
+                )}
+            </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
                 <Input
@@ -103,11 +94,12 @@ export default function Login() {
                     }}
                     disabled={loading}
                     error={errors.email}
-                    success={email && !errors.emai && submitted && !errors.general}
+                    success={email && !errors.email && submitted && !errors.general}
                     className="input-field"
                 />
 
                 <Input
+                    page="login"
                     label="Password"
                     type="password"
                     placeholder="Enter your password"
@@ -121,13 +113,14 @@ export default function Login() {
                     error={errors.password}
                     success={password && !errors.password && submitted && !errors.general}
                     className="input-field"
+                    helperText={
+                        <div className="flex justify-end">
+                            <span className="text-hint text-link cursor-pointer font-medium underline">
+                                Forgot password?
+                            </span>
+                        </div>
+                    }
                 />
-
-                <div className="flex justify-end">
-                    <span className="text-hint text-link cursor-pointer font-medium underline">
-                        Forgot password?
-                    </span>
-                </div>
 
                 <Button
                     type="submit"
@@ -135,7 +128,7 @@ export default function Login() {
                     page="login"
                     loading={loading}
                     disabled={!email || !password}
-                    className="primary-button w-full text-btn-text"
+                    className="primary-button w-full mt-2 text-btn-text"
                     success={success}
                     error={errors && submitted && errors.general}
                 >
@@ -143,7 +136,7 @@ export default function Login() {
                 </Button>
 
                 {/* Divider */}
-                <div className="flex items-center gap-5">
+                <div className="flex items-center gap-4">
                     <div className="flex-1 h-px bg-divider" />
                     <span className="text-[20px] text-text-primary">Or</span>
                     <div className="flex-1 h-px bg-divider" />
@@ -164,3 +157,5 @@ export default function Login() {
         </AuthLayout>
     );
 }
+
+export default Login;

@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { signupUser } from "../../services/auth.service";
 import Input from "../../components/shared/Input";
 import Button from "../../components/shared/Button";
 import AuthLayout from "./AuthLayout";
-import axiosInstance from "../../api/axiosInstance";
 import GoogleIcon from "../../assets/images/GoogleIcon.png";
 import { CircleAlert, CircleCheck, ShieldAlert, ShieldCheck } from 'lucide-react';
 
-export default function Signup() {
+const Signup = () => {
   const navigate = useNavigate();
 
   const [form, setForm] = useState({ name: "", email: "", password: "" });
@@ -72,9 +72,7 @@ export default function Signup() {
       setLoading(true);
       setErrors({});
 
-      const res = await axiosInstance.post("/auth/register", form);
-
-      const { accessToken, user } = res.data.data;
+      const { accessToken, user } = await signupUser(form);
 
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("user", JSON.stringify(user));
@@ -90,21 +88,8 @@ export default function Signup() {
       }, 1500);
 
     } catch (err) {
-      const data = err.response?.data;
-
-      if (data?.errors) {
-        const backendErrors = {};
-        data.errors.forEach(err => {
-          backendErrors[err.param] = err.msg;
-        });
-        setErrors(backendErrors);
-      } else if (data?.error) {
-        console.log(data?.error);
-        setErrors({ general: data.error });
-
-      } else {
-        setErrors({ general: "Something went wrong" });
-      }
+      if (err.type === "validation") setErrors(err.errors);
+      else setErrors({ general: err.message });
     } finally {
       setLoading(false);
     }
@@ -114,20 +99,22 @@ export default function Signup() {
 
   return (
     <AuthLayout type="signup">
-      <h1 className="text-heading text-text-primary mb-1">Create an account</h1>
+      <div className="mb-6">
+        <h1 className="text-heading text-text-primary mb-1">Create an account</h1>
 
-      <p className="text-subtitle text-text-secondary mb-3">
-        Already have an account?{" "}
-        <Link to="/login" className="text-link font-medium underline">
-          Login
-        </Link>
-      </p>
+        <p className="text-subtitle text-text-secondary">
+          Already have an account?{" "}
+          <Link to="/login" className="text-link font-medium underline">
+            Login
+          </Link>
+        </p>
 
-      {errors.general && (
-        <div className="flex items-start gap-2 px-4 py-4 rounded-xl mb-3 text-error-text bg-[#ef444410] border border-[#ef444430] text-error-red">
-          < CircleAlert className="error-icon" />{errors.general}
-        </div>
-      )}
+        {errors.general && (
+          <div className="flex items-start gap-2 mt-4 px-4 py-4 rounded-xl text-error-text bg-[#ef444410] border border-[#ef444430] text-error-red">
+            < CircleAlert className="error-icon" />{errors.general}
+          </div>
+        )}
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
 
@@ -175,18 +162,18 @@ export default function Signup() {
                 </span>
               ) : passwordStrength === "medium" ? (
                 <span className="text-yellow-500 flex  items-start  gap-1">
-                  <ShieldAlert className="w-3.5 h-3.5" />
+                  <ShieldAlert className="w-4 h-4" />
                   Password strength: Medium
                 </span>
               ) : (
                 <span className="text-error-red flex items-start gap-1">
-                  <ShieldAlert className="w-3.5 h-3.5" />
+                  <ShieldAlert className="w-4 h-4" />
                   Password strength: Weak
                 </span>
               )
             ) : (
               <span className="text-text-secondary flex items-start gap-1">
-                <ShieldCheck className="w-3.5 h-3.5" />
+                <ShieldCheck className="w-4 h-4" />
                 Must contain 8+ characters, uppercase, lowercase, number and symbol
               </span>
             )
@@ -230,7 +217,7 @@ export default function Signup() {
           type="submit"
           size="lg"
           page="signup"
-          className="primary-button w-full mt-3 text-btn-text"
+          className="primary-button w-full mt-2 text-btn-text"
           loading={loading}
           success={success}
           disabled={isButtonDisabled}
@@ -240,7 +227,7 @@ export default function Signup() {
         </Button>
 
         {/* Divider */}
-        <div className="flex items-center gap-5">
+        <div className="flex items-center gap-4">
           <div className="flex-1 h-px bg-divider" />
           <span className="text-[20px] text-text-primary">Or</span>
           <div className="flex-1 h-px bg-divider" />
@@ -262,3 +249,5 @@ export default function Signup() {
     </AuthLayout>
   );
 }
+
+export default Signup;

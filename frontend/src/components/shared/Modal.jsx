@@ -1,9 +1,9 @@
-export default function Modal({
+const Modal = ({
     isOpen,
     onClose,
     title,
     children,
-}) {
+}) => {
     if (!isOpen) return null;
 
     return (
@@ -26,3 +26,4 @@ export default function Modal({
         </div>
     );
 }
+export default Modal;
