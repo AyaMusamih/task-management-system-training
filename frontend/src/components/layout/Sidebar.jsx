@@ -123,13 +123,13 @@ const Sidebar = ({ user, isOpen, onClose }) => {
             )}
 
             <aside
-                className={`fixed top-0 left-0 h-full w-64 bg-card-left border-r border-divider/30 z-50 transform transition-transform duration-300 ease-in-out lg:hidden
+                className={`fixed top-0 left-0 h-full w-64 bg-background border-r border-divider/30 z-50 transform transition-transform duration-300 ease-in-out lg:hidden
     ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
             >
                 <SidebarContent links={links} initials={initials} user={user} onClose={onClose} handleLogout={handleLogout} />
             </aside>
 
-            <aside className="hidden lg:flex w-60 flex-col border-r border-divider/30 shrink-0 bg-card-left">
+            <aside className="hidden lg:flex w-60 flex-col shrink-0 bg-background">
                 <SidebarContent links={links} initials={initials} user={user} onClose={onClose} handleLogout={handleLogout} />
             </aside>
         </>

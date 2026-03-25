@@ -8,8 +8,8 @@ const AdminDashboard = () => {
 
     const header = (
         <div>
-            <h1 className="font-poppins font-semibold text-[24px] text-text-primary leading-tight">Project Dashboard</h1>
-            <p className="text-success-text text-[#64748B] mt-1">
+            <h1 className="font-inter font-medium text-[24px] text-text-primary" style={{ letterSpacing: "-0.45px" }}>Project Dashboard</h1>
+            <p className="font-inter font-normal text-[18px] text-text-primary" style={{ letterSpacing: "0.5%" }}>
                 Manage and track tasks across your project lifecycle.
             </p>
         </div>

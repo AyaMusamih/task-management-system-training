@@ -1,3 +1,5 @@
+import Loading from "../common-ui/Loading";
+
 const PRIORITY_STYLES = {
     CRITICAL: "bg-red-600/15 text-red-500 border border-red-600/40",
     HIGH: "bg-orange-500/15 text-orange-500 border border-orange-500/40",
@@ -61,7 +63,7 @@ const getContext = (ticket) => {
     return "—";
 };
 
-const TicketsTable = ({ tickets, showAssignee = true, showContext = false, onRowClick }) => {
+const TicketsTable = ({ tickets, showAssignee = true, showContext = false, onRowClick, isLoading = false }) => {
 
     const handleRowClick = (ticket) => {
         if (onRowClick) onRowClick(ticket);
@@ -71,7 +73,9 @@ const TicketsTable = ({ tickets, showAssignee = true, showContext = false, onRow
     return (
         <>
             <div className="md:hidden flex flex-col divide-y divide-divider/20">
-                {tickets.map((ticket) => (
+                {isLoading ? (
+                    <Loading variant="skeleton" rows={8} />
+                ) : tickets.map((ticket) => (
                     <div
                         key={ticket.id}
                         onClick={() => handleRowClick(ticket)}
@@ -116,8 +120,8 @@ const TicketsTable = ({ tickets, showAssignee = true, showContext = false, onRow
                 ))}
             </div>
 
-            <div className="hidden md:block overflow-x-auto">
-                <table className="w-full rounded-[10px] overflow-hidden min-w-[540px]">
+            <div className="hidden md:block overflow-x-auto px-4">
+                <table className="w-full rounded-[8px] overflow-hidden min-w-[540px]">
                     <thead className="bg-input-bg">
                         <tr>
                             <th className="text-left py-3 px-4 text-hint text-text-hint font-medium w-[30%]">Task Name</th>
@@ -133,11 +137,17 @@ const TicketsTable = ({ tickets, showAssignee = true, showContext = false, onRow
                         </tr>
                     </thead>
                     <tbody>
-                        {tickets.map((ticket) => (
+                        {isLoading ? (
+                            <tr>
+                                <td colSpan={2 + (showAssignee ? 1 : 0) + (showContext ? 1 : 0) + 2}>
+                                    <Loading variant="skeleton" rows={8} />
+                                </td>
+                            </tr>
+                        ) : tickets.map((ticket) => (
                             <tr
                                 key={ticket.id}
                                 onClick={() => handleRowClick(ticket)}
-                                className="border-b border-divider/20 hover:bg-white/[0.02] cursor-pointer transition-colors duration-100"
+                                className="hover:bg-white/[0.02] cursor-pointer transition-colors duration-100"
                             >
                                 <td className="py-3 px-4">
                                     <span className="text-field-label text-text-primary font-medium">

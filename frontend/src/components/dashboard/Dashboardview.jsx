@@ -5,7 +5,6 @@ import { toast } from "react-toastify";
 import { getTickets } from "../../services/tickets.service";
 import TicketsTable from "../tickets/TicketsTable";
 import TicketDetailsModal from "../tickets/TicketDetailsModal";
-import Loading from "../common-ui/Loading";
 import Empty from "../common-ui/Empty";
 import Error from "../common-ui/Error";
 import Button from "../shared/Button";
@@ -245,7 +244,7 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, header }) => {
         <div className="flex flex-col h-full bg-card-left">
 
             {/* Header */}
-            <div className="flex items-start justify-between px-4 sm:px-6 lg:px-[16px] lg:pr-[32px] pt-4 sm:pt-[16px] pb-1">
+            <div className="flex items-start justify-between px-4 sm:px-6 lg:px-[16px] lg:pr-[32px] pt-4 sm:pt-[16px] pb-3">
                 <div className="flex-1 min-w-0">
                     {header}
                 </div>
@@ -272,7 +271,7 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, header }) => {
                             onClick={() => handleTabChange(key)}
                             className={`ml-2 px-3 py-1 mb-[-1px] font-inter font-medium text-[14px] sm:text-[16px] transition-colors duration-150 relative cursor-pointer
                                 ${activeTab === key
-                                    ? "text-text-primary after:absolute after:bottom-0 after:top-10 sm:after:top-11.5 after:left-0 after:right-0 after:h-0.5 after:bg-accent-blue"
+                                    ? "text-text-primary after:absolute after:bottom-[-17px] after:left-3 after:right-3 after:h-0.5 after:bg-accent-blue"
                                     : "text-text-hint hover:text-text-primary"
                                 }`}
                         >
@@ -286,7 +285,7 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, header }) => {
                         <>
                             <Button
                                 onClick={onCreateTicket}
-                                className="flex items-center justify-center gap-1.5 cursor-pointer bg-admin-btn/40 hover:bg-admin-btn/60 transition-colors !rounded-lg"
+                                className="flex items-center justify-center gap-1.5 cursor-pointer bg-accent-blue hover:bg-accent-blue/80 transition-colors !rounded-lg"
                             >
                                 <Plus className="w-4 h-4 text-text-primary" />
                                 <span className="text-white-btn font-inter text-[12px] sm:text-[13.5px] font-medium">Create Ticket</span>
@@ -296,10 +295,10 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, header }) => {
                 </div>
             </div>
 
-            <div className="border-b border-divider/40 mx-3 sm:mx-[20px]" />
+            <div className="border-b border-[#00000033] mx-3 sm:mx-[20px]" />
 
             {/* Filters */}
-            <div className="mx-3 sm:mx-[16px] mt-3 sm:mt-[16px] mb-[7px] rounded-[10px] bg-background border border-[#49475a]/50">
+            <div className="mx-3 sm:mx-[16px] mt-[32px] mb-[25px] rounded-[10px] bg-background py-[7px]">
 
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-4 py-[10px] gap-2">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -344,7 +343,7 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, header }) => {
             </div>
 
             {/* Content area */}
-            <div className="mx-3 sm:mx-[16px] my-[7px] bg-background rounded-[10px] flex flex-col flex-1 border border-[#49475a]/50 min-h-0">
+            <div className="mx-3 sm:mx-[16px] my-[7px] bg-background rounded-[10px] flex flex-col flex-1 min-h-0">
                 <div className="flex-1 pt-4 pb-0 min-h-0">
 
                     <div className="flex items-center px-4 sm:px-[16px] mb-2">
@@ -366,16 +365,14 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, header }) => {
                     </div>
 
                     {/* States */}
-                    {loading ? (
-                        <Loading variant="skeleton" rows={8} />
-                    ) : error ? (
+                    {error ? (
                         <Error
                             title={error}
                             description="Something went wrong. Please try again."
                             icon={ErrorIcon}
                             onRetry={fetchTickets}
                         />
-                    ) : tickets.length === 0 ? (
+                    ) : !loading && tickets.length === 0 ? (
                         <Empty
                             title={`No tickets in ${viewLabel}`}
                             description={`No tasks have been added to this ${viewLabel} yet`}
@@ -390,12 +387,13 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, header }) => {
                             onRowClick={(ticket) =>
                                 navigate(`${basePath}/tickets/${ticket.id}${location.search}`)
                             }
+                            isLoading={loading}
                         />
                     )}
                 </div>
 
                 {/* Footer: count + pagination */}
-                <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 mt-auto border-t border-divider/20">
+                <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 mt-auto">
                     <span className="text-hint text-text-hint hidden sm:inline">
                         {loading ? "Loading..." : error ? "—" : `Showing ${tickets.length} of ${total} tasks`}
                     </span>
@@ -410,7 +408,6 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, header }) => {
                         >
                             <ChevronLeft className="w-4 h-4" />
                         </button>
-                        <span className="text-hint text-text-hint px-1">{currentPage} / {totalPages}</span>
                         <button
                             onClick={() => handlePageChange(currentPage + 1)}
                             disabled={currentPage >= totalPages || loading || !!error}
