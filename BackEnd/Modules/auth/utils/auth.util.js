@@ -23,7 +23,9 @@ const generateAuthSession = async (user) => {
   const accessToken = signAccessToken(payload);
   const refreshToken = signRefreshToken(payload);
 
+  await prisma.refreshToken.deleteMany({ where: { userId: user.id } });
   await saveRefreshToken(user.id, hashToken(refreshToken));
+  
   return { accessToken, refreshToken };
 };
 module.exports = {

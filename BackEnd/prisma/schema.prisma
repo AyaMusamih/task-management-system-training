@@ -47,6 +47,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   refreshTokens  RefreshToken[]
+  passwordResetTokens PasswordResetToken[]
   assignedTickets Ticket[]      @relation("AssignedTickets")
   createdTickets  Ticket[]      @relation("CreatedTickets")
   comments       Comment[]
@@ -144,6 +145,15 @@ model AuditLog {
   @@index([ticketId])
   @@index([userId])
   @@map("audit_logs")
+}
+
+model PasswordResetToken {
+  id        Int      @id @default(autoincrement())
+  tokenHash String   @unique
+  userId    BigInt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }
 
 // Phase 2 – not active yet

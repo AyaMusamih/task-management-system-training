@@ -30,6 +30,10 @@ app.use('', healthRouter);
 app.use('/auth', authRouter);
 app.use('/tickets', ticketsRouter);
 
+
+
+
+
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 
