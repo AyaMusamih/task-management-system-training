@@ -39,7 +39,6 @@ const getTickets = async (
   if (search) {
     where.title = {
       contains: search,
-      mode: "insensitive",
     };
   }
 

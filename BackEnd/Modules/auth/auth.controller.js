@@ -69,9 +69,39 @@ const logout = async (req, res, next) => {
   }
 };
 
+const forgotPassword = async (req, res, next) => {
+  try{
+   await authService.forgotPassword(req.body.email);
+    res.status(200).json({
+      success: true,
+      data: 'Reset Link sent if email exsists'
+    });
+
+  } catch(err){
+    next(err);
+  }
+}
+
+const resetPassword = async (req, res, next) => {
+  try {
+    const { token, newPassword } = req.body;
+    
+    await authService.resetPassword(token, newPassword);
+
+    res.status(200).json({
+      data: null,
+      message: 'Password has been successfully reset',
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   register,
   login,
   refresh,
   logout,
+  forgotPassword,
+  resetPassword
 };
