@@ -70,39 +70,47 @@ const refresh = async (token) => {
     throw err;
   }
   const tokenHash = hashToken(token);
-  const storedToken = await prisma.refreshToken.findUnique({
-    where: { tokenHash },
+  const storedToken = await prisma.refreshToken.findFirst({
+    where: {
+      tokenHash,
+      revokedAt: null,
+    },
   });
 
   if (!storedToken) {
-    await prisma.refreshToken.deleteMany({
+    await prisma.refreshToken.updateMany({
       where: { userId: BigInt(decoded.id) },
+      data: { revokedAt: new Date() },
     });
     const err = new Error("Invalid Token");
     err.status = 401;
     throw err;
   }
+
   if (storedToken.expiresAt < new Date()) {
-    await prisma.refreshToken.delete({ where: { tokenHash } });
     const err = new Error("Refresh token expired");
     err.status = 401;
     throw err;
   }
-  await prisma.refreshToken.delete({ where: { tokenHash } });
+  await prisma.refreshToken.update({
+    where: { id: storedToken.id },
+    data: { revokedAt: new Date() },
+  });
   const user = await findUserByEmail(decoded.email);
   return await generateAuthSession(user);
 };
 
 const logout = async (token) => {
   const tokenHash = hashToken(token);
-  const storedToken = await prisma.refreshToken.findUnique({
-    where: { tokenHash },
+  await prisma.refreshToken.updateMany({
+    where: {
+      tokenHash: tokenHash,
+      revokedAt: null,
+    },
+    data: {
+      revokedAt: new Date(),
+    },
   });
-  if (!storedToken) {
-    return;
-  }
-
-  await prisma.refreshToken.deleteMany({ where: { tokenHash } });
 };
 
 const forgotPassword = async (email) => {
@@ -139,40 +147,39 @@ const forgotPassword = async (email) => {
   }
 };
 
-  const resetPassword = async (rawToken, newPassword) => {
-    const hashedToken = crypto
-      .createHash("sha256")
-      .update(rawToken)
-      .digest("hex");
+const resetPassword = async (rawToken, newPassword) => {
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(rawToken)
+    .digest("hex");
 
-    const token = await prisma.passwordResetToken.findFirst({
-      where: {
-        tokenHash: hashedToken,
-        expiresAt: { gt: new Date() },
-      },
+  const token = await prisma.passwordResetToken.findFirst({
+    where: {
+      tokenHash: hashedToken,
+      expiresAt: { gt: new Date() },
+    },
+  });
+
+  if (!token) {
+    const err = new Error("Invalid or expired password reset token");
+    err.status = 400;
+    throw err;
+  }
+
+  const newPasswordHash = await bcrypt.hash(newPassword, 10);
+
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: token.userId },
+      data: { passwordHash: newPasswordHash },
     });
-
-    if (!token) {
-      const err = new Error("Invalid or expired password reset token");
-      err.status = 400;
-      throw err;
-    }
-
-    const newPasswordHash = await bcrypt.hash(newPassword, 10);
-
-    await prisma.$transaction(async (tx) => {
-      await tx.user.update({
-        where: { id: token.userId },
-        data: { passwordHash: newPasswordHash },
-      });
-      await tx.passwordResetToken.deleteMany({ where: { id: token.id } });
-      await tx.refreshToken.updateMany({
-        where: { userId: token.userId, revokedAt: null },
-        data: { revokedAt: new Date() },
-      });
+    await tx.passwordResetToken.deleteMany({ where: { id: token.id } });
+    await tx.refreshToken.updateMany({
+      where: { userId: token.userId, revokedAt: null },
+      data: { revokedAt: new Date() },
     });
-  };
-
+  });
+};
 
 module.exports = {
   login,
