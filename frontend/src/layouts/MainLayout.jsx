@@ -9,15 +9,15 @@ import { showToast } from "../utils/showToast";
 import { logoutUser } from "../services/auth.service";
 
 const MainLayout = () => {
+    const [modalState, setModalState] = useState(null);
     const [sessionExpired, setSessionExpired] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [Refreshed, setRefreshed] = useState(false);
-    const [modalContent, setModalContent] = useState(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const isLoggedIn = localStorage.getItem("accessToken");
-    const user = JSON.parse(localStorage.getItem("user")) || null;
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const [loading, setLoading] = useState(false);
+    const isLoggedIn = localStorage.getItem("accessToken");
+    const user = JSON.parse(localStorage.getItem("user")) || null;
 
     const handleLogoutConfirm = async () => {
         setLoading(true);
@@ -42,9 +42,16 @@ const MainLayout = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    const openModal = (content) => setModalContent(content);
+    const openModal = (contentOrOptions) => {
+        if (contentOrOptions && typeof contentOrOptions === "object" && contentOrOptions.content !== undefined) {
+            setModalState(contentOrOptions);
+        } else {
+            setModalState({ content: contentOrOptions });
+        }
+    };
+
     const closeModal = () => {
-        setModalContent(null);
+        setModalState(null);
         const path = location.pathname.replace(/\/tickets\/[^/]+$/, "");
         navigate(path + location.search, { replace: true });
     };
@@ -120,7 +127,6 @@ const MainLayout = () => {
             {(isRefreshing || sessionExpired) && (
                 <div className="fixed top-4 left-1/2 -translate-x-1/2 w-[50%] max-w-2xl z-51 flex flex-col gap-3 backdrop-blur-sm">
 
-                    {/* Refreshing */}
                     {isRefreshing && (
                         <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-yellow-500/30 bg-yellow-500/10 text-[#D97706]">
                             <div className="w-4 h-4 border-2 border-[#D97706] border-t-transparent rounded-full animate-spin" />
@@ -128,7 +134,6 @@ const MainLayout = () => {
                         </div>
                     )}
 
-                    {/* Expired */}
                     {sessionExpired && (
                         <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-yellow-500/30 bg-yellow-500/10 text-[#D97706]">
 
@@ -149,9 +154,14 @@ const MainLayout = () => {
                 </div>
             )}
 
-            {modalContent && (
-                <Modal isOpen={!!modalContent} onClose={closeModal}>
-                    {modalContent}
+            {modalState && (
+                <Modal
+                    isOpen={true}
+                    onClose={closeModal}
+                    title={modalState.title}
+                    width={modalState.width}
+                >
+                    {modalState.content}
                 </Modal>
             )}
 

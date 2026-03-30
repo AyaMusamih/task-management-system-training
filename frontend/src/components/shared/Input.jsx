@@ -113,7 +113,7 @@ const Input = ({
             )}
 
             {/* Error / helperText */}
-            {error ? (
+            {error && error.trim() ? (
                 helperText && page === "login" ? (
                     <div className="flex justify-between">
                         <div className="flex items-start gap-1">

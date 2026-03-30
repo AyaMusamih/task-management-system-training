@@ -134,9 +134,9 @@ const Login = () => {
                     className="input-field"
                     helperText={
                         <div className="flex justify-end">
-                            <span className="text-hint text-link cursor-pointer font-medium underline">
+                            <Link to="/forgot-password" className="text-hint text-link cursor-pointer font-medium underline">
                                 Forgot password?
-                            </span>
+                            </Link>
                         </div>
                     }
                 />

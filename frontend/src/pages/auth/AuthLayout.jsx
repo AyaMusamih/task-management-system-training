@@ -6,8 +6,7 @@ const AuthLayout = ({ children }) => {
 
             <div className="max-w-5xl w-full flex flex-col md:flex-row gap-4 rounded-2xl overflow-hidden shadow-2xl">
 
-                {/* Left — form */}
-                <div className="flex-1 flex flex-col bg-card-left rounded-2xl shadow-lg p-8 md:p-8">
+                <div className="flex-1 flex flex-col justify-center bg-card-left rounded-2xl shadow-lg p-8 md:p-8">
 
                     {/* Logo */}
                     <div className="flex items-center gap-2 mb-6 md:mb-6">
@@ -15,7 +14,7 @@ const AuthLayout = ({ children }) => {
                         <span className="text-logo text-text-primary">Task Flow</span>
                     </div>
 
-                    <div className="flex flex-col">
+                    <div className="flex flex-col justify-center">
                         {children}
                     </div>
 

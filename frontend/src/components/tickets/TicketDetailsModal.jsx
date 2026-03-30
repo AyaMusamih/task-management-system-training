@@ -6,8 +6,9 @@ import { showToast } from "../../utils/showToast";
 import { CircleCheckBig, XCircle, Trash2 } from "lucide-react";
 import { deleteTicket } from "../../services/tickets.service";
 import StatusControl from "../tickets/StatusControl";
+import TaskFormModal from "./TaskFormModal";
 
-const TicketDetailsModal = ({ ticket, onDeleteSuccess, closeModal }) => {
+const TicketDetailsModal = ({ ticket, openModal, closeModal, onRefresh, assignees = [], onDeleteSuccess }) => {
     if (!ticket) return null;
 
     const [loading, setLoading] = useState(false);
@@ -15,6 +16,23 @@ const TicketDetailsModal = ({ ticket, onDeleteSuccess, closeModal }) => {
     const user = JSON.parse(localStorage.getItem("user")) || null;
     const isAdmin = user?.role === "ADMIN";
     const canUpdate = ticket.permissions?.canUpdateStatus;
+  
+  const handleEditClick = () => {
+        if (!openModal) return;
+        openModal({
+            title: "Edit Task",
+            content: (
+                <TaskFormModal
+                    mode="edit"
+                    ticket={ticket}
+                    assignees={assignees}
+                    onSuccess={() => {
+                        closeModal?.();
+                        onRefresh?.();
+                    }}
+                />
+            ),
+        });
 
     const handleDelete = async () => {
         try {
@@ -65,7 +83,7 @@ const TicketDetailsModal = ({ ticket, onDeleteSuccess, closeModal }) => {
     return (
         <div className="w-full p-4">
 
-            <h2 className="text-2xl font-bold mb-4">
+            <h2 className="text-2xl font-bold mb-4 text-text-primary">
                 {ticket.title}
             </h2>
 
@@ -73,26 +91,22 @@ const TicketDetailsModal = ({ ticket, onDeleteSuccess, closeModal }) => {
 
                 <div>
                     <p className="text-gray-500">Status</p>
-                    <p className="font-medium">{ticket.status}</p>
+                    <p className="font-medium text-text-primary">{ticket.status}</p>
                 </div>
 
                 <div>
                     <p className="text-gray-500">Priority</p>
-                    <p className="font-medium">{ticket.priority}</p>
+                    <p className="font-medium text-text-primary">{ticket.priority}</p>
                 </div>
 
                 <div>
                     <p className="text-gray-500">Assignee</p>
-                    <p className="font-medium">
-                        {ticket.assignee?.name || "Unassigned"}
-                    </p>
+                    <p className="font-medium text-text-primary">{ticket.assignee?.name || "Unassigned"}</p>
                 </div>
 
                 <div>
                     <p className="text-gray-500">Created By</p>
-                    <p className="font-medium">
-                        {ticket.createdBy?.name}
-                    </p>
+                    <p className="font-medium text-text-primary">{ticket.createdBy?.name}</p>
                 </div>
 
             </div>
@@ -110,8 +124,8 @@ const TicketDetailsModal = ({ ticket, onDeleteSuccess, closeModal }) => {
             </div>
 
             <div className="mb-6">
-                <h3 className="font-semibold mb-2">Description</h3>
-                <p className="text-gray-600 font-medium">
+                <h3 className="font-semibold mb-2 text-gray-500">Description</h3>
+                <p className="text-gray-600 font-medium text-text-primary">
                     {ticket.description || "No description"}
                 </p>
             </div>
@@ -123,7 +137,9 @@ const TicketDetailsModal = ({ ticket, onDeleteSuccess, closeModal }) => {
                     variant="primary"
                     size="md"
                     disabled={!ticket.permissions?.canEdit}
-                    className="w-full h-10 rounded-lg !text-[15px] cursor-pointer"
+                    onClick={handleEditClick}
+                    className="flex-1"
+
                 >
                     Edit Ticket
                 </Button>

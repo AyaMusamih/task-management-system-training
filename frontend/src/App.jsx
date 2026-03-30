@@ -14,6 +14,8 @@ import DeletedTickets from './pages/admin/DeletedTickets ';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import UserDashboard from './pages/user/UserDashboard';
 import NotFound from './pages/NotFound';
+import ForgotPassword from './pages/auth/ForgotPassword';
+import ResetPassword from './pages/auth/ResetPassword';
 
 function App() {
   return (
@@ -22,8 +24,12 @@ function App() {
         {/* Routes without layout */}
         <Route path='/login' element={<Login />} />
         <Route path='/signup' element={<Signup />} />
+        <Route path='/forgot-password' element={<ForgotPassword />} />
+        <Route path='/reset-password' element={<ResetPassword />} />
+
         {/* redirect root */}
         <Route path='/' element={<Navigate to="/login" />} />
+
 
         <Route element={<MainLayout />}>
 
@@ -40,14 +46,6 @@ function App() {
           } />
 
           {/* User */}
-          {/* <Route path='/user/dashboard' element={
-             <ProtectedRoute role="USER">
-              <UserDashboard />
-             </ProtectedRoute>
-          }>
-             <Route path='tickets/:id' element={<TicketDetailsModal />} />
-          </Route> */}
-
           <Route path='/user/dashboard' element={
             <ProtectedRoute role="USER">
               <UserDashboard />
@@ -61,14 +59,6 @@ function App() {
           } />
 
           {/* Admin */}
-          {/* <Route path='/admin/dashboard' element={
-             <ProtectedRoute role="ADMIN">
-               <AdminDashboard />
-            </ProtectedRoute>
-           } >
-             <Route path='tickets/:id' element={<TicketDetailsModal />} />
-           </Route> */}
-
           <Route path='/admin/dashboard' element={
             <ProtectedRoute role="ADMIN">
               <AdminDashboard />
@@ -92,14 +82,6 @@ function App() {
               <AllTickets />
             </ProtectedRoute>
           } />
-
-          {/* <Route path='/all-tickets' element={
-            <ProtectedRoute role="ADMIN">
-              <AllTickets />
-            </ProtectedRoute>
-          } >
-            <Route path='tickets/:id' element={<TicketDetailsModal />} />
-          </Route> */}
 
           <Route path='/reports' element={
             <ProtectedRoute role="ADMIN">
