@@ -41,12 +41,6 @@ export const signupUser = async (form) => {
   }
 };
 
-// Logout user
-export const logoutUser = () => {
-  localStorage.removeItem("accessToken");
-  localStorage.removeItem("user");
-};
-
 // Forgot Password
 export const forgotPassword = async (email) => {
   try {
@@ -94,4 +88,18 @@ export const resetPassword = async (token, newPassword) => {
       };
     }
   }
+};
+
+//Logout
+export const logoutUser = async (refreshToken) => {
+    try {
+        await axiosInstance.post("/auth/logout", { refreshToken }); 
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("user");
+        return true;
+    } catch (err) {
+        console.error("Logout failed:", err);
+        return false;
+    }
 };

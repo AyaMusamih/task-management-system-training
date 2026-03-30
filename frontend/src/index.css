@@ -12,6 +12,11 @@ input[type="password"]::-webkit-credentials-auto-fill-button {
   pointer-events: none;
 }
 
+.Toastify__toast {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
 /* Custom Scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
@@ -48,6 +53,7 @@ input[type="password"]::-webkit-credentials-auto-fill-button {
   --color-white-btn: #ffffff;
   --color-admin-btn: #EDF1FA33;
   --color-dashboard:#EDF1FA20;
+  --color-permissions:#93C5FD;
   --color-text-secondary: rgba(237, 241, 250, 0.65);
   --color-text-placeholder: rgba(237, 241, 250, 0.22);
   --color-text-filled: rgba(237, 241, 250, 0.9);
@@ -142,6 +148,19 @@ input[type="password"]::-webkit-credentials-auto-fill-button {
     font-size: 18px;
     font-weight: 400;
     font-family: var(--font-poppins);
+  }
+
+  .text-dialog-title {
+  font-size: 17px;
+  font-weight: 600;
+  font-family: var(--font-poppins);
+  }
+
+  .text-dialog-description {
+  font-size: 14px;
+  font-weight: 400;
+  font-family: var(--font-inter);
+  color: var(--color-text-secondary);
   }
 
 

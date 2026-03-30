@@ -27,5 +27,32 @@ export const updateTicket = async (id, payload) => {
         return data;
     } catch (error) {
         throw error?.response?.data || error;
+
+export const deleteTicket = async (id) => {
+    try {
+        const { data } = await axiosInstance.delete(`/tickets/${id}`);
+        return data;
+    } catch (error) {
+        throw {
+            status: error?.response?.status,
+            message: error?.response?.data?.error || "Something went wrong",
+        };
+    }
+};
+
+export const updateTicketStatus = async (id, status) => {
+    try {
+        const { data } = await axiosInstance.patch(`/tickets/${id}/status`, {
+            status,
+        });
+        return data;
+    } catch (error) {
+        throw {
+            status: error?.response?.status,
+            message:
+                error?.response?.data?.error ||
+                error?.response?.data?.errors?.[0]?.msg ||
+                "Something went wrong",
+        };
     }
 };
