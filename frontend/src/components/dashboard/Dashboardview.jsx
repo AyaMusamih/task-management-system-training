@@ -207,7 +207,6 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
                     onRefresh={fetchTickets}
                     openModal={openModal}
                     closeModal={closeModal}
-                    onDeleteSuccess={fetchTickets}
                 />
             ),
         });

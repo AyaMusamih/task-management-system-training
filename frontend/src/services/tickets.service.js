@@ -27,6 +27,8 @@ export const updateTicket = async (id, payload) => {
         return data;
     } catch (error) {
         throw error?.response?.data || error;
+    }
+};
 
 export const deleteTicket = async (id) => {
     try {
