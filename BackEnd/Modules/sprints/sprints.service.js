@@ -11,7 +11,20 @@ const create = async (payload) => {
     })
 };
 
+const update = async (id, payload) => {
+    const sprint = prisma.sprint.findUnique({where: {id}});
+
+    if(!sprint){
+    const err = new Error("Sprint not found");
+    err.status = 404;
+    throw err;
+    }
+    return await prisma.sprint.update({where: {id}, data: payload});
+
+}
+
 module.exports = {
-    create
+    create,
+    update
 }
 

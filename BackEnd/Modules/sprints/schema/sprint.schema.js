@@ -1,4 +1,5 @@
 const { z } = require("zod");
+const {bigIntIdSchema} = require("../../tickets/utils/schema.utils");
 
 const createSprintSchema = z
   .object({
@@ -20,8 +21,15 @@ const createSprintSchema = z
       message: "End date must be after the start date",
       path: ["endDate"],
     },
-  );
+  ).strict();
+
+  const updateSprintSchema = createSprintSchema.partial();
+  const updateSprintParamSchema = z.object({
+    id: bigIntIdSchema
+  })
 
   module.exports = {
     createSprintSchema,
+    updateSprintSchema,
+    updateSprintParamSchema,
   }
