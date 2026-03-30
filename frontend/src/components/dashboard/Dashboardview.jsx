@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate, useParams, useOutletContext, useLocation } from "react-router-dom";
-import { Search, ChevronDown, Plus, ChevronLeft, ChevronRight, Bell, X } from "lucide-react";
-import { toast } from "react-toastify";
+import { Search, ChevronDown, Plus, ChevronLeft, ChevronRight, Bell, CircleAlert, CircleCheckBig } from "lucide-react";
 import { getTickets } from "../../services/tickets.service";
 import TicketsTable from "../tickets/TicketsTable";
 import TicketDetailsModal from "../tickets/TicketDetailsModal";
@@ -10,6 +9,7 @@ import Error from "../common-ui/Error";
 import Button from "../shared/Button";
 import ErrorIcon from "../../assets/images/ErrorIcon.png";
 import EmptyIcon from "../../assets/images/EmptyIcon.png";
+import { showToast } from "../../utils/showToast";
 
 const STAGES = [
     { key: "SCOPED_BACKLOG", label: "Scoped Backlog" },
@@ -105,7 +105,7 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, header }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const { id } = useParams();
-    const { openModal } = useOutletContext();
+    const { openModal, closeModal } = useOutletContext();
 
     const TABS = isAdmin
         ? [{ key: "sprint", label: "Sprint" }, { key: "scoped", label: "Scoped" }, { key: "all", label: "All" }]
@@ -126,10 +126,19 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, header }) => {
     const [error, setError] = useState(null);
 
     const allAssigneesRef = useRef([]);
+    const iconMap = {
+        success: <CircleCheckBig className="w-4 h-4" />,
+        error: <CircleAlert className="w-4 h-4" />,
+    };
 
     useEffect(() => {
-        if (location.state?.success) {
-            toast.success(location.state.success);
+        if (location.state?.toast) {
+            const toastData = location.state.toast;
+
+            showToast({
+                ...toastData,
+                icon: iconMap[toastData.icon],
+            });
             window.history.replaceState({}, document.title);
         }
     }, [location.state]);
@@ -181,7 +190,7 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, header }) => {
         const ticket = allTickets.find((t) => String(t.id) === String(id));
         if (!ticket) return;
         hasOpenedModal.current = true;
-        openModal(<TicketDetailsModal ticket={ticket} />);
+        openModal(<TicketDetailsModal ticket={ticket} onDeleteSuccess={fetchTickets} closeModal={closeModal} />);
     }, [id, allTickets, openModal]);
 
     const assignees = allAssigneesRef.current;
