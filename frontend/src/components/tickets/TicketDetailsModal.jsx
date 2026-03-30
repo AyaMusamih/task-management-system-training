@@ -1,11 +1,69 @@
 import TicketIndicators from "./TicketIndicators";
 import Button from "../shared/Button";
+import ConfirmDialog from "../shared/ConfirmDialog";
+import { useState } from "react";
+import { showToast } from "../../utils/showToast";
+import { CircleCheckBig, XCircle, Trash2 } from "lucide-react";
+import { deleteTicket } from "../../services/tickets.service";
+import StatusControl from "../tickets/StatusControl";
 
-const TicketDetailsModal = ({ ticket }) => {
+const TicketDetailsModal = ({ ticket, onDeleteSuccess, closeModal }) => {
     if (!ticket) return null;
 
+    const [loading, setLoading] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
+    const user = JSON.parse(localStorage.getItem("user")) || null;
+    const isAdmin = user?.role === "ADMIN";
+    const canUpdate = ticket.permissions?.canUpdateStatus;
+
+    const handleDelete = async () => {
+        try {
+            setLoading(true);
+
+            const res = await deleteTicket(ticket.id);
+
+            showToast({
+                title: "Ticket Deleted",
+                description: res.message || `Ticket "${ticket.title}" deleted successfully`,
+                icon: <CircleCheckBig className="w-4 h-4" />,
+                type: "success",
+            });
+
+            setShowConfirm(false);
+            closeModal?.()
+
+            onDeleteSuccess?.();
+
+        } catch (err) {
+
+            let message = "Something went wrong";
+
+            if (err.status === 403) {
+                message = err.message || "Admin access only";
+            } else if (err.status === 400) {
+                message = err.message || "Ticket already deleted";
+            } else {
+                message = err.message;
+            }
+
+            showToast({
+                title: "Failed to Delete Ticket",
+                description: message,
+                icon: <XCircle className="w-4 h-4" />,
+                type: "error",
+            });
+
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDeleteClick = () => {
+        setShowConfirm(true);
+    };
+
     return (
-        <div className="w-100 p-4">
+        <div className="w-full p-4">
 
             <h2 className="text-2xl font-bold mb-4">
                 {ticket.title}
@@ -25,14 +83,26 @@ const TicketDetailsModal = ({ ticket }) => {
 
                 <div>
                     <p className="text-gray-500">Assignee</p>
-                    <p className="font-medium">{ticket.assignee?.name || "Unassigned"}</p>
+                    <p className="font-medium">
+                        {ticket.assignee?.name || "Unassigned"}
+                    </p>
                 </div>
 
                 <div>
                     <p className="text-gray-500">Created By</p>
-                    <p className="font-medium">{ticket.createdBy?.name}</p>
+                    <p className="font-medium">
+                        {ticket.createdBy?.name}
+                    </p>
                 </div>
 
+            </div>
+            <div className="mb-4 m-auto">
+                <StatusControl
+                    ticketId={ticket.id}
+                    initialStatus={ticket.status}
+                    canUpdate={canUpdate}
+                    onSuccess={onDeleteSuccess}
+                />
             </div>
 
             <div className="mb-6">
@@ -48,24 +118,53 @@ const TicketDetailsModal = ({ ticket }) => {
 
             {/* Actions */}
             <div className="flex gap-3 pt-4 border-t border-gray-200">
+
                 <Button
                     variant="primary"
-                    size="sm"
+                    size="md"
                     disabled={!ticket.permissions?.canEdit}
-                    className="flex-1"
+                    className="w-full h-10 rounded-lg !text-[15px] cursor-pointer"
                 >
                     Edit Ticket
                 </Button>
 
-                <Button
-                    variant="secondary"
-                    size="sm"
-                    disabled={!ticket.permissions?.canUpdateStatus}
-                    className="flex-1"
-                >
-                    Update Status
-                </Button>
+                {isAdmin && (
+                    <Button
+                        variant="destructive"
+                        size="md"
+                        className="w-full h-10 rounded-lg !text-[15px] cursor-pointer"
+                        onClick={handleDeleteClick}
+                    >
+                        Delete
+                    </Button>
+                )}
+
             </div>
+
+            {showConfirm && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center">
+
+                    <div
+                        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                        onClick={() => setShowConfirm(false)}
+                    />
+
+                    <div className="relative z-10">
+                        <ConfirmDialog
+                            icon={<Trash2 className="w-5 h-5" />}
+                            title="Delete Ticket?"
+                            description={`This will delete " ${ticket.id} : ${ticket.title} ". This action cannot be undone.`}
+                            confirmText="Delete Ticket"
+                            cancelText="Cancel"
+                            variant="danger"
+                            loading={loading}
+                            onConfirm={handleDelete}
+                            onCancel={() => setShowConfirm(false)}
+                        />
+                    </div>
+
+                </div>
+            )}
 
         </div>
     );
