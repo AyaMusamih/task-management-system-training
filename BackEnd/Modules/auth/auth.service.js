@@ -138,7 +138,14 @@ const forgotPassword = async (email) => {
   try {
     await sendResetEmail(email, rawToken);
   } catch (error) {
-    await prisma.passwordResetToken.delete({ where: { id: created.id } });
+    console.error("sendResetEmail failed:", error); 
+
+    try {
+      await prisma.passwordResetToken.delete({ where: { id: created.id } });
+    } catch (dbError) {
+      console.error("Token rollback failed:", dbError); 
+    }
+
     const err = new Error(
       "There is an error sending reset email, Please try again later",
     );
