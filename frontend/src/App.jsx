@@ -1,5 +1,5 @@
 import './App.css'
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import MainLayout from './layouts/MainLayout';
@@ -22,6 +22,8 @@ function App() {
         {/* Routes without layout */}
         <Route path='/login' element={<Login />} />
         <Route path='/signup' element={<Signup />} />
+        {/* redirect root */}
+        <Route path='/' element={<Navigate to="/login" />} />
 
         <Route element={<MainLayout />}>
 
@@ -121,7 +123,13 @@ function App() {
 
         <Route path='*' element={<NotFound />} />
       </Routes>
-      <ToastContainer position="top-right" autoClose={3000} />
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        toastClassName={() =>
+          "!w-[345px]"
+        }
+      />
     </div>
   );
 }

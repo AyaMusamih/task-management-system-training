@@ -1,14 +1,43 @@
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from '../components/layout/Sidebar';
 import Modal from "../components/shared/Modal";
 import { Menu } from "lucide-react";
+import ConfirmDialog from "../components/shared/ConfirmDialog";
+import { AlarmClock, TriangleAlert, BadgeInfo, LogOut, CircleCheckBig } from "lucide-react";
+import { showToast } from "../utils/showToast";
+import { logoutUser } from "../services/auth.service";
 
 const MainLayout = () => {
+    const [sessionExpired, setSessionExpired] = useState(false);
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    const [Refreshed, setRefreshed] = useState(false);
     const [modalContent, setModalContent] = useState(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const isLoggedIn = localStorage.getItem("accessToken");
     const user = JSON.parse(localStorage.getItem("user")) || null;
+    const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    const handleLogoutConfirm = async () => {
+        setLoading(true);
+        const refreshToken = localStorage.getItem("refreshToken");
+        const success = await logoutUser(refreshToken);
+
+        if (success) {
+            showToast({
+                title: "Logout successfully!",
+                description: "You’ve been logged out. Come back anytime!",
+                icon: <CircleCheckBig className="w-4 h-4" />,
+                type: "success",
+            });
+
+            navigate("/login");
+        }
+
+        setShowLogoutConfirm(false);
+        setLoading(false);
+    };
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -19,7 +48,41 @@ const MainLayout = () => {
         const path = location.pathname.replace(/\/tickets\/[^/]+$/, "");
         navigate(path + location.search, { replace: true });
     };
+    useEffect(() => {
+        const handleSessionExpired = () => {
+            setIsRefreshing(false);
+            setSessionExpired(true);
+        };
 
+        const handleRefreshing = () => {
+            setIsRefreshing(true);
+        };
+
+        window.addEventListener("sessionExpired", handleSessionExpired);
+        window.addEventListener("sessionRefreshing", handleRefreshing);
+
+        return () => {
+            window.removeEventListener("sessionExpired", handleSessionExpired);
+            window.removeEventListener("sessionRefreshing", handleRefreshing);
+        };
+    }, []);
+    useEffect(() => {
+        if (Refreshed) {
+            showToast({
+                title: "Session Refreshed",
+                description: "Your session was automatically renewed.",
+                icon: <BadgeInfo className="w-4 h-4" />,
+                type: "info",
+            });
+
+            setRefreshed(false);
+        }
+    }, [Refreshed]);
+
+    const handleSessionConfirm = () => {
+        setSessionExpired(false);
+        window.location.replace("/login");
+    };
     return (
         <div className="min-h-screen flex flex-col bg-background">
 
@@ -46,6 +109,7 @@ const MainLayout = () => {
                         user={user}
                         isOpen={sidebarOpen}
                         onClose={() => setSidebarOpen(false)}
+                        onLogoutClick={() => setShowLogoutConfirm(true)}
                     />
                 )}
                 <main className="flex-1 overflow-y-auto bg-background min-w-0">
@@ -53,10 +117,75 @@ const MainLayout = () => {
                 </main>
             </div>
 
+            {(isRefreshing || sessionExpired) && (
+                <div className="fixed top-4 left-1/2 -translate-x-1/2 w-[50%] max-w-2xl z-51 flex flex-col gap-3 backdrop-blur-sm">
+
+                    {/* Refreshing */}
+                    {isRefreshing && (
+                        <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-yellow-500/30 bg-yellow-500/10 text-[#D97706]">
+                            <div className="w-4 h-4 border-2 border-[#D97706] border-t-transparent rounded-full animate-spin" />
+                            <span>Refreshing your session...</span>
+                        </div>
+                    )}
+
+                    {/* Expired */}
+                    {sessionExpired && (
+                        <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-yellow-500/30 bg-yellow-500/10 text-[#D97706]">
+
+                            <div className="flex items-center gap-3">
+                                <TriangleAlert className="w-4 h-4 text-[#D97706]" />
+                                <span>Your session has expired. Please log in again.</span>
+                            </div>
+
+                            <button
+                                onClick={handleSessionConfirm}
+                                className="px-3 py-1.5 rounded-lg border border-[#D97706] hover:bg-[#D97706]/10 transition cursor-pointer"
+                            >
+                                Log in again
+                            </button>
+
+                        </div>
+                    )}
+                </div>
+            )}
+
             {modalContent && (
                 <Modal isOpen={!!modalContent} onClose={closeModal}>
                     {modalContent}
                 </Modal>
+            )}
+
+            {showLogoutConfirm && (
+                <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+                    <div
+                        className="absolute inset-0"
+                        onClick={() => setShowLogoutConfirm(false)}
+                    />
+                    <ConfirmDialog
+                        title="Confirm Logout"
+                        description="You'll be signed out of your account. Any unsaved changes will be lost."
+                        confirmText="Logout"
+                        cancelText="Stay logged in"
+                        loading={loading}
+                        variant="danger"
+                        icon={<LogOut className="w-5 h-5" />}
+                        onConfirm={handleLogoutConfirm}
+                        onCancel={() => setShowLogoutConfirm(false)}
+                    />
+                </div>
+            )}
+
+            {sessionExpired && (
+                <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/40 backdrop-blur-xs">
+                    <ConfirmDialog
+                        title="Session Expired"
+                        description="Your session has timed out for security reasons. Please log in again to continue."
+                        confirmText="Login again"
+                        icon={<AlarmClock className="w-5 h-5" />}
+                        variant="warning"
+                        onConfirm={handleSessionConfirm}
+                    />
+                </div>
             )}
         </div>
     );
