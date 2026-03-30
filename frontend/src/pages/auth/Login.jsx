@@ -38,18 +38,37 @@ const Login = () => {
             setLoading(true);
             setErrors({});
 
-            const { accessToken, user } = await loginUser(email, password);
+            const { accessToken, user, refreshToken } = await loginUser(email, password);
 
             localStorage.setItem("accessToken", accessToken);
+            localStorage.setItem("refreshToken", refreshToken);
             localStorage.setItem("user", JSON.stringify(user));
 
             setSuccess(true);
 
             setTimeout(() => {
                 if (user?.role === "ADMIN") {
-                    navigate("/admin/dashboard", { state: { success: "Logged in successfully!" } });
+                    navigate("/admin/dashboard", {
+                        state: {
+                            toast: {
+                                title: "Logged in successfully!",
+                                description: "Welcome back!",
+                                icon: "success",
+                                type: "success",
+                            }
+                        }
+                    });
                 } else if (user?.role === "USER") {
-                    navigate("/user/dashboard", { state: { success: "Logged in successfully!" } });
+                    navigate("/user/dashboard", {
+                        state: {
+                            toast: {
+                                title: "Logged in successfully!",
+                                description: "Welcome back!",
+                                icon: "success",
+                                type: "success",
+                            }
+                        }
+                    });
                 }
             }, 1500);
 
