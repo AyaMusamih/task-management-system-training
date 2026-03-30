@@ -9,8 +9,9 @@ const {
   updateTicketStatusSchema,
 } = require("./schema/updateTicket.schema");
 const {
-  checkUpdatePermission, isAdmin
+  checkUpdatePermission
 } = require("./middlewares/ticketAuth.middleware");
+const isAdmin = require("../Middlewares/isAdmin.middleware")
 const ticketController = require("./tickets.controller");
 const authMiddleware = require("../Middlewares/auth.middleware");
 
