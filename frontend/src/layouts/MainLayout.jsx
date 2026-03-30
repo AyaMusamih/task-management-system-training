@@ -5,7 +5,7 @@ import Modal from "../components/shared/Modal";
 import { Menu } from "lucide-react";
 
 const MainLayout = () => {
-    const [modalContent, setModalContent] = useState(null);
+    const [modalState, setModalState] = useState(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const isLoggedIn = localStorage.getItem("accessToken");
     const user = JSON.parse(localStorage.getItem("user")) || null;
@@ -13,9 +13,16 @@ const MainLayout = () => {
     const navigate = useNavigate();
     const location = useLocation();
 
-    const openModal = (content) => setModalContent(content);
+    const openModal = (contentOrOptions) => {
+        if (contentOrOptions && typeof contentOrOptions === "object" && contentOrOptions.content !== undefined) {
+            setModalState(contentOrOptions);
+        } else {
+            setModalState({ content: contentOrOptions });
+        }
+    };
+
     const closeModal = () => {
-        setModalContent(null);
+        setModalState(null);
         const path = location.pathname.replace(/\/tickets\/[^/]+$/, "");
         navigate(path + location.search, { replace: true });
     };
@@ -53,9 +60,14 @@ const MainLayout = () => {
                 </main>
             </div>
 
-            {modalContent && (
-                <Modal isOpen={!!modalContent} onClose={closeModal}>
-                    {modalContent}
+            {modalState && (
+                <Modal
+                    isOpen={true}
+                    onClose={closeModal}
+                    title={modalState.title}
+                    width={modalState.width}
+                >
+                    {modalState.content}
                 </Modal>
             )}
         </div>

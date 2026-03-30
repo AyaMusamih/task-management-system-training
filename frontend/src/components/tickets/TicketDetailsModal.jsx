@@ -1,13 +1,32 @@
 import TicketIndicators from "./TicketIndicators";
 import Button from "../shared/Button";
+import TaskFormModal from "./TaskFormModal";
 
-const TicketDetailsModal = ({ ticket }) => {
+const TicketDetailsModal = ({ ticket, openModal, closeModal, onRefresh, assignees = [] }) => {
     if (!ticket) return null;
+
+    const handleEditClick = () => {
+        if (!openModal) return;
+        openModal({
+            title: "Edit Task",
+            content: (
+                <TaskFormModal
+                    mode="edit"
+                    ticket={ticket}
+                    assignees={assignees}
+                    onSuccess={() => {
+                        closeModal?.();
+                        onRefresh?.();
+                    }}
+                />
+            ),
+        });
+    };
 
     return (
         <div className="w-100 p-4">
 
-            <h2 className="text-2xl font-bold mb-4">
+            <h2 className="text-2xl font-bold mb-4 text-text-primary">
                 {ticket.title}
             </h2>
 
@@ -15,22 +34,22 @@ const TicketDetailsModal = ({ ticket }) => {
 
                 <div>
                     <p className="text-gray-500">Status</p>
-                    <p className="font-medium">{ticket.status}</p>
+                    <p className="font-medium text-text-primary">{ticket.status}</p>
                 </div>
 
                 <div>
                     <p className="text-gray-500">Priority</p>
-                    <p className="font-medium">{ticket.priority}</p>
+                    <p className="font-medium text-text-primary">{ticket.priority}</p>
                 </div>
 
                 <div>
                     <p className="text-gray-500">Assignee</p>
-                    <p className="font-medium">{ticket.assignee?.name || "Unassigned"}</p>
+                    <p className="font-medium text-text-primary">{ticket.assignee?.name || "Unassigned"}</p>
                 </div>
 
                 <div>
                     <p className="text-gray-500">Created By</p>
-                    <p className="font-medium">{ticket.createdBy?.name}</p>
+                    <p className="font-medium text-text-primary">{ticket.createdBy?.name}</p>
                 </div>
 
             </div>
@@ -40,8 +59,8 @@ const TicketDetailsModal = ({ ticket }) => {
             </div>
 
             <div className="mb-6">
-                <h3 className="font-semibold mb-2">Description</h3>
-                <p className="text-gray-600 font-medium">
+                <h3 className="font-semibold mb-2 text-gray-500">Description</h3>
+                <p className="text-gray-600 font-medium text-text-primary">
                     {ticket.description || "No description"}
                 </p>
             </div>
@@ -52,6 +71,7 @@ const TicketDetailsModal = ({ ticket }) => {
                     variant="primary"
                     size="sm"
                     disabled={!ticket.permissions?.canEdit}
+                    onClick={handleEditClick}
                     className="flex-1"
                 >
                     Edit Ticket

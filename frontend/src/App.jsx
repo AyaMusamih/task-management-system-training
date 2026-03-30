@@ -1,5 +1,5 @@
 import './App.css'
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import MainLayout from './layouts/MainLayout';
@@ -14,6 +14,8 @@ import DeletedTickets from './pages/admin/DeletedTickets ';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import UserDashboard from './pages/user/UserDashboard';
 import NotFound from './pages/NotFound';
+import ForgotPassword from './pages/auth/ForgotPassword';
+import ResetPassword from './pages/auth/ResetPassword';
 
 function App() {
   return (
@@ -22,6 +24,8 @@ function App() {
         {/* Routes without layout */}
         <Route path='/login' element={<Login />} />
         <Route path='/signup' element={<Signup />} />
+        <Route path='/forgot-password' element={<ForgotPassword />} />
+        <Route path='/reset-password' element={<ResetPassword />} />
 
         <Route element={<MainLayout />}>
 
@@ -121,7 +125,11 @@ function App() {
 
         <Route path='*' element={<NotFound />} />
       </Routes>
-      <ToastContainer position="top-right" autoClose={3000} />
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        toastStyle={{ backgroundColor: "var(--color-background)", color: "#FFFFFF" }}
+      />
     </div>
   );
 }

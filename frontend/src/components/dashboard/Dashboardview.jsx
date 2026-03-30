@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate, useParams, useOutletContext, useLocation } from "react-router-dom";
-import { Search, ChevronDown, Plus, ChevronLeft, ChevronRight, Bell, X } from "lucide-react";
+import { Search, ChevronDown, Plus, ChevronLeft, ChevronRight, Bell } from "lucide-react";
 import { toast } from "react-toastify";
 import { getTickets } from "../../services/tickets.service";
 import TicketsTable from "../tickets/TicketsTable";
@@ -100,12 +100,12 @@ const FilterDropdown = ({ label, options, value, onChange }) => {
     );
 };
 
-const DashboardView = ({ isAdmin, basePath, onCreateTicket, header }) => {
+const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, header }) => {
     const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
     const location = useLocation();
     const { id } = useParams();
-    const { openModal } = useOutletContext();
+    const { openModal, closeModal } = useOutletContext();
 
     const TABS = isAdmin
         ? [{ key: "sprint", label: "Sprint" }, { key: "scoped", label: "Scoped" }, { key: "all", label: "All" }]
@@ -156,6 +156,13 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, header }) => {
         }
     }, [activeTab, activeStatus, activePriority, activeAssignee, searchQuery, currentPage, isAdmin]);
 
+    // Register refresh function with parent (AdminDashboard)
+    useEffect(() => {
+        if (onRegisterRefresh) {
+            onRegisterRefresh(fetchTickets);
+        }
+    }, [onRegisterRefresh, fetchTickets]);
+
     useEffect(() => { fetchTickets(); }, [fetchTickets]);
 
     useEffect(() => {
@@ -181,8 +188,19 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, header }) => {
         const ticket = allTickets.find((t) => String(t.id) === String(id));
         if (!ticket) return;
         hasOpenedModal.current = true;
-        openModal(<TicketDetailsModal ticket={ticket} />);
-    }, [id, allTickets, openModal]);
+        openModal({
+            title: "Ticket Details",
+            content: (
+                <TicketDetailsModal
+                    ticket={ticket}
+                    assignees={allAssigneesRef.current}
+                    onRefresh={fetchTickets}
+                    openModal={openModal}
+                    closeModal={closeModal}
+                />
+            ),
+        });
+    }, [id, allTickets, openModal, closeModal, fetchTickets]);
 
     const assignees = allAssigneesRef.current;
     const currentSprint = allTickets.find((t) => t.sprint)?.sprint;
@@ -227,8 +245,13 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, header }) => {
         setSearchParams(next);
     };
 
-    const showContext = activeTab === "all" && isAdmin;
+    // Pass current assignees list to onCreateTicket so the modal can populate the dropdown
+    const handleCreateClick = () => {
+        onCreateTicket?.(allAssigneesRef.current, currentSprint ?? null);
+    };
+
     const showAssignee = isAdmin;
+    const showContext = activeTab === "all" && isAdmin;
 
     const viewLabel = activeTab === "sprint" ? "Sprint" : activeTab === "scoped" ? "Scoped" : "All Tickets";
     const total = pagination?.total ?? 0;
@@ -249,7 +272,6 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, header }) => {
                     {header}
                 </div>
                 <div className="flex items-center gap-2 ml-3 shrink-0">
-                    {/* Sprint chip - user only */}
                     {!isAdmin && currentSprint && (
                         <span className="hidden sm:inline-flex px-3 py-1 rounded-full text-hint border border-[#60A5FA]/60 text-[#60A5FA] bg-[#60A5FA]/10">
                             {currentSprint.name}
@@ -282,15 +304,13 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, header }) => {
 
                 <div className="flex items-center gap-2 shrink-0">
                     {isAdmin && (
-                        <>
-                            <Button
-                                onClick={onCreateTicket}
-                                className="flex items-center justify-center gap-1.5 cursor-pointer bg-accent-blue hover:bg-accent-blue/80 transition-colors !rounded-lg"
-                            >
-                                <Plus className="w-4 h-4 text-text-primary" />
-                                <span className="text-white-btn font-inter text-[12px] sm:text-[13.5px] font-medium">Create Ticket</span>
-                            </Button>
-                        </>
+                        <Button
+                            onClick={handleCreateClick}
+                            className="flex items-center justify-center gap-1.5 cursor-pointer bg-accent-blue hover:bg-accent-blue/80 transition-colors !rounded-lg"
+                        >
+                            <Plus className="w-4 h-4 text-text-primary" />
+                            <span className="text-white-btn font-inter text-[12px] sm:text-[13.5px] font-medium">Create Ticket</span>
+                        </Button>
                     )}
                 </div>
             </div>
@@ -299,7 +319,6 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, header }) => {
 
             {/* Filters */}
             <div className="mx-3 sm:mx-[16px] mt-[32px] mb-[25px] rounded-[10px] bg-background py-[7px]">
-
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-4 py-[10px] gap-2">
                     <div className="flex items-center gap-2 flex-wrap">
                         <FilterDropdown
