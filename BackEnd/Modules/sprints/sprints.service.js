@@ -45,7 +45,7 @@ const update = async (id, data) => {
 
 const findAll = async (page, limit, user) => {
   let where = {};
-
+  const ticketsWhere = { deletedAt: null };
   if (user.role !== "ADMIN") {
     where = {
       tickets: {
@@ -55,7 +55,9 @@ const findAll = async (page, limit, user) => {
         },
       },
     };
+    ticketsWhere.assigneeId = BigInt(user.id);
   }
+
   const skip = (page - 1) * limit;
 
   const [items, total] = await Promise.all([
@@ -71,11 +73,11 @@ const findAll = async (page, limit, user) => {
         endDate: true,
         isActive: true,
         _count: {
-          select: { tickets: { where: { deletedAt: null } } },
+          select: { tickets: { where: ticketsWhere } },
         },
       },
     }),
-    prisma.sprint.count({where}),
+    prisma.sprint.count({ where }),
   ]);
 
   return {
@@ -92,47 +94,47 @@ const findAll = async (page, limit, user) => {
 };
 
 const findOne = async (id, user) => {
+  const ticketsWhere = { deletedAt: null };
 
+  if (user.role !== "ADMIN") {
+    ticketsWhere.assigneeId = BigInt(user.id);
+  }
   const sprint = await prisma.sprint.findUnique({
     where: { id },
     include: {
       tickets: {
-        where: { deletedAt: null },
+        where: ticketsWhere,
         select: {
           id: true,
           title: true,
           status: true,
           priority: true,
-          assigneeId: true, 
-          assignee: { select: { id: true, name: true } }
-        }
+          assigneeId: true,
+          assignee: { select: { id: true, name: true } },
+        },
       },
       _count: {
-        select: { tickets: { where: { deletedAt: null } } }
-      }
-    }
+        select: { tickets: { where: ticketsWhere } },
+      },
+    },
   });
   if (!sprint) {
     const err = new Error("Sprint not found");
     err.status = 404;
     throw err;
   }
-  if (user.role !== "ADMIN") {
-    const isAssigned = sprint.tickets.some(t => t.assigneeId === BigInt(user.id));
-
-    if (!isAssigned) {
-      const err = new Error("Access Denied: You are not assigned to any tickets in this sprint.");
-      err.status = 403;
-      throw err;
-    }
-    sprint.tickets = sprint.tickets.filter(t => t.assigneeId === BigInt(user.id));
+  if (user.role !== "ADMIN" && sprint.tickets.length === 0) {
+    const err = new Error(
+      "Access Denied: You are not assigned to any tickets in this sprint.",
+    );
+    err.status = 403;
+    throw err;
   }
 
   return sprint;
 };
 
 const remove = async (id) => {
-
   const sprint = await prisma.sprint.findUnique({
     where: { id },
   });
@@ -159,5 +161,5 @@ module.exports = {
   update,
   findAll,
   findOne,
-  remove
+  remove,
 };
