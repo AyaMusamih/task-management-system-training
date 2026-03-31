@@ -7,6 +7,7 @@ import TicketDetailsModal from "../tickets/TicketDetailsModal";
 import Button from "../shared/Button";
 import { showToast } from "../../utils/showToast";
 import SprintsModalContent from "../tickets/SprintsModalContent"
+import { getSprints } from "../../services/sprints.service";
 
 const STAGES = [
     { key: "SCOPED_BACKLOG", label: "Scoped Backlog" },
@@ -98,9 +99,9 @@ const FilterDropdown = ({ label, options, value, onChange }) => {
 };
 
 const iconMap = {
-        success: <CircleCheckBig className="w-4 h-4" />,
-        error: <CircleAlert className="w-4 h-4" />,
-    };
+    success: <CircleCheckBig className="w-4 h-4" />,
+    error: <CircleAlert className="w-4 h-4" />,
+};
 
 
 const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, header }) => {
@@ -129,7 +130,35 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
     const [error, setError] = useState(null);
 
     const allAssigneesRef = useRef([]);
-    
+    const [allSprints, setAllSprints] = useState([]);
+    const activeSprintFilter = searchParams.get("sprint") || null;
+
+    const refreshSprints = useCallback(() => {
+        getSprints(1, 100)
+            .then((res) => setAllSprints(res.data?.items || []))
+            .catch(() => { });
+    }, []);
+
+    useEffect(() => {
+        refreshSprints();
+    }, [refreshSprints]);
+
+    const handleOpenSprints = () => {
+        openModal({
+            title: "Sprints",
+            content: (
+                <SprintsModalContent
+                    openModal={openModal}
+                    closeModal={() => {
+                        refreshSprints();
+                        closeModal();
+                    }}
+                    onSprintsChange={refreshSprints}
+                />
+            ),
+        });
+    };
+
     useEffect(() => {
         if (location.state?.toast) {
             const toastData = location.state.toast;
@@ -174,10 +203,19 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
     useEffect(() => { fetchTickets(); }, [fetchTickets]);
 
     useEffect(() => {
-        if (!activeStageGroup) { setTickets(allTickets); return; }
-        const group = STAGE_GROUPS.find((g) => g.key === activeStageGroup);
-        setTickets(group ? allTickets.filter((t) => group.statuses.includes(t.status)) : allTickets);
-    }, [allTickets, activeStageGroup]);
+        let filtered = allTickets;
+
+        if (activeStageGroup) {
+            const group = STAGE_GROUPS.find((g) => g.key === activeStageGroup);
+            if (group) filtered = filtered.filter((t) => group.statuses.includes(t.status));
+        }
+
+        if (activeSprintFilter) {
+            filtered = filtered.filter((t) => String(t.sprint?.id) === String(activeSprintFilter));
+        }
+
+        setTickets(filtered);
+    }, [allTickets, activeStageGroup, activeSprintFilter]);
 
     useEffect(() => {
         if (activeAssignee) return;
@@ -210,18 +248,6 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
             ),
         });
     }, [id, allTickets, openModal, closeModal, fetchTickets]);
-
-    const handleOpenSprints = () => {
-        openModal({
-            title: "Sprints",
-            content: (
-                <SprintsModalContent
-                    openModal={openModal}
-                    closeModal={closeModal}
-                />
-            ),
-        });
-    };
 
     const assignees = allAssigneesRef.current;
     const currentSprint = allTickets.find((t) => t.sprint)?.sprint;
@@ -382,9 +408,11 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
                         />
                         <FilterDropdown
                             label="Sprint"
-                            options={[]}
-                            value={null}
-                            onChange={() => { }}
+                            options={allSprints.map((s) => ({ value: String(s.id), label: s.name }))}
+                            value={activeSprintFilter
+                                ? allSprints.find((s) => String(s.id) === activeSprintFilter)?.name ?? null
+                                : null}
+                            onChange={(v) => setParam("sprint", v)}
                         />
                     </div>
                     <div className="flex items-center gap-2 px-3 py-1.5 bg-card-left border border-divider/50 rounded-lg w-full sm:w-[280px] lg:w-[442px]">

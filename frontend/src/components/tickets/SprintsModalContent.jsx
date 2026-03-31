@@ -1,25 +1,38 @@
-import { Plus, SquarePen } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Plus, SquarePen, Trash2 } from "lucide-react";
 import SprintFormContent from "./SprintFormContent";
+import ConfirmDialog from "../shared/ConfirmDialog";
+import { getSprints, deleteSprint } from "../../services/sprints.service";
+import { showToast } from "../../utils/showToast";
+import { CircleCheckBig, XCircle } from "lucide-react";
+import Loading from "../common-ui/Loading";
 
-const dummySprints = [
-    { id: 1, name: "Sprint 1" },
-    { id: 2, name: "Sprint 2" },
-    { id: 3, name: "Sprint 3" },
-    { id: 4, name: "Sprint 4" },
-    { id: 5, name: "Sprint 5" },
-    { id: 6, name: "Sprint 6" },
-    { id: 7, name: "Sprint 7" },
-    { id: 8, name: "Sprint 8" },
-    { id: 9, name: "Sprint 9" },
-    { id: 10, name: "Sprint 10" },
-    { id: 11, name: "Sprint 11" },
-    { id: 12, name: "Sprint 12" },
-    { id: 13, name: "Sprint 13" },
-    { id: 14, name: "Sprint 14" },
-    { id: 15, name: "Sprint 15" },
-];
+const SprintsModalContent = ({ openModal, closeModal, onSprintsChange }) => {
+    const [sprints, setSprints] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [deleteTarget, setDeleteTarget] = useState(null);
+    const [deleteLoading, setDeleteLoading] = useState(false);
 
-const SprintsModalContent = ({ openModal, closeModal }) => {
+    const fetchSprints = async () => {
+        setLoading(true);
+        try {
+            const res = await getSprints();
+            setSprints(res.data?.items || []);
+        } catch (err) {
+            showToast({
+                title: "Failed to load sprints",
+                description: err?.error || "Please try again",
+                icon: <XCircle className="w-4 h-4" />,
+                type: "error",
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchSprints();
+    }, []);
 
     const handleAdd = () => {
         openModal({
@@ -28,6 +41,10 @@ const SprintsModalContent = ({ openModal, closeModal }) => {
                 <SprintFormContent
                     openModal={openModal}
                     closeModal={closeModal}
+                    onSuccess={() => {
+                        fetchSprints();
+                        onSprintsChange?.();
+                    }}
                 />
             ),
         });
@@ -41,9 +58,39 @@ const SprintsModalContent = ({ openModal, closeModal }) => {
                     sprint={sprint}
                     openModal={openModal}
                     closeModal={closeModal}
+                    onSuccess={() => {
+                        fetchSprints();
+                        onSprintsChange?.();
+                    }}
                 />
             ),
         });
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!deleteTarget) return;
+        setDeleteLoading(true);
+        try {
+            await deleteSprint(deleteTarget.id);
+            showToast({
+                title: "Sprint Deleted",
+                description: `"${deleteTarget.name}" has been permanently deleted.`,
+                icon: <CircleCheckBig className="w-4 h-4" />,
+                type: "success",
+            });
+            setDeleteTarget(null);
+            fetchSprints();
+            onSprintsChange?.();
+        } catch (err) {
+            showToast({
+                title: "Failed to Delete Sprint",
+                description: err?.message || "Please try again",
+                icon: <XCircle className="w-4 h-4" />,
+                type: "error",
+            });
+        } finally {
+            setDeleteLoading(false);
+        }
     };
 
     return (
@@ -56,21 +103,64 @@ const SprintsModalContent = ({ openModal, closeModal }) => {
                 <Plus className="w-5 h-5 text-white" />
             </button>
 
-            {dummySprints.map((sprint) => (
-                <div
-                    key={sprint.id}
-                    className="flex items-center justify-between bg-[#080B12] px-4 py-2 rounded-xl text-white"
-                >
-                    <span>{sprint.name}</span>
-
-                    <button
-                        onClick={() => handleEdit(sprint)}
-                        className="p-2 rounded-lg hover:bg-white/10 cursor-pointer"
+            {loading ? (
+                <Loading variant="skeleton" rows={5} />
+            ) : sprints.length === 0 ? (
+                <p className="text-text-hint text-hint text-center py-6">No sprints yet. Create one!</p>
+            ) : (
+                sprints.map((sprint) => (
+                    <div
+                        key={sprint.id}
+                        className="flex items-center justify-between bg-[#080B12] px-4 py-2 rounded-xl text-white"
                     >
-                        <SquarePen className="w-4 h-4" />
-                    </button>
+                        <div className="flex flex-col min-w-0">
+                            <span className="text-field-label text-text-primary">{sprint.name}</span>
+                            {sprint.isActive && (
+                                <span className="text-hint text-[#22C55E]">Active</span>
+                            )}
+                        </div>
+
+                        <div className="flex items-center gap-1 shrink-0">
+                            <button
+                                onClick={() => handleEdit(sprint)}
+                                className="p-2 rounded-lg hover:bg-white/10 cursor-pointer"
+                                title="Edit sprint"
+                            >
+                                <SquarePen className="w-4 h-4" />
+                            </button>
+                            <button
+                                onClick={() => setDeleteTarget(sprint)}
+                                className="p-2 rounded-lg hover:bg-red-500/10 text-red-400 cursor-pointer"
+                                title="Delete sprint"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                        </div>
+                    </div>
+                ))
+            )}
+
+            {deleteTarget && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center">
+                    <div
+                        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                        onClick={() => setDeleteTarget(null)}
+                    />
+                    <div className="relative z-10">
+                        <ConfirmDialog
+                            icon={<Trash2 className="w-5 h-5" />}
+                            title="Delete Sprint?"
+                            description={`This will permanently delete "${deleteTarget.name}". This action cannot be undone.`}
+                            confirmText="Delete Sprint"
+                            cancelText="Cancel"
+                            variant="danger"
+                            loading={deleteLoading}
+                            onConfirm={handleDeleteConfirm}
+                            onCancel={() => setDeleteTarget(null)}
+                        />
+                    </div>
                 </div>
-            ))}
+            )}
         </div>
     );
 };

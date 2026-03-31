@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
-import { toast } from "react-toastify";
+import { showToast } from "../../utils/showToast";
+import { CircleCheckBig, XCircle } from "lucide-react";
 import Button from "../shared/Button";
 import { createTicket, updateTicket } from "../../services/tickets.service";
+import { getSprints } from "../../services/sprints.service";
 
 const PRIORITY_OPTIONS = ["Low", "Medium", "High", "Critical"];
 const PRIORITY_VALUES = { Low: "LOW", Medium: "MEDIUM", High: "HIGH", Critical: "CRITICAL" };
@@ -84,7 +86,7 @@ const FieldLabel = ({ children, required = true }) => (
     </label>
 );
 
-const StyledSelect = ({ value, onChange, options, placeholder, hasError }) => {
+const StyledSelect = ({ value, onChange, options, placeholder, hasError, disabled }) => {
     const [open, setOpen] = useState(false);
     const selected = options.find((o) => o.value === value);
 
@@ -92,8 +94,9 @@ const StyledSelect = ({ value, onChange, options, placeholder, hasError }) => {
         <div className="relative">
             <button
                 type="button"
-                onClick={() => setOpen((v) => !v)}
-                className={`w-full h-11 px-4 flex items-center justify-between rounded-xl bg-[#808080]/20 border text-left transition-colors cursor-pointer shadow-[0_0_0_1px_rgba(255,255,255,0.05)]
+                onClick={() => { if (!disabled) setOpen((v) => !v); }}
+                className={`w-full h-11 px-4 flex items-center justify-between rounded-xl bg-[#808080]/20 border text-left transition-colors shadow-[0_0_0_1px_rgba(255,255,255,0.05)]
+                    ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
                     ${hasError
                         ? "border-error-red focus:border-error-red"
                         : open
@@ -107,7 +110,7 @@ const StyledSelect = ({ value, onChange, options, placeholder, hasError }) => {
                 <ChevronDown className={`w-4 h-4 text-text-hint transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
             </button>
 
-            {open && (
+            {open && !disabled && (
                 <>
                     <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
                     <div className="absolute top-full mt-1 left-0 right-0 z-[100] bg-background border border-divider/50 rounded-xl py-1.5 shadow-2xl max-h-48 overflow-y-auto custom-scrollbar">
@@ -129,7 +132,16 @@ const StyledSelect = ({ value, onChange, options, placeholder, hasError }) => {
     );
 };
 
-const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], currentSprint = null, onSuccess }) => {
+const filterAvailableSprints = (sprints) => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    return sprints.filter((s) => {
+        const end = new Date(s.endDate);
+        return s.isActive || end >= now;
+    });
+};
+
+const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], onSuccess }) => {
     const isEdit = mode === "edit";
 
     const [fields, setFields] = useState({
@@ -144,6 +156,32 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], current
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
     const [submitted, setSubmitted] = useState(false);
+
+    const [sprintOptions, setSprintOptions] = useState([]);
+    const [sprintsLoading, setSprintsLoading] = useState(true);
+
+    // Fetch all sprints and filter to active + future
+    useEffect(() => {
+        const fetchSprints = async () => {
+            setSprintsLoading(true);
+            try {
+                const res = await getSprints(1, 100);
+                const all = res.data?.items || [];
+                const available = filterAvailableSprints(all);
+                setSprintOptions(
+                    available.map((s) => ({
+                        value: s.id.toString(),
+                        label: s.isActive ? `${s.name} (Active)` : s.name,
+                    }))
+                );
+            } catch {
+                setSprintOptions([]);
+            } finally {
+                setSprintsLoading(false);
+            }
+        };
+        fetchSprints();
+    }, []);
 
     useEffect(() => {
         if (isEdit && ticket) {
@@ -175,7 +213,7 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], current
         const validationErrors = validate(fields);
         if (Object.keys(validationErrors).length > 0) {
             setErrors(validationErrors);
-            toast.error("Please fix the errors");
+            showToast({ title: "Validation Error", description: "Please fix the errors", icon: <XCircle className="w-4 h-4" />, type: "error" });
             return;
         }
 
@@ -193,10 +231,10 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], current
 
             if (isEdit) {
                 await updateTicket(ticket.id, payload);
-                toast.success("Task updated successfully");
+                showToast({ title: "Task Updated", description: "Task updated successfully", icon: <CircleCheckBig className="w-4 h-4" />, type: "success" });
             } else {
                 await createTicket(payload);
-                toast.success("Task created successfully");
+                showToast({ title: "Task Created", description: "Task created successfully", icon: <CircleCheckBig className="w-4 h-4" />, type: "success" });
             }
 
             onSuccess?.();
@@ -206,15 +244,15 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], current
                 const mapped = {};
                 apiErrors.forEach((e) => { mapped[e.param] = e.msg; });
                 setErrors(mapped);
-                toast.error("Please fix the errors");
+                showToast({ title: "Validation Error", description: "Please fix the errors", icon: <XCircle className="w-4 h-4" />, type: "error" });
             } else if (err?.error === "You can update status only if assigned to this ticket") {
                 setErrors((prev) => ({ ...prev, status: "You can update status only if assigned to this ticket" }));
-                toast.error("Please fix the errors");
+                showToast({ title: "Validation Error", description: "Please fix the errors", icon: <XCircle className="w-4 h-4" />, type: "error" });
             } else {
                 const msg = isEdit
                     ? "Failed to update task. Please try again"
                     : "Failed to create task. Please try again";
-                toast.error(msg);
+                showToast({ title: "Error", description: msg, icon: <XCircle className="w-4 h-4" />, type: "error" });
             }
         } finally {
             setLoading(false);
@@ -314,7 +352,7 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], current
                             ${fields.deadline ? "text-text-filled" : "text-[#FFFFFF80]"}
                             ${errors.deadline
                                 ? "border-error-red focus:border-error-red"
-                                : "border-[#808080]/40 focus:border-accent-blue"         
+                                : "border-[#808080]/40 focus:border-accent-blue"
                             }`}
                     />
                 </div>
@@ -363,27 +401,23 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], current
             {/* Sprint */}
             <div>
                 <FieldLabel>Sprint</FieldLabel>
-                {(() => {
-                    const sprintToShow = isEdit
-                        ? (ticket?.sprint || currentSprint)
-                        : currentSprint;
-
-                    if (!sprintToShow) return (
-                        <div className={`w-full h-11 px-4 flex items-center rounded-xl bg-[#808080]/20 border text-[#FFFFFF80] text-input shadow-[0_0_0_1px_rgba(255,255,255,0.05)] border-[#808080]/40`}>
-                            No sprint available
-                        </div>
-                    );
-
-                    return (
-                        <StyledSelect
-                            value={fields.sprintId}
-                            onChange={(v) => set("sprintId", v)}
-                            options={[{ value: sprintToShow.id.toString(), label: sprintToShow.name }]}
-                            placeholder="Select sprint"
-                            hasError={!!errors.sprintId}
-                        />
-                    );
-                })()}
+                {sprintsLoading ? (
+                    <div className="w-full h-11 px-4 flex items-center rounded-xl bg-[#808080]/20 border border-[#808080]/40 text-[#FFFFFF80] text-input">
+                        Loading sprints…
+                    </div>
+                ) : sprintOptions.length === 0 ? (
+                    <div className={`w-full h-11 px-4 flex items-center rounded-xl bg-[#808080]/20 border text-[#FFFFFF80] text-input shadow-[0_0_0_1px_rgba(255,255,255,0.05)] border-[#808080]/40`}>
+                        No active or upcoming sprints available
+                    </div>
+                ) : (
+                    <StyledSelect
+                        value={fields.sprintId}
+                        onChange={(v) => set("sprintId", v)}
+                        options={sprintOptions}
+                        placeholder="Select sprint"
+                        hasError={!!errors.sprintId}
+                    />
+                )}
                 <FieldError message={errors.sprintId} />
             </div>
 
