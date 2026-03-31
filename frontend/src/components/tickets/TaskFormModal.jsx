@@ -296,8 +296,7 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], current
                             ${errors.deadline
                                 ? "border-error-red focus:border-error-red"
                                 : "border-divider/50 focus:border-accent-blue"
-                            }
-                            [color-scheme:dark]`}
+                            }`}
                     />
                 </div>
                 <FieldError message={errors.deadline} />

@@ -65,12 +65,19 @@ const MainLayout = () => {
             setIsRefreshing(true);
         };
 
+        const handleRefreshed = () => {
+            setIsRefreshing(false);
+            setRefreshed(true);
+        }
+
         window.addEventListener("sessionExpired", handleSessionExpired);
         window.addEventListener("sessionRefreshing", handleRefreshing);
+        window.addEventListener("sessionRefreshed", handleRefreshed);
 
         return () => {
             window.removeEventListener("sessionExpired", handleSessionExpired);
             window.removeEventListener("sessionRefreshing", handleRefreshing);
+            window.removeEventListener("sessionRefreshed", handleRefreshed);
         };
     }, []);
     useEffect(() => {
