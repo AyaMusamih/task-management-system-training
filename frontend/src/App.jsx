@@ -108,10 +108,9 @@ function App() {
       <ToastContainer
         position="top-right"
         autoClose={3000}
-        hideProgressBar
-        closeButton={false}
-        icon={false}
-        toastStyle={{ background: "transparent", boxShadow: "none", padding: 0 }}
+        toastClassName={() =>
+          "!w-[345px] mt-2 mr-2"
+        }
       />
     </div>
   );
