@@ -1,5 +1,5 @@
 const { z } = require("zod");
-const { bigIntIdSchema } = require("../../tickets/utils/schema.utils");
+const { bigIntIdSchema } = require("../../utils/schema.utils");
 
 const sprintShape = {
   name: z
