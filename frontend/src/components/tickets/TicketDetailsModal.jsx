@@ -9,10 +9,11 @@ import StatusControl from "../tickets/StatusControl";
 import TaskFormModal from "./TaskFormModal";
 
 const TicketDetailsModal = ({ ticket, openModal, closeModal, onRefresh, assignees = [] }) => {
-    if (!ticket) return null;
-
     const [loading, setLoading] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
+
+    if (!ticket) return null;
+
     const user = JSON.parse(localStorage.getItem("user")) || null;
     const isAdmin = user?.role === "ADMIN";
     const canUpdate = ticket.permissions?.canUpdateStatus;
@@ -143,7 +144,7 @@ const TicketDetailsModal = ({ ticket, openModal, closeModal, onRefresh, assignee
 
 
                 >
-                    Edit Ticket
+                    Edit Task
                 </Button>
 
                 {isAdmin && (

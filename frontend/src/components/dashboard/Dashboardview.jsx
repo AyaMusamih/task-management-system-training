@@ -4,11 +4,7 @@ import { Search, ChevronDown, Plus, ChevronLeft, ChevronRight, Bell, CircleAlert
 import { getTickets } from "../../services/tickets.service";
 import TicketsTable from "../tickets/TicketsTable";
 import TicketDetailsModal from "../tickets/TicketDetailsModal";
-import Empty from "../common-ui/Empty";
-import Error from "../common-ui/Error";
 import Button from "../shared/Button";
-import ErrorIcon from "../../assets/images/ErrorIcon.png";
-import EmptyIcon from "../../assets/images/EmptyIcon.png";
 import { showToast } from "../../utils/showToast";
 import SprintsModalContent from "../tickets/SprintsModalContent"
 
@@ -101,6 +97,12 @@ const FilterDropdown = ({ label, options, value, onChange }) => {
     );
 };
 
+const iconMap = {
+        success: <CircleCheckBig className="w-4 h-4" />,
+        error: <CircleAlert className="w-4 h-4" />,
+    };
+
+
 const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, header }) => {
     const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
@@ -127,11 +129,7 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
     const [error, setError] = useState(null);
 
     const allAssigneesRef = useRef([]);
-    const iconMap = {
-        success: <CircleCheckBig className="w-4 h-4" />,
-        error: <CircleAlert className="w-4 h-4" />,
-    };
-
+    
     useEffect(() => {
         if (location.state?.toast) {
             const toastData = location.state.toast;
@@ -344,7 +342,7 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
                             className="flex items-center justify-center gap-1.5 cursor-pointer bg-accent-blue hover:bg-accent-blue/80 transition-colors !rounded-lg"
                         >
                             <Plus className="w-4 h-4 text-text-primary" />
-                            <span className="text-white-btn font-inter text-[12px] sm:text-[13.5px] font-medium">Create Ticket</span>
+                            <span className="text-white-btn font-inter text-[12px] sm:text-[13.5px] font-medium">Create Task</span>
                         </Button>
                     )}
                 </div>
@@ -382,6 +380,12 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
                             value={null}
                             onChange={() => { }}
                         />
+                        <FilterDropdown
+                            label="Sprint"
+                            options={[]}
+                            value={null}
+                            onChange={() => { }}
+                        />
                     </div>
                     <div className="flex items-center gap-2 px-3 py-1.5 bg-card-left border border-divider/50 rounded-lg w-full sm:w-[280px] lg:w-[442px]">
                         <Search className="w-3.5 h-3.5 text-[#6B7280] shrink-0" />
@@ -400,50 +404,41 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
             <div className="mx-3 sm:mx-[16px] my-[7px] bg-background rounded-[10px] flex flex-col flex-1 min-h-0">
                 <div className="flex-1 pt-4 pb-0 min-h-0">
 
-                    <div className="flex items-center px-4 sm:px-[16px] mb-2">
+                    <div className="flex items-center px-4 sm:px-[16px] mb-6">
                         <h2 className="font-poppins font-semibold text-[18px] sm:text-[20px] text-text-primary">Tickets</h2>
                     </div>
 
                     {/* Status chips */}
-                    <div className="flex gap-2 px-3 sm:px-[16px] mb-3 overflow-x-auto scrollbar-none pb-3">
-                        {STAGES.map(({ key, label }) => (
-                            <button
-                                key={key}
-                                onClick={() => handleStatusChip(key)}
-                                className={`px-3 py-1 rounded-full text-hint font-medium border transition-colors duration-150 cursor-pointer whitespace-nowrap shrink-0
-                                    ${activeStatus === key ? STAGE_CHIP_ACTIVE[key] : STAGE_CHIP_STYLES[key]}`}
-                            >
-                                {label}
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* States */}
-                    {error ? (
-                        <Error
-                            title={error}
-                            description="Something went wrong. Please try again."
-                            icon={ErrorIcon}
-                            onRetry={fetchTickets}
-                        />
-                    ) : !loading && tickets.length === 0 ? (
-                        <Empty
-                            title={`No tickets in ${viewLabel}`}
-                            description={`No tasks have been added to this ${viewLabel} yet`}
-                            icon={EmptyIcon}
-                        />
-                    ) : (
-                        <TicketsTable
-                            tickets={tickets}
-                            basePath={basePath}
-                            showAssignee={showAssignee}
-                            showContext={showContext}
-                            onRowClick={(ticket) =>
-                                navigate(`${basePath}/tickets/${ticket.id}${location.search}`)
-                            }
-                            isLoading={loading}
-                        />
+                    {activeTab !== "scoped" && (
+                        <div className="flex gap-2 px-3 sm:px-[16px] mb-3 overflow-x-auto scrollbar-none pb-3">
+                            {STAGES.filter(({ key }) =>
+                                activeTab === "sprint" ? key !== "SCOPED_BACKLOG" : true
+                            ).map(({ key, label }) => (
+                                <button
+                                    key={key}
+                                    onClick={() => handleStatusChip(key)}
+                                    className={`px-3 py-1 rounded-full text-hint font-medium border transition-colors duration-150 cursor-pointer whitespace-nowrap shrink-0
+                    ${activeStatus === key ? STAGE_CHIP_ACTIVE[key] : STAGE_CHIP_STYLES[key]}`}
+                                >
+                                    {label}
+                                </button>
+                            ))}
+                        </div>
                     )}
+
+                    <TicketsTable
+                        tickets={tickets}
+                        basePath={basePath}
+                        showAssignee={showAssignee}
+                        showContext={showContext}
+                        onRowClick={(ticket) =>
+                            navigate(`${basePath}/tickets/${ticket.id}${location.search}`)
+                        }
+                        isLoading={loading}
+                        error={error}
+                        onRetry={fetchTickets}
+                        viewLabel={viewLabel}
+                    />
                 </div>
 
                 {/* Footer: count + pagination */}

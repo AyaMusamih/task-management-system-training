@@ -7,7 +7,12 @@ import { createTicket, updateTicket } from "../../services/tickets.service";
 const PRIORITY_OPTIONS = ["Low", "Medium", "High", "Critical"];
 const PRIORITY_VALUES = { Low: "LOW", Medium: "MEDIUM", High: "HIGH", Critical: "CRITICAL" };
 
-const STATUS_OPTIONS = [
+const STATUS_OPTIONS_CREATE = [
+    { value: "SCOPED_BACKLOG", label: "Scoped Backlog" },
+    { value: "SPRINT_BACKLOG", label: "Sprint Backlog" },
+];
+
+const STATUS_OPTIONS_EDIT = [
     { value: "SCOPED_BACKLOG", label: "Scoped Backlog" },
     { value: "SPRINT_BACKLOG", label: "Sprint Backlog" },
     { value: "TODO", label: "To Do" },
@@ -60,6 +65,10 @@ const validate = (fields) => {
         errors.status = "Please select a status";
     }
 
+    if (!fields.sprintId) {
+        errors.sprintId = "Please select a sprint";
+    }
+
     return errors;
 };
 
@@ -69,9 +78,9 @@ const FieldError = ({ message }) =>
     ) : null;
 
 const FieldLabel = ({ children, required = true }) => (
-    <label className="block text-field-label text-text-secondary mb-1.5">
+    <label className="block mb-1.5 text-text-primary font-inter font-bold text-[14px]">
         {children}
-        {required && <span className="text-error-red ml-0.5">*</span>}
+        {required && <span className="text-text-primary ml-0.5">*</span>}
     </label>
 );
 
@@ -84,15 +93,15 @@ const StyledSelect = ({ value, onChange, options, placeholder, hasError }) => {
             <button
                 type="button"
                 onClick={() => setOpen((v) => !v)}
-                className={`w-full h-11 px-4 flex items-center justify-between rounded-xl bg-info-bg border text-left transition-colors cursor-pointer
+                className={`w-full h-11 px-4 flex items-center justify-between rounded-xl bg-[#808080]/20 border text-left transition-colors cursor-pointer shadow-[0_0_0_1px_rgba(255,255,255,0.05)]
                     ${hasError
                         ? "border-error-red focus:border-error-red"
                         : open
                             ? "border-accent-blue"
-                            : "border-divider/50 hover:border-divider"
+                            : "border-[#808080]/40 hover:border-[#808080]/60"
                     }`}
             >
-                <span className={`text-field-label ${selected ? "text-text-filled" : "text-text-placeholder"}`}>
+                <span className={`text-input ${selected ? "text-text-filled" : "text-[#FFFFFF80]"}`}>
                     {selected ? selected.label : placeholder}
                 </span>
                 <ChevronDown className={`w-4 h-4 text-text-hint transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
@@ -219,6 +228,16 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], current
 
     const descLen = fields.description.length;
 
+    const isFormValid =
+        fields.title.trim().length <= 100 &&
+        !!fields.description.trim() &&
+        fields.description.length <= DESCRIPTION_MAX &&
+        !!fields.assigneeId &&
+        !!fields.deadline &&
+        !!fields.priority &&
+        !!fields.status &&
+        !!fields.sprintId;
+
     return (
         <div className="flex flex-col gap-4">
 
@@ -230,10 +249,10 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], current
                     value={fields.title}
                     onChange={(e) => set("title", e.target.value)}
                     placeholder="Enter task title"
-                    className={`w-full h-11 px-4 rounded-xl bg-info-bg border text-field-label text-text-filled placeholder:text-text-placeholder outline-none transition-colors
+                    className={`w-full h-11 px-4 rounded-xl bg-[#808080]/20 border text-input text-text-filled placeholder:text-[#FFFFFF80] placeholder:text-input outline-none transition-colors shadow-[0_0_0_1px_rgba(255,255,255,0.05)]
                         ${errors.title
                             ? "border-error-red focus:border-error-red"
-                            : "border-divider/50 focus:border-accent-blue"
+                            : "border-[#808080]/40 focus:border-accent-blue"
                         }`}
                 />
                 <FieldError message={errors.title} />
@@ -249,10 +268,10 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], current
                         placeholder="Enter task description"
                         rows={4}
                         maxLength={DESCRIPTION_MAX + 50}
-                        className={`w-full px-4 pt-3 pb-6 rounded-xl bg-info-bg border text-field-label text-text-filled placeholder:text-text-placeholder outline-none resize-none transition-colors
+                        className={`w-full px-4 pt-3 pb-6 rounded-xl bg-[#808080]/20 border text-input text-text-filled placeholder:text-[#FFFFFF80] placeholder:text-input outline-none resize-none transition-colors shadow-[0_0_0_1px_rgba(255,255,255,0.05)]
                             ${errors.description
                                 ? "border-error-red focus:border-error-red"
-                                : "border-divider/50 focus:border-accent-blue"
+                                : "border-[#808080]/40 focus:border-accent-blue"
                             }`}
                     />
                     <span className={`absolute bottom-2 right-3 text-hint ${descLen > DESCRIPTION_MAX ? "text-error-red" : "text-text-hint"}`}>
@@ -274,8 +293,8 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], current
                         hasError={!!errors.assigneeId}
                     />
                 ) : (
-                    <div className={`w-full h-11 px-4 flex items-center rounded-xl bg-info-bg border text-text-hint text-field-label
-                        ${errors.assigneeId ? "border-error-red" : "border-divider/50"}`}>
+                    <div className={`w-full h-11 px-4 flex items-center rounded-xl bg-[#808080]/20 border text-[#FFFFFF80] text-input shadow-[0_0_0_1px_rgba(255,255,255,0.05)]
+                        ${errors.assigneeId ? "border-error-red" : "border-[#808080]/40"}`}>
                         No assignees available
                     </div>
                 )}
@@ -291,11 +310,11 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], current
                         value={fields.deadline}
                         onChange={(e) => set("deadline", e.target.value)}
                         min={new Date().toISOString().split("T")[0]}
-                        className={`w-full h-11 px-4 rounded-xl bg-info-bg border text-field-label outline-none transition-colors cursor-pointer appearance-none
-                            ${fields.deadline ? "text-text-filled" : "text-text-placeholder"}
+                        className={`w-full h-11 px-4 rounded-xl bg-[#808080]/20 border text-input outline-none transition-colors cursor-pointer appearance-none shadow-[0_0_0_1px_rgba(255,255,255,0.05)]
+                            ${fields.deadline ? "text-text-filled" : "text-[#FFFFFF80]"}
                             ${errors.deadline
                                 ? "border-error-red focus:border-error-red"
-                                : "border-divider/50 focus:border-accent-blue"
+                                : "border-[#808080]/40 focus:border-accent-blue"         
                             }`}
                     />
                 </div>
@@ -334,7 +353,7 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], current
                 <StyledSelect
                     value={fields.status}
                     onChange={(v) => set("status", v)}
-                    options={STATUS_OPTIONS}
+                    options={isEdit ? STATUS_OPTIONS_EDIT : STATUS_OPTIONS_CREATE}
                     placeholder="Select status"
                     hasError={!!errors.status}
                 />
@@ -342,32 +361,31 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], current
             </div>
 
             {/* Sprint */}
-            {(() => {
-                const sprintToShow = isEdit
-                    ? (ticket?.sprint || currentSprint)
-                    : currentSprint;
+            <div>
+                <FieldLabel>Sprint</FieldLabel>
+                {(() => {
+                    const sprintToShow = isEdit
+                        ? (ticket?.sprint || currentSprint)
+                        : currentSprint;
 
-                if (!sprintToShow) return null;
-
-                return (
-                    <div>
-                        <FieldLabel required={false}>Sprint</FieldLabel>
-                        <div className="flex gap-2">
-                            <button
-                                type="button"
-                                onClick={() => set("sprintId", fields.sprintId ? "" : sprintToShow.id.toString())}
-                                className={`px-4 py-1.5 rounded-full text-hint font-medium border transition-colors duration-150 cursor-pointer
-                        ${fields.sprintId
-                                        ? "border-accent-blue bg-accent-blue/15 text-accent-blue"
-                                        : "border-divider/50 text-text-secondary hover:border-divider hover:text-text-primary bg-transparent"
-                                    }`}
-                            >
-                                {sprintToShow.name}
-                            </button>
+                    if (!sprintToShow) return (
+                        <div className={`w-full h-11 px-4 flex items-center rounded-xl bg-[#808080]/20 border text-[#FFFFFF80] text-input shadow-[0_0_0_1px_rgba(255,255,255,0.05)] border-[#808080]/40`}>
+                            No sprint available
                         </div>
-                    </div>
-                );
-            })()}
+                    );
+
+                    return (
+                        <StyledSelect
+                            value={fields.sprintId}
+                            onChange={(v) => set("sprintId", v)}
+                            options={[{ value: sprintToShow.id.toString(), label: sprintToShow.name }]}
+                            placeholder="Select sprint"
+                            hasError={!!errors.sprintId}
+                        />
+                    );
+                })()}
+                <FieldError message={errors.sprintId} />
+            </div>
 
             {/* Submit */}
             <Button
@@ -375,7 +393,9 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], current
                 size="lg"
                 onClick={handleSubmit}
                 loading={loading}
-                className="w-full mt-2 !rounded-xl bg-accent-blue text-white font-poppins text-[15px] font-medium"
+                disabled={!isFormValid}
+                disabledClassName="bg-accent-blue"
+                className="w-full mt-2 !rounded-xl text-white font-poppins text-[15px] font-medium cursor-pointer"
             >
                 {loading
                     ? isEdit ? "Updating…" : "Creating…"

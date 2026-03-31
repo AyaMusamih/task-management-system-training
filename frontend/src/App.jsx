@@ -106,12 +106,28 @@ function App() {
         <Route path='*' element={<NotFound />} />
       </Routes>
       <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        toastClassName={() =>
-          "!w-[345px]"
-        }
-      />
+    position="top-right"
+    autoClose={3000}
+   toastClassName={(context) =>
+    `inline-flex items-center gap-2 px-4 py-3 rounded-xl border mb-2 shadow-lg bg-input-bg text-white w-auto max-w-[500px] whitespace-nowrap
+    ${context?.type === "success"
+        ? "border-[#22C55E]/60"
+        : "border-[#ef4444]/60"
+    }`
+}
+    bodyClassName={() => "flex items-center gap-2 text-hint font-inter text-white"}
+   icon={({ type }) => (
+    <span className={`flex items-center justify-center w-4 h-4 rounded-full border text-hint shrink-0
+        ${type === "success" ? "border-[#22C55E] text-[#22C55E]" : "border-[#ef4444] text-[#ef4444]"}`}>
+        {type === "success" ? "✓" : "✕"}
+    </span>
+)}
+    closeButton={({ closeToast }) => (
+        <button onClick={closeToast} className="ml-auto text-white opacity-60 hover:opacity-100 cursor-pointer">
+            ✕
+        </button>
+    )}
+/>
     </div>
   );
 }
