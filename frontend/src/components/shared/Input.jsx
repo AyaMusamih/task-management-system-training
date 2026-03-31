@@ -16,9 +16,11 @@ const Input = ({
     helperText,
     disabled = false,
     className = "",
+    ...props
 }) => {
     const [showPassword, setShowPassword] = useState(false);
 
+    const isDate = type === "date";
     const isPassword = type === "password";
     const isCheckbox = type === "checkbox";
     const inputType = isPassword ? (showPassword ? "text" : "password") : type;
@@ -90,8 +92,13 @@ const Input = ({
                         onChange={onChange}
                         placeholder={placeholder}
                         disabled={disabled}
-                        className={`input-field text-text-filled text-field-placeholder placeholder:text-text-placeholder bg-input-bg border outline-none transition-all duration-200 ${borderColor} ${disabledStyles} ${isPassword ? "pr-16" : ""} ${className}`}
-                    />
+                        {...props}
+                        className={`input-field text-text-filled placeholder:text-text-placeholder bg-input-bg border outline-none transition-all duration-200
+                                    ${borderColor} ${disabledStyles} 
+                                    ${isPassword ? "pr-16" : ""}
+                                    ${isDate ? "pr-4" : ""}
+                                    ${className}
+                                  `} />
 
                     {/* Toggle password */}
                     {isPassword && (
@@ -122,7 +129,7 @@ const Input = ({
                                 {error}
                             </span>
                         </div>
-                            {helperText}
+                        {helperText}
                     </div>
                 ) : (
                     <div className="flex items-start gap-1">

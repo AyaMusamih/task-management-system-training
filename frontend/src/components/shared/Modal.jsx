@@ -29,8 +29,6 @@ const Modal = ({
                 w-[500px] max-w-[95vw]
                 h-[859px] max-h-[90vh]"
                 style={{ borderRadius: "18px" }}
-                //className="bg-[#141b27] text-white p-6 rounded-2xl shadow-lg w-130 transition duration-200"
-
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
