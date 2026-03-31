@@ -1,6 +1,6 @@
 const { z } = require("zod");
 const { TicketStatus, Priority } = require("../../../prisma/generated");
-const { bigIntIdSchema } = require("../utils/schema.utils");
+const { bigIntIdSchema } = require("../../utils/schema.utils");
 
 const addTicketSchema = z.object({
   title: z.string().min(1, "Title is required").max(100, "Title too long"),
