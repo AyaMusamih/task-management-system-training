@@ -25,12 +25,12 @@ const SidebarContent = ({ links, initials, user, onClose, onLogoutClick }) => {
                         <p className="text-hint text-text-hint">Project Alpha</p>
                     </div>
                 </div>
-                <button
+                {/* <button
                     onClick={onClose}
                     className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg text-text-hint hover:text-text-primary hover:bg-white/5 transition-colors"
                 >
-                    <X className="w-4 h-4" />
-                </button>
+                    <X className="w-4 h-40" />
+                </button> */}
             </div>
 
             <div className="border-b border-divider/30 mb-4 mt-[-16px]" />

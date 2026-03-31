@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate, useParams, useOutletContext, useLocation } from "react-router-dom";
-import { Search, ChevronDown, Plus, ChevronLeft, ChevronRight, Bell, CircleAlert, CircleCheckBig } from "lucide-react";
+import { Search, ChevronDown, Plus, ChevronLeft, ChevronRight, Bell, CircleAlert, CircleCheckBig, ClockArrowDown } from "lucide-react";
 import { getTickets } from "../../services/tickets.service";
 import TicketsTable from "../tickets/TicketsTable";
 import TicketDetailsModal from "../tickets/TicketDetailsModal";
 import Button from "../shared/Button";
 import { showToast } from "../../utils/showToast";
+import SprintsModalContent from "../tickets/SprintsModalContent"
 
 const STAGES = [
     { key: "SCOPED_BACKLOG", label: "Scoped Backlog" },
@@ -210,6 +211,18 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
         });
     }, [id, allTickets, openModal, closeModal, fetchTickets]);
 
+    const handleOpenSprints = () => {
+        openModal({
+            title: "Sprints",
+            content: (
+                <SprintsModalContent
+                    openModal={openModal}
+                    closeModal={closeModal}
+                />
+            ),
+        });
+    };
+
     const assignees = allAssigneesRef.current;
     const currentSprint = allTickets.find((t) => t.sprint)?.sprint;
 
@@ -310,7 +323,19 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
                     ))}
                 </div>
 
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex flex-col sm:flex-row items-center gap-2 shrink-0">
+
+                    {/* Sprints Button */}
+                    {isAdmin && (
+                        <button
+                            onClick={handleOpenSprints}
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-orange-400/40 text-orange-400 hover:bg-orange-400/10 transition-colors cursor-pointer"
+                        >
+                            <ClockArrowDown className="w-4 h-4" />
+                            <span className="text-sm font-medium">Sprints</span>
+                        </button>
+                    )}
+
                     {isAdmin && (
                         <Button
                             onClick={handleCreateClick}

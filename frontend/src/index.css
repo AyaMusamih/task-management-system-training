@@ -12,6 +12,11 @@ input[type="password"]::-webkit-credentials-auto-fill-button {
   pointer-events: none;
 }
 
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1); 
+  cursor: pointer;
+}
+
 .Toastify__toast {
   background: transparent !important;
   box-shadow: none !important;
