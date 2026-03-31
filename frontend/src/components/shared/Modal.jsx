@@ -34,9 +34,9 @@ const Modal = ({
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="bg-background shrink-0 h-16 px-8 flex items-center justify-between">
+                <div className="bg-background shrink-0 h-12 px-4 flex items-center justify-between">
                     {title && (
-                        <h2 className="font-poppins font-semibold text-[18px] text-text-primary">
+                        <h2 className="font-inter font-meduim text-[20px] text-text-primary">
                             {title}
                         </h2>
                     )}

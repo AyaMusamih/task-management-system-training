@@ -11,6 +11,7 @@ const Button = ({
   loading = false,
   onClick,
   className = "",
+  disabledClassName = "",
   success,
   error,
   style
@@ -32,7 +33,7 @@ const Button = ({
   };
 
   const disabledStyles =
-    disabled ? "bg-input-bg opacity-50 cursor-not-allowed pointer-events-none" : loading ? "bg-loading-dark cursor-not-allowed pointer-events-none" : success ? "bg-success-green hover:bg-success-dark" : error ? "bg-error-red hover:bg-error-dark" : "";
+    disabled ? `opacity-50 cursor-not-allowed pointer-events-none ${disabledClassName || "bg-input-bg"}` : loading ? "bg-loading-dark cursor-not-allowed pointer-events-none" : success ? "bg-success-green hover:bg-success-dark" : error ? "bg-error-red hover:bg-error-dark" : "";
 
   return (
     <div className="relative w-full group">

@@ -132,6 +132,12 @@ input[type="password"]::-webkit-credentials-auto-fill-button {
     font-family: var(--font-inter);
   }
 
+  .text-input {
+    font-size: 16px;
+    font-weight: 400;
+    font-family: var(--font-inter);
+  }
+
   .text-checkbox {
     font-size: 12px;
     font-weight: 400;

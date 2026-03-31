@@ -1,4 +1,8 @@
 import Loading from "../common-ui/Loading";
+import Error from "../common-ui/Error";
+import Empty from "../common-ui/Empty";
+import ErrorIcon from "../../assets/images/ErrorIcon.png";
+import EmptyIcon from "../../assets/images/EmptyIcon.png";
 
 const PRIORITY_STYLES = {
     CRITICAL: "bg-red-600/15 text-red-500 border border-red-600/40",
@@ -45,6 +49,8 @@ const AVATAR_COLORS = [
     "bg-[#16A34A]",
 ];
 
+const SPRINT_CHIP_STYLE = "bg-[#4B4F55] text-white-btn border border-white/10";
+
 const getAvatarColor = (name = "") => {
     let hash = 0;
     for (let i = 0; i < name.length; i++) hash += name.charCodeAt(i);
@@ -63,7 +69,7 @@ const getContext = (ticket) => {
     return "—";
 };
 
-const TicketsTable = ({ tickets, showAssignee = true, showContext = false, onRowClick, isLoading = false }) => {
+const TicketsTable = ({ tickets, showAssignee = true, showContext = false, onRowClick, isLoading = false, error, onRetry, viewLabel }) => {
 
     const handleRowClick = (ticket) => {
         if (onRowClick) onRowClick(ticket);
@@ -124,23 +130,45 @@ const TicketsTable = ({ tickets, showAssignee = true, showContext = false, onRow
                 <table className="w-full rounded-[8px] overflow-hidden min-w-[540px]">
                     <thead className="bg-input-bg">
                         <tr>
-                            <th className="text-left py-3 px-4 text-hint text-text-hint font-medium w-[30%]">Task Name</th>
-                            <th className="text-left py-3 px-4 text-hint text-text-hint font-medium w-[28%] hidden lg:table-cell">Description</th>
+                            <th className="text-left py-3 px-4 text-hint text-text-hint font-medium w-[20%]">Task Name</th>
+                            <th className="text-left py-3 px-4 text-hint text-text-hint font-medium w-[35%] hidden lg:table-cell">Description</th>
                             <th className="text-left py-3 px-4 text-hint text-text-hint font-medium w-[12%]">Priority</th>
                             {showAssignee && (
                                 <th className="text-left py-3 px-4 text-hint text-text-hint font-medium w-[12%]">Assignee</th>
                             )}
                             {showContext && (
-                                <th className="text-left py-3 px-4 text-hint text-text-hint font-medium w-[10%] hidden lg:table-cell">Context</th>
+                                <th className="text-left py-3 px-4 text-hint text-text-hint font-medium w-[12%] hidden lg:table-cell">Context</th>
                             )}
-                            <th className="text-left py-3 px-4 text-hint text-text-hint font-medium w-[14%]">Status</th>
+                            <th className="text-left py-3 px-4 text-hint text-text-hint font-medium w-[12%]">Status</th>
+                            <th className="text-left py-3 px-4 text-hint text-text-hint font-medium w-[10%] whitespace-nowrap">Sprint No.</th>
                         </tr>
                     </thead>
                     <tbody>
                         {isLoading ? (
                             <tr>
-                                <td colSpan={2 + (showAssignee ? 1 : 0) + (showContext ? 1 : 0) + 2}>
+                                <td colSpan={5 + (showAssignee ? 1 : 0) + (showContext ? 1 : 0)}>
                                     <Loading variant="skeleton" rows={8} />
+                                </td>
+                            </tr>
+                        ) : error ? (
+                            <tr>
+                                <td colSpan={5 + (showAssignee ? 1 : 0) + (showContext ? 1 : 0)}>
+                                    <Error
+                                        title={error}
+                                        description="Something went wrong. Please try again."
+                                        icon={ErrorIcon}
+                                        onRetry={onRetry}
+                                    />
+                                </td>
+                            </tr>
+                        ) : tickets.length === 0 ? (
+                            <tr>
+                                <td colSpan={5 + (showAssignee ? 1 : 0) + (showContext ? 1 : 0)}>
+                                    <Empty
+                                        title={`No tickets in ${viewLabel}`}
+                                        description={`No tasks have been added to this ${viewLabel} yet`}
+                                        icon={EmptyIcon}
+                                    />
                                 </td>
                             </tr>
                         ) : tickets.map((ticket) => (
@@ -195,6 +223,16 @@ const TicketsTable = ({ tickets, showAssignee = true, showContext = false, onRow
                                             className={STATUS_STYLES[ticket.status] || "bg-slate-700/50 text-slate-300"}
                                         />
                                     ) : <span className="text-text-hint text-hint">—</span>}
+                                </td>
+                                <td className="py-3 px-4">
+                                    {ticket.sprint ? (
+                                        <Chip
+                                            label={ticket.sprint.name}
+                                            className={SPRINT_CHIP_STYLE}
+                                        />
+                                    ) : (
+                                        <span className="text-text-hint text-hint">—</span>
+                                    )}
                                 </td>
                             </tr>
                         ))}
