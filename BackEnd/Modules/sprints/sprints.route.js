@@ -7,22 +7,43 @@ const {
   createSprintSchema,
   updateSprintSchema,
   updateSprintParamSchema,
-} = require("./schema/createSprint.schema");
+  SprintRequestSchema,
+} = require("./schema/sprint.schema");
 const isAdmin = require("../Middlewares/isAdmin.middleware");
 
 router.use(authMiddleware);
-router.use(isAdmin);
 
 router.post(
   "/create",
-  validate({ body: createSprintSchema }),
+  isAdmin,
+  validate({ body: createSprintSchema }), 
   sprintController.create,
 );
 
 router.patch(
-  "/update",
-  validate({ param: updateSprintParamSchema, body: updateSprintSchema }),
+  "/update/:id",
+  isAdmin,
+  validate({ params: updateSprintParamSchema, body: updateSprintSchema }),
   sprintController.update,
+);
+
+router.get(
+  "",
+  validate({ query: SprintRequestSchema }),
+  sprintController.getSprints,
+);
+
+router.get(
+  "/:id",
+  validate({ params: updateSprintParamSchema }),
+  sprintController.getById,
+);
+
+router.delete(
+  "/:id",
+  isAdmin, 
+  validate({ params: updateSprintParamSchema }),
+  sprintController.deleteSprint
 );
 
 module.exports = router;
