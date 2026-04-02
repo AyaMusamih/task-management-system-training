@@ -132,32 +132,33 @@ const MainLayout = () => {
             </div>
 
             {(isRefreshing || sessionExpired) && (
-                <div className="fixed top-4 left-1/2 -translate-x-1/2 w-[50%] max-w-2xl z-51 flex flex-col gap-3 backdrop-blur-sm">
+                <div className="fixed top-4 left-1/2 -translate-x-1/2 w-[90%] sm:w-[70%] md:w-[50%] max-w-2xl z-51 flex flex-col gap-3 backdrop-blur-sm">
 
                     {isRefreshing && (
                         <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-yellow-500/30 bg-yellow-500/10 text-[#D97706]">
                             <div className="w-4 h-4 border-2 border-[#D97706] border-t-transparent rounded-full animate-spin" />
-                            <span>Refreshing your session...</span>
+                            <span className="text-sm sm:text-base">Refreshing your session...</span>
                         </div>
                     )}
 
                     {sessionExpired && (
-                        <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-yellow-500/30 bg-yellow-500/10 text-[#D97706]">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3 rounded-xl border border-yellow-500/30 bg-yellow-500/10 text-[#D97706]">
 
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3 flex-1">
                                 <TriangleAlert className="w-4 h-4 text-[#D97706]" />
-                                <span>Your session has expired. Please log in again.</span>
+                                <span className="text-sm sm:text-base">Your session has expired. Please log in again.</span>
                             </div>
 
                             <button
                                 onClick={handleSessionConfirm}
-                                className="px-3 py-1.5 rounded-lg border border-[#D97706] hover:bg-[#D97706]/10 transition cursor-pointer"
+                                className="mt-2 sm:mt-0 px-3 py-1.5 rounded-lg border border-[#D97706] hover:bg-[#D97706]/10 transition cursor-pointer text-sm sm:text-base"
                             >
                                 Log in again
                             </button>
 
                         </div>
                     )}
+
                 </div>
             )}
 
