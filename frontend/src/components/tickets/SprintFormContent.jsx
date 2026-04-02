@@ -148,6 +148,7 @@ const SprintFormContent = ({ sprint, openModal, closeModal, onSuccess }) => {
                     label="Start Date"
                     type="date"
                     value={startDate}
+                    min={new Date().toLocaleDateString("en-CA")}
                     onChange={(e) => {
                         setStartDate(e.target.value);
                         setErrors((prev) => ({ ...prev, startDate: undefined }));
@@ -166,7 +167,7 @@ const SprintFormContent = ({ sprint, openModal, closeModal, onSuccess }) => {
                         setEndDate(e.target.value);
                         setErrors((prev) => ({ ...prev, endDate: undefined }));
                     }}
-                    min={startDate || undefined}
+                    min={startDate || new Date().toLocaleDateString("en-CA")}
                     className={`!bg-info-bg ${endDate ? "text-text-filled" : "text-text-placeholder"}`}
                     error={errors.endDate}
                 />
