@@ -1,6 +1,6 @@
 const { z } = require("zod");
 const { addTicketSchema } = require("./addTicket.schema");
-const { bigIntIdSchema } = require("../utils/schema.utils");
+const { bigIntIdSchema } = require("../../utils/schema.utils");
 const { TicketStatus } = require("../../../prisma/generated");
 const updateTicketSchema = addTicketSchema.partial();
 const updateTicketParamSchema = z

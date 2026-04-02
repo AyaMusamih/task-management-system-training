@@ -74,7 +74,6 @@ const addTicket = async (req, res, next) => {
 const updateTicket = async (req, res, next) => {
   try {
     const { id } = req.params;
-    console.log("jeeee"); console.log(typeof(id))
     const {deadline, ...data } = req.body;
     const payload = {
       ...data,
