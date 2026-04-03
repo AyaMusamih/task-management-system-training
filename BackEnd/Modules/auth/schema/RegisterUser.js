@@ -1,4 +1,5 @@
 const { z } = require("zod");
+const {strongPasswordSchema} = require("../../utils/schema.utils")
 
 const registerUserSchema = z.object({
     name: z
@@ -15,16 +16,7 @@ const registerUserSchema = z.object({
         .max(255, { message: "Email must be at most 255 characters long" })
         .email("Invalid email format"),
 
-    password: z
-        .string()
-        .trim()
-        .nonempty({ message: "Password is required" })
-        .min(8, { message: "Password must be at least 8 characters" })
-        .max(100, { message: "Password is too long" })
-        .regex(
-            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).+$/,
-            { message: "Password must contain uppercase, lowercase, number and special character" }
-        ),
+    password: strongPasswordSchema,
 }).strict();
 
 module.exports = registerUserSchema;

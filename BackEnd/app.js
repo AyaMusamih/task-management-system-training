@@ -16,6 +16,7 @@ const healthRouter = require('./Modules/health');
 const authRouter = require('./Modules/auth/auth.routes');
 const ticketsRouter = require('./Modules/tickets/tickets.route');
 const sprintRouter = require('./Modules/sprints/sprints.route')
+const userRouter = require('./Modules/user/user.routes');
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -31,6 +32,7 @@ app.use('', healthRouter);
 app.use('/auth', authRouter);
 app.use('/tickets', ticketsRouter);
 app.use('/sprints', sprintRouter)
+app.use('/profile', userRouter);
 
 
 
