@@ -18,4 +18,10 @@ const strongPasswordSchema = z
       "Password must contain uppercase, lowercase, number and special character",
   });  
 
-module.exports = { bigIntIdSchema, strongPasswordSchema };
+  const paginationSchema =  z.object({
+      page: z.coerce.number().int().positive().default(1),
+      limit: z.coerce.number().int().positive().max(100).default(20),
+    })
+  .strict();
+
+module.exports = { bigIntIdSchema, strongPasswordSchema, paginationSchema };

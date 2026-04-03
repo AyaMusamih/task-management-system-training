@@ -34,4 +34,22 @@ const changePassword = async (userId, currentPassword, newPassword) => {
   });
 };
 
-module.exports = { findUserByEmail, findUserById, changePassword };
+const getUsers = async ({ page, limit}) => {
+  const skip = (Number(page) - 1) * Number(limit);
+  const where = {
+    role: "USER",
+  };
+
+  const [users, total] = await Promise.all([
+  prisma.user.findMany({
+    where,
+    select: { id: true, name: true, email: true, role: true },
+    skip,
+    take: Number(limit),
+  }),
+  prisma.user.count({ where }),
+]);
+  return { users, total, page: Number(page), limit: Number(limit) };
+}
+
+module.exports = { findUserByEmail, findUserById, changePassword, getUsers };
