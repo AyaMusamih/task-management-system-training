@@ -26,7 +26,7 @@ const getTickets = async (
   }
   if (view === "sprint") {
     where.sprintId = { not: null };
-    where.sprint = { is: { isActive: true } };
+ 
   }
   if (view === "scoped" && !status) where.status = "SCOPED_BACKLOG";
   if (status) where.status = status;
