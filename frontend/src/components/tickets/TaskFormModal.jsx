@@ -25,50 +25,29 @@ const STATUS_OPTIONS_EDIT = [
     { value: "DEPLOYED", label: "Deployed" },
 ];
 
-const DESCRIPTION_MAX = 200;
+const TITLE_MAX = 100;
+const DESCRIPTION_MAX = 10000;
 
 const validate = (fields) => {
     const errors = {};
 
     if (!fields.title.trim()) {
         errors.title = "Title is required";
-    } else if (fields.title.trim().length < 5) {
-        errors.title = "Title must be at least 5 characters";
-    } else if (fields.title.trim().length > 100) {
-        errors.title = "Title cannot exceed 100 characters";
+    } else if (fields.title.trim().length > TITLE_MAX) {
+        errors.title = `Title cannot exceed ${TITLE_MAX} characters`;
     }
 
-    if (!fields.description.trim()) {
-        errors.description = "Description is required";
-    } else if (fields.description.length > DESCRIPTION_MAX) {
+    if (fields.description.length > DESCRIPTION_MAX) {
         errors.description = `Description cannot exceed ${DESCRIPTION_MAX} characters`;
     }
 
-    if (!fields.assigneeId) {
-        errors.assigneeId = "Please select an assignee";
-    }
-
-    if (!fields.deadline) {
-        errors.deadline = "Deadline is required";
-    } else {
+    if (fields.deadline) {
         const selected = new Date(fields.deadline);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         if (selected < today) {
             errors.deadline = "Deadline must be in the future";
         }
-    }
-
-    if (!fields.priority) {
-        errors.priority = "Please select a priority";
-    }
-
-    if (!fields.status) {
-        errors.status = "Please select a status";
-    }
-
-    if (!fields.sprintId) {
-        errors.sprintId = "Please select a sprint";
     }
 
     return errors;
@@ -79,7 +58,7 @@ const FieldError = ({ message }) =>
         <p className="mt-1 text-hint text-error-red">{message}</p>
     ) : null;
 
-const FieldLabel = ({ children, required = true }) => (
+const FieldLabel = ({ children, required = false }) => (
     <label className="block mb-1.5 text-text-primary font-inter font-bold text-[14px]">
         {children}
         {required && <span className="text-text-primary ml-0.5">*</span>}
@@ -160,7 +139,8 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], onSucce
     const [sprintOptions, setSprintOptions] = useState([]);
     const [sprintsLoading, setSprintsLoading] = useState(true);
 
-    // Fetch all sprints and filter to active + future
+    const isScopedBacklog = fields.status === "SCOPED_BACKLOG";
+
     useEffect(() => {
         const fetchSprints = async () => {
             setSprintsLoading(true);
@@ -205,6 +185,12 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], onSucce
         }
     }, [fields, submitted]);
 
+    useEffect(() => {
+        if (isScopedBacklog) {
+            setFields((prev) => ({ ...prev, sprintId: "" }));
+        }
+    }, [isScopedBacklog]);
+
     const set = (key, value) =>
         setFields((prev) => ({ ...prev, [key]: value }));
 
@@ -221,12 +207,14 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], onSucce
         try {
             const payload = {
                 title: fields.title.trim(),
-                description: fields.description.trim(),
-                assigneeId: fields.assigneeId,
-                deadline: new Date(`${fields.deadline}T23:59:59Z`).toISOString(),
-                priority: fields.priority,
-                status: fields.status,
-                sprintId: fields.sprintId || null,
+                description: fields.description.trim() || undefined,
+                assigneeId: fields.assigneeId || undefined,
+                deadline: fields.deadline
+                    ? new Date(`${fields.deadline}T23:59:59Z`).toISOString()
+                    : undefined,
+                priority: fields.priority || undefined,
+                status: fields.status || undefined,
+                sprintId: isScopedBacklog ? null : (fields.sprintId || undefined),
             };
 
             if (isEdit) {
@@ -267,21 +255,16 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], onSucce
     const descLen = fields.description.length;
 
     const isFormValid =
-        fields.title.trim().length <= 100 &&
-        !!fields.description.trim() &&
-        fields.description.length <= DESCRIPTION_MAX &&
-        !!fields.assigneeId &&
-        !!fields.deadline &&
-        !!fields.priority &&
-        !!fields.status &&
-        !!fields.sprintId;
+        !!fields.title.trim() &&
+        fields.title.trim().length <= TITLE_MAX &&
+        fields.description.length <= DESCRIPTION_MAX;
 
     return (
         <div className="flex flex-col gap-4">
 
             {/* Title */}
             <div>
-                <FieldLabel>Title</FieldLabel>
+                <FieldLabel required>Title</FieldLabel>
                 <input
                     type="text"
                     value={fields.title}
@@ -305,7 +288,6 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], onSucce
                         onChange={(e) => set("description", e.target.value)}
                         placeholder="Enter task description"
                         rows={4}
-                        maxLength={DESCRIPTION_MAX + 50}
                         className={`w-full px-4 pt-3 pb-6 rounded-xl bg-[#808080]/20 border text-input text-text-filled placeholder:text-[#FFFFFF80] placeholder:text-input outline-none resize-none transition-colors shadow-[0_0_0_1px_rgba(255,255,255,0.05)]
                             ${errors.description
                                 ? "border-error-red focus:border-error-red"
@@ -398,28 +380,30 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], onSucce
                 <FieldError message={errors.status} />
             </div>
 
-            {/* Sprint */}
-            <div>
-                <FieldLabel>Sprint</FieldLabel>
-                {sprintsLoading ? (
-                    <div className="w-full h-11 px-4 flex items-center rounded-xl bg-[#808080]/20 border border-[#808080]/40 text-[#FFFFFF80] text-input">
-                        Loading sprints…
-                    </div>
-                ) : sprintOptions.length === 0 ? (
-                    <div className={`w-full h-11 px-4 flex items-center rounded-xl bg-[#808080]/20 border text-[#FFFFFF80] text-input shadow-[0_0_0_1px_rgba(255,255,255,0.05)] border-[#808080]/40`}>
-                        No active or upcoming sprints available
-                    </div>
-                ) : (
-                    <StyledSelect
-                        value={fields.sprintId}
-                        onChange={(v) => set("sprintId", v)}
-                        options={sprintOptions}
-                        placeholder="Select sprint"
-                        hasError={!!errors.sprintId}
-                    />
-                )}
-                <FieldError message={errors.sprintId} />
-            </div>
+            {/* Sprint hidden when status is SCOPED_BACKLOG */}
+            {!isScopedBacklog && (
+                <div>
+                    <FieldLabel>Sprint</FieldLabel>
+                    {sprintsLoading ? (
+                        <div className="w-full h-11 px-4 flex items-center rounded-xl bg-[#808080]/20 border border-[#808080]/40 text-[#FFFFFF80] text-input">
+                            Loading sprints…
+                        </div>
+                    ) : sprintOptions.length === 0 ? (
+                        <div className={`w-full h-11 px-4 flex items-center rounded-xl bg-[#808080]/20 border text-[#FFFFFF80] text-input shadow-[0_0_0_1px_rgba(255,255,255,0.05)] border-[#808080]/40`}>
+                            No active or upcoming sprints available
+                        </div>
+                    ) : (
+                        <StyledSelect
+                            value={fields.sprintId}
+                            onChange={(v) => set("sprintId", v)}
+                            options={sprintOptions}
+                            placeholder="Select sprint"
+                            hasError={!!errors.sprintId}
+                        />
+                    )}
+                    <FieldError message={errors.sprintId} />
+                </div>
+            )}
 
             {/* Submit */}
             <Button
