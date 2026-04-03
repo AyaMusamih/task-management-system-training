@@ -1,7 +1,11 @@
 const prisma = require("../prismaClient");
 const bcrypt = require("bcrypt");
 const { findUserByEmail } = require("../user/user.service");
-const { generateAuthSession } = require("./utils/auth.util");
+const { generateAuthSession, hashToken } = require("./utils/auth.util");
+const { verifyRefreshToken } = require("./utils/jwt.util");
+const userService = require("../user/user.service");
+const { sendResetEmail } = require("./utils/emialHandler.util");
+const crypto = require("crypto");
 
 const registerUser = async (name, email, hashedPassword) => {
   const newUser = await prisma.user.create({
@@ -58,7 +62,137 @@ const login = async (email, password) => {
   };
 };
 
+const refresh = async (token) => {
+  const decoded = verifyRefreshToken(token);
+  if (!decoded) {
+    const err = new Error("Invalid Token");
+    err.status = 401;
+    throw err;
+  }
+  const tokenHash = hashToken(token);
+  const storedToken = await prisma.refreshToken.findFirst({
+    where: {
+      tokenHash,
+      revokedAt: null,
+    },
+  });
+
+  if (!storedToken) {
+    await prisma.refreshToken.updateMany({
+      where: { userId: BigInt(decoded.id) },
+      data: { revokedAt: new Date() },
+    });
+    const err = new Error("Invalid Token");
+    err.status = 401;
+    throw err;
+  }
+
+  if (storedToken.expiresAt < new Date()) {
+    const err = new Error("Refresh token expired");
+    err.status = 401;
+    throw err;
+  }
+  await prisma.refreshToken.update({
+    where: { id: storedToken.id },
+    data: { revokedAt: new Date() },
+  });
+  const user = await findUserByEmail(decoded.email);
+  return await generateAuthSession(user);
+};
+
+const logout = async (token) => {
+  const tokenHash = hashToken(token);
+  await prisma.refreshToken.updateMany({
+    where: {
+      tokenHash: tokenHash,
+      revokedAt: null,
+    },
+    data: {
+      revokedAt: new Date(),
+    },
+  });
+};
+
+const forgotPassword = async (email) => {
+  const user = await userService.findUserByEmail(email);
+  if (!user) {
+    return;
+  }
+  const rawToken = crypto.randomBytes(32).toString("hex");
+  if (process.env.NODE_ENV === "dev") {
+    console.log(`reset token: ${rawToken}`);
+  }
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(rawToken)
+    .digest("hex");
+
+  await prisma.passwordResetToken.deleteMany({ where: { userId: user.id } });
+  const created = await prisma.passwordResetToken.create({
+    data: {
+      tokenHash: hashedToken,
+      userId: user.id,
+      expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+    },
+  });
+  try {
+    await sendResetEmail(email, rawToken);
+  } catch (error) {
+    console.error("sendResetEmail failed:", error); 
+
+    try {
+      await prisma.passwordResetToken.delete({ where: { id: created.id } });
+    } catch (dbError) {
+      console.error("Token rollback failed:", dbError); 
+    }
+
+    const err = new Error(
+      "There is an error sending reset email, Please try again later",
+    );
+    err.status = 500;
+    throw err;
+  }
+};
+
+const resetPassword = async (rawToken, newPassword) => {
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(rawToken)
+    .digest("hex");
+
+  const token = await prisma.passwordResetToken.findFirst({
+    where: {
+      tokenHash: hashedToken,
+      expiresAt: { gt: new Date() },
+    },
+  });
+
+  if (!token) {
+    const err = new Error("Invalid or expired password reset token");
+    err.status = 400;
+    throw err;
+  }
+
+  const newPasswordHash = await bcrypt.hash(newPassword, 10);
+
+  await prisma.$transaction(async (tx) => {
+    await tx.user.update({
+      where: { id: token.userId },
+      data: { passwordHash: newPasswordHash },
+    });
+    await tx.passwordResetToken.deleteMany({ where: { id: token.id } });
+    await tx.refreshToken.updateMany({
+      where: { userId: token.userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+  });
+};
+
 module.exports = {
   login,
   registerUser,
+  refresh,
+  logout,
+  forgotPassword,
+  resetPassword,
 };

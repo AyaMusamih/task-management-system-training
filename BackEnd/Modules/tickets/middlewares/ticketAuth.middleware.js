@@ -1,5 +1,5 @@
-const { getTicketFlags } = require("../tickets/utils/ticket-premissions.util");
-const prisma = require("../prismaClient");
+const { getTicketFlags } = require("../utils/ticket-permissions.util");
+const prisma = require("../../prismaClient");
 
 const checkUpdatePermission = async (req, res, next) => {
   try {
@@ -8,17 +8,21 @@ const checkUpdatePermission = async (req, res, next) => {
 
     const ticket = await prisma.ticket.findUnique({
       where: { id: BigInt(id) },
-      select: { id: true, assigneeId: true },
+      select: { id: true, assigneeId: true, status: true },
     });
 
-    if (!ticket) return res.status(404).json({ message: "Ticket Not Found" });
+    if (!ticket) {
+      const err = new Error("Ticket Not Found");
+      err.status = 404;
+      return next(err);
+    }
 
     const { canUpdateStatus } = getTicketFlags(ticket, user);
 
     if (!canUpdateStatus) {
-      return res.status(403).json({
-        message: "You can only update status for tickets assgined to you",
-      });
+     const err = new Error("You can only update status for tickets assgined to you");
+     err.status = 403;
+     return next(err)
     }
     req.ticket = ticket;
     next();
