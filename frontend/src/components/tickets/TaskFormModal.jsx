@@ -111,15 +111,6 @@ const StyledSelect = ({ value, onChange, options, placeholder, hasError, disable
     );
 };
 
-const filterAvailableSprints = (sprints) => {
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-    return sprints.filter((s) => {
-        const end = new Date(s.endDate);
-        return s.isActive || end >= now;
-    });
-};
-
 const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], onSuccess }) => {
     const isEdit = mode === "edit";
 
@@ -147,9 +138,8 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], onSucce
             try {
                 const res = await getSprints(1, 100);
                 const all = res.data?.items || [];
-                const available = filterAvailableSprints(all);
                 setSprintOptions(
-                    available.map((s) => ({
+                    all.map((s) => ({
                         value: s.id.toString(),
                         label: s.isActive ? `${s.name} (Active)` : s.name,
                     }))
