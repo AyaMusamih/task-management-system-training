@@ -106,7 +106,6 @@ const Input = ({
                             type="button"
                             onClick={() => setShowPassword((prev) => !prev)}
                             disabled={disabled}
-                            aria
                             className="absolute right-4 top-1/2 -translate-y-1/2 focus:outline-none"
                         >
                             {showPassword ? (

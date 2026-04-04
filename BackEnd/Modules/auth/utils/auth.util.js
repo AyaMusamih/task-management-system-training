@@ -28,12 +28,13 @@ const generateAuthSession = async (user) => {
   
   return { accessToken, refreshToken };
 };
+const isProduction = process.env.NODE_ENV === "production";
 
 const setRefreshTokenCookie = (res, refreshToken) => {
   const options = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    secure: isProduction,
+    sameSite: isProduction? "strict": "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000,
   };
 
@@ -44,8 +45,8 @@ const setRefreshTokenCookie = (res, refreshToken) => {
 const clearRefreshTokenCookie = (res) => {
   const options = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
+    secure: isProduction,
+    sameSite: isProduction? "strict": "lax",
   };
 
   res.clearCookie("refreshToken", { ...options, path: "/auth/refresh" });

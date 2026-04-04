@@ -91,15 +91,16 @@ export const resetPassword = async (token, newPassword) => {
 };
 
 //Logout
-export const logoutUser = async (refreshToken) => {
-    try {
-        await axiosInstance.post("/auth/logout", { refreshToken }); 
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("user");
-        return true;
-    } catch (err) {
-        console.error("Logout failed:", err);
-        return false;
-    }
+export const logoutUser = async () => {
+  try {
+    await axiosInstance.post("/auth/logout", {}, {
+      withCredentials: true
+    });
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("user");
+    return true;
+  } catch (err) {
+    console.error("Logout failed:", err);
+    return false;
+  }
 };

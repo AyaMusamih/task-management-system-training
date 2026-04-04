@@ -10,7 +10,10 @@ var usersRouter = require('./routes/users');
 
 var app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:5173",   
+  credentials: true,                 
+}));
 
 const healthRouter = require('./Modules/health');
 const authRouter = require('./Modules/auth/auth.routes');
