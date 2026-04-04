@@ -3,15 +3,15 @@ const router = express.Router();
 
 const authMiddleware = require("../Middlewares/auth.middleware");
 const validate = require("../Middlewares/validation");
+const isAdmin = require("../Middlewares/isAdmin.middleware");
 const userController = require("./user.controller");
-const { changePasswordSchema } = require("./schema/changePassword.schema");
+const {paginationSchema} = require("../utils/schema.utils")
 
 router.use(authMiddleware);
+router.use(isAdmin);
 
-router.put(
-	"/password",
-	validate({ body: changePasswordSchema }),
-	userController.changePassword,
-);
+router.get('/users', validate({query: paginationSchema}), userController.getUsers);
 
 module.exports = router;
+
+
