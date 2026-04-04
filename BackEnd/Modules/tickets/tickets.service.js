@@ -139,7 +139,7 @@ const updateTicketStatus = async (id, status, ticket, userRole) => {
 
   if (userRole !== "ADMIN") {
     const allowed = {
-      TODO: ["IN_PROGRESS", "DONE"],
+      TODO: ["IN_PROGRESS"],
       IN_PROGRESS: ["DONE"],
     };
 

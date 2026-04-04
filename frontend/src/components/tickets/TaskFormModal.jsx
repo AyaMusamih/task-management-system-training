@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
-import { toast } from "react-toastify";
+import { showToast } from "../../utils/showToast";
+import { CircleCheckBig, XCircle } from "lucide-react";
 import Button from "../shared/Button";
 import { createTicket, updateTicket } from "../../services/tickets.service";
+import { getSprints } from "../../services/sprints.service";
 
 const PRIORITY_OPTIONS = ["Low", "Medium", "High", "Critical"];
 const PRIORITY_VALUES = { Low: "LOW", Medium: "MEDIUM", High: "HIGH", Critical: "CRITICAL" };
@@ -23,50 +25,29 @@ const STATUS_OPTIONS_EDIT = [
     { value: "DEPLOYED", label: "Deployed" },
 ];
 
-const DESCRIPTION_MAX = 200;
+const TITLE_MAX = 100;
+const DESCRIPTION_MAX = 10000;
 
 const validate = (fields) => {
     const errors = {};
 
     if (!fields.title.trim()) {
         errors.title = "Title is required";
-    } else if (fields.title.trim().length < 5) {
-        errors.title = "Title must be at least 5 characters";
-    } else if (fields.title.trim().length > 100) {
-        errors.title = "Title cannot exceed 100 characters";
+    } else if (fields.title.trim().length > TITLE_MAX) {
+        errors.title = `Title cannot exceed ${TITLE_MAX} characters`;
     }
 
-    if (!fields.description.trim()) {
-        errors.description = "Description is required";
-    } else if (fields.description.length > DESCRIPTION_MAX) {
+    if (fields.description.length > DESCRIPTION_MAX) {
         errors.description = `Description cannot exceed ${DESCRIPTION_MAX} characters`;
     }
 
-    if (!fields.assigneeId) {
-        errors.assigneeId = "Please select an assignee";
-    }
-
-    if (!fields.deadline) {
-        errors.deadline = "Deadline is required";
-    } else {
+    if (fields.deadline) {
         const selected = new Date(fields.deadline);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         if (selected < today) {
             errors.deadline = "Deadline must be in the future";
         }
-    }
-
-    if (!fields.priority) {
-        errors.priority = "Please select a priority";
-    }
-
-    if (!fields.status) {
-        errors.status = "Please select a status";
-    }
-
-    if (!fields.sprintId) {
-        errors.sprintId = "Please select a sprint";
     }
 
     return errors;
@@ -77,14 +58,14 @@ const FieldError = ({ message }) =>
         <p className="mt-1 text-hint text-error-red">{message}</p>
     ) : null;
 
-const FieldLabel = ({ children, required = true }) => (
+const FieldLabel = ({ children, required = false }) => (
     <label className="block mb-1.5 text-text-primary font-inter font-bold text-[14px]">
         {children}
         {required && <span className="text-text-primary ml-0.5">*</span>}
     </label>
 );
 
-const StyledSelect = ({ value, onChange, options, placeholder, hasError }) => {
+const StyledSelect = ({ value, onChange, options, placeholder, hasError, disabled }) => {
     const [open, setOpen] = useState(false);
     const selected = options.find((o) => o.value === value);
 
@@ -92,8 +73,9 @@ const StyledSelect = ({ value, onChange, options, placeholder, hasError }) => {
         <div className="relative">
             <button
                 type="button"
-                onClick={() => setOpen((v) => !v)}
-                className={`w-full h-11 px-4 flex items-center justify-between rounded-xl bg-[#808080]/20 border text-left transition-colors cursor-pointer shadow-[0_0_0_1px_rgba(255,255,255,0.05)]
+                onClick={() => { if (!disabled) setOpen((v) => !v); }}
+                className={`w-full h-11 px-4 flex items-center justify-between rounded-xl bg-[#808080]/20 border text-left transition-colors shadow-[0_0_0_1px_rgba(255,255,255,0.05)]
+                    ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
                     ${hasError
                         ? "border-error-red focus:border-error-red"
                         : open
@@ -107,7 +89,7 @@ const StyledSelect = ({ value, onChange, options, placeholder, hasError }) => {
                 <ChevronDown className={`w-4 h-4 text-text-hint transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
             </button>
 
-            {open && (
+            {open && !disabled && (
                 <>
                     <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
                     <div className="absolute top-full mt-1 left-0 right-0 z-[100] bg-background border border-divider/50 rounded-xl py-1.5 shadow-2xl max-h-48 overflow-y-auto custom-scrollbar">
@@ -129,7 +111,7 @@ const StyledSelect = ({ value, onChange, options, placeholder, hasError }) => {
     );
 };
 
-const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], currentSprint = null, onSuccess }) => {
+const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], onSuccess }) => {
     const isEdit = mode === "edit";
 
     const [fields, setFields] = useState({
@@ -144,6 +126,32 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], current
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
     const [submitted, setSubmitted] = useState(false);
+
+    const [sprintOptions, setSprintOptions] = useState([]);
+    const [sprintsLoading, setSprintsLoading] = useState(true);
+
+    const isScopedBacklog = fields.status === "SCOPED_BACKLOG";
+
+    useEffect(() => {
+        const fetchSprints = async () => {
+            setSprintsLoading(true);
+            try {
+                const res = await getSprints(1, 100);
+                const all = res.data?.items || [];
+                setSprintOptions(
+                    all.map((s) => ({
+                        value: s.id.toString(),
+                        label: s.isActive ? `${s.name} (Active)` : s.name,
+                    }))
+                );
+            } catch {
+                setSprintOptions([]);
+            } finally {
+                setSprintsLoading(false);
+            }
+        };
+        fetchSprints();
+    }, []);
 
     useEffect(() => {
         if (isEdit && ticket) {
@@ -167,6 +175,12 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], current
         }
     }, [fields, submitted]);
 
+    useEffect(() => {
+        if (isScopedBacklog) {
+            setFields((prev) => ({ ...prev, sprintId: "" }));
+        }
+    }, [isScopedBacklog]);
+
     const set = (key, value) =>
         setFields((prev) => ({ ...prev, [key]: value }));
 
@@ -175,7 +189,7 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], current
         const validationErrors = validate(fields);
         if (Object.keys(validationErrors).length > 0) {
             setErrors(validationErrors);
-            toast.error("Please fix the errors");
+            showToast({ title: "Validation Error", description: "Please fix the errors", icon: <XCircle className="w-4 h-4" />, type: "error" });
             return;
         }
 
@@ -183,20 +197,22 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], current
         try {
             const payload = {
                 title: fields.title.trim(),
-                description: fields.description.trim(),
-                assigneeId: fields.assigneeId,
-                deadline: new Date(`${fields.deadline}T23:59:59Z`).toISOString(),
-                priority: fields.priority,
-                status: fields.status,
-                sprintId: fields.sprintId || null,
+                description: fields.description.trim() || undefined,
+                assigneeId: fields.assigneeId || undefined,
+                deadline: fields.deadline
+                    ? new Date(`${fields.deadline}T23:59:59Z`).toISOString()
+                    : undefined,
+                priority: fields.priority || undefined,
+                status: fields.status || undefined,
+                sprintId: isScopedBacklog ? null : (fields.sprintId || undefined),
             };
 
             if (isEdit) {
                 await updateTicket(ticket.id, payload);
-                toast.success("Task updated successfully");
+                showToast({ title: "Task Updated", description: "Task updated successfully", icon: <CircleCheckBig className="w-4 h-4" />, type: "success" });
             } else {
                 await createTicket(payload);
-                toast.success("Task created successfully");
+                showToast({ title: "Task Created", description: "Task created successfully", icon: <CircleCheckBig className="w-4 h-4" />, type: "success" });
             }
 
             onSuccess?.();
@@ -206,15 +222,15 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], current
                 const mapped = {};
                 apiErrors.forEach((e) => { mapped[e.param] = e.msg; });
                 setErrors(mapped);
-                toast.error("Please fix the errors");
+                showToast({ title: "Validation Error", description: "Please fix the errors", icon: <XCircle className="w-4 h-4" />, type: "error" });
             } else if (err?.error === "You can update status only if assigned to this ticket") {
                 setErrors((prev) => ({ ...prev, status: "You can update status only if assigned to this ticket" }));
-                toast.error("Please fix the errors");
+                showToast({ title: "Validation Error", description: "Please fix the errors", icon: <XCircle className="w-4 h-4" />, type: "error" });
             } else {
                 const msg = isEdit
                     ? "Failed to update task. Please try again"
                     : "Failed to create task. Please try again";
-                toast.error(msg);
+                showToast({ title: "Error", description: msg, icon: <XCircle className="w-4 h-4" />, type: "error" });
             }
         } finally {
             setLoading(false);
@@ -229,21 +245,16 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], current
     const descLen = fields.description.length;
 
     const isFormValid =
-        fields.title.trim().length <= 100 &&
-        !!fields.description.trim() &&
-        fields.description.length <= DESCRIPTION_MAX &&
-        !!fields.assigneeId &&
-        !!fields.deadline &&
-        !!fields.priority &&
-        !!fields.status &&
-        !!fields.sprintId;
+        !!fields.title.trim() &&
+        fields.title.trim().length <= TITLE_MAX &&
+        fields.description.length <= DESCRIPTION_MAX;
 
     return (
         <div className="flex flex-col gap-4">
 
             {/* Title */}
             <div>
-                <FieldLabel>Title</FieldLabel>
+                <FieldLabel required>Title</FieldLabel>
                 <input
                     type="text"
                     value={fields.title}
@@ -267,7 +278,6 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], current
                         onChange={(e) => set("description", e.target.value)}
                         placeholder="Enter task description"
                         rows={4}
-                        maxLength={DESCRIPTION_MAX + 50}
                         className={`w-full px-4 pt-3 pb-6 rounded-xl bg-[#808080]/20 border text-input text-text-filled placeholder:text-[#FFFFFF80] placeholder:text-input outline-none resize-none transition-colors shadow-[0_0_0_1px_rgba(255,255,255,0.05)]
                             ${errors.description
                                 ? "border-error-red focus:border-error-red"
@@ -314,7 +324,7 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], current
                             ${fields.deadline ? "text-text-filled" : "text-[#FFFFFF80]"}
                             ${errors.deadline
                                 ? "border-error-red focus:border-error-red"
-                                : "border-[#808080]/40 focus:border-accent-blue"         
+                                : "border-[#808080]/40 focus:border-accent-blue"
                             }`}
                     />
                 </div>
@@ -360,32 +370,30 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], current
                 <FieldError message={errors.status} />
             </div>
 
-            {/* Sprint */}
-            <div>
-                <FieldLabel>Sprint</FieldLabel>
-                {(() => {
-                    const sprintToShow = isEdit
-                        ? (ticket?.sprint || currentSprint)
-                        : currentSprint;
-
-                    if (!sprintToShow) return (
-                        <div className={`w-full h-11 px-4 flex items-center rounded-xl bg-[#808080]/20 border text-[#FFFFFF80] text-input shadow-[0_0_0_1px_rgba(255,255,255,0.05)] border-[#808080]/40`}>
-                            No sprint available
+            {/* Sprint hidden when status is SCOPED_BACKLOG */}
+            {!isScopedBacklog && (
+                <div>
+                    <FieldLabel>Sprint</FieldLabel>
+                    {sprintsLoading ? (
+                        <div className="w-full h-11 px-4 flex items-center rounded-xl bg-[#808080]/20 border border-[#808080]/40 text-[#FFFFFF80] text-input">
+                            Loading sprints…
                         </div>
-                    );
-
-                    return (
+                    ) : sprintOptions.length === 0 ? (
+                        <div className={`w-full h-11 px-4 flex items-center rounded-xl bg-[#808080]/20 border text-[#FFFFFF80] text-input shadow-[0_0_0_1px_rgba(255,255,255,0.05)] border-[#808080]/40`}>
+                            No active or upcoming sprints available
+                        </div>
+                    ) : (
                         <StyledSelect
                             value={fields.sprintId}
                             onChange={(v) => set("sprintId", v)}
-                            options={[{ value: sprintToShow.id.toString(), label: sprintToShow.name }]}
+                            options={sprintOptions}
                             placeholder="Select sprint"
                             hasError={!!errors.sprintId}
                         />
-                    );
-                })()}
-                <FieldError message={errors.sprintId} />
-            </div>
+                    )}
+                    <FieldError message={errors.sprintId} />
+                </div>
+            )}
 
             {/* Submit */}
             <Button

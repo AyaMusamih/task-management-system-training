@@ -4,6 +4,7 @@ import { forgotPassword } from "../../services/auth.service";
 import Input from "../../components/shared/Input";
 import Button from "../../components/shared/Button";
 import AuthLayout from "./AuthLayout";
+import { ChevronLeft } from "lucide-react"
 
 const ForgotPassword = () => {
     const [email, setEmail] = useState("");
@@ -89,6 +90,15 @@ const ForgotPassword = () => {
     return (
         <AuthLayout>
             <div className="mb-6">
+                <Link to="/login">
+                    <button
+                        className="flex items-center gap-1 text-field-label text-text-hint hover:text-text-primary cursor-pointer mb-3"
+                    >
+                        <ChevronLeft className="w-4 h-4" />
+                        <p>Back</p>
+                    </button>
+                </Link>
+
                 <h1 className="text-heading text-text-primary mb-1">Forgot Password</h1>
                 <p className="text-success-text text-text-secondary">
                     Enter your email and we will send you a link to reset your password
