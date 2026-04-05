@@ -5,7 +5,6 @@ const registerUserSchema = z.object({
     name: z
         .string()
         .trim()
-        .nonempty({ message: "Name is required" })
         .min(2, { message: "Name must be at least 2 characters long" })
         .max(100, { message: "Name must be at most 100 characters long" }),
 
