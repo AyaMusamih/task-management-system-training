@@ -3,6 +3,7 @@ import { Bell, Pencil, Camera, CircleCheckBig, XCircle } from "lucide-react";
 import { getProfile, updateProfile } from "../services/profile.service";
 import Input from "../components/shared/Input";
 import Button from "../components/shared/Button";
+import ChangePasswordSection from "../components/profile/ChangePasswordSection"
 import { showToast } from "../utils/showToast";
 
 
@@ -161,23 +162,6 @@ const ProfileHeader = ({ profile, isEdit, loading, onEditClick }) => {
         </div>
     );
 };
-
-const SecuritySection = () => (
-    <>
-        <SectionTitle>Security</SectionTitle>
-        <Section className="gap-3">
-            <div className="flex flex-col gap-1">
-                <p className="text-profile-sections">Change Password</p>
-                <p className="text-input text-text-primary">
-                    When you change your password, we keep you logged in to this device but may log you out from your other devices
-                </p>
-            </div>
-            <Input label="Current Password" type="password" placeholder="Enter your current password" disabled />
-            <Input label="New Password" type="password" placeholder="Enter new password" disabled />
-            <Input label="Confirm Password" type="password" placeholder="Confirm new password" disabled helperText="Must match the new password" />
-        </Section>
-    </>
-);
 
 const Profile = () => {
     const [profile, setProfile] = useState(null);
@@ -414,8 +398,9 @@ const Profile = () => {
                             )}
                         </Section>
 
-                        {/* Security */}
-                        <SecuritySection />
+                        {/* Security / Change Password */}
+                        <SectionTitle>Security</SectionTitle>
+                        <ChangePasswordSection />
 
                         {/* Save / Cancel */}
                         {isEdit && (
