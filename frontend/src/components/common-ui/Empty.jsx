@@ -1,4 +1,5 @@
-import React from "react";
+import Button from "../shared/Button";
+import { RotateCcw } from "lucide-react";
 
 const Empty = ({
   title = "No data found",
@@ -6,15 +7,16 @@ const Empty = ({
   icon,
   action,
   className = "",
+  onRetry
 }) => {
   return (
     <div className={`flex flex-col items-center justify-center py-16 text-center ${className}`}>
-      
+
       {icon && (
         <img
           src={icon}
           alt="empty"
-          className="w-40 mb-6 opacity-70"
+          className="w-37 mb-5 opacity-70"
         />
       )}
 
@@ -28,8 +30,18 @@ const Empty = ({
         </p>
       )}
 
+      {onRetry && (
+        <Button
+          className="flex gap-2 items-center justify-center px-8 bg-accent-blue text-white rounded-lg hover:bg-blue-400 transition duration-100 cursor-pointer mx-auto"
+          onClick={onRetry}
+        >
+          <RotateCcw className="h-5 w-5"/>
+          Clear filters
+        </Button>
+      )}
+
       {action && action}
-      
+
     </div>
   );
 };
