@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate, useParams, useOutletContext, useLocation } from "react-router-dom";
 import { Search, ChevronDown, Plus, ChevronLeft, ChevronRight, Bell, CircleAlert, CircleCheckBig, ClockArrowDown } from "lucide-react";
 import { getTickets } from "../../services/tickets.service";
+import { getUsers } from "../../services/user.service";
 import TicketsTable from "../tickets/TicketsTable";
 import TicketDetailsModal from "../tickets/TicketDetailsModal";
 import Button from "../shared/Button";
@@ -129,7 +130,15 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const allAssigneesRef = useRef([]);
+    const [allAssignees, setAllAssignees] = useState([]);
+
+    useEffect(() => {
+        if (!isAdmin) return;
+        getUsers(1, 100)
+            .then((res) => setAllAssignees(res.data?.users || []))
+            .catch(() => { });
+    }, [isAdmin]);
+
     const [allSprints, setAllSprints] = useState([]);
     const activeSprintFilter = searchParams.get("sprint") || null;
 
@@ -217,16 +226,6 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
         setTickets(filtered);
     }, [allTickets, activeStageGroup, activeSprintFilter]);
 
-    useEffect(() => {
-        if (activeAssignee) return;
-        const incoming = allTickets.filter((t) => t.assignee).map((t) => t.assignee);
-        if (incoming.length === 0) return;
-        const map = new Map();
-        allAssigneesRef.current.forEach((a) => map.set(String(a.id), a));
-        incoming.forEach((a) => map.set(String(a.id), a));
-        allAssigneesRef.current = Array.from(map.values());
-    }, [allTickets, activeAssignee]);
-
     const hasOpenedModal = useRef(false);
     useEffect(() => {
         if (!id) { hasOpenedModal.current = false; return; }
@@ -240,16 +239,16 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
             content: (
                 <TicketDetailsModal
                     ticket={ticket}
-                    assignees={allAssigneesRef.current}
+                    assignees={allAssignees}
                     onRefresh={fetchTickets}
                     openModal={openModal}
                     closeModal={closeModal}
                 />
             ),
         });
-    }, [id, allTickets, openModal, closeModal, fetchTickets]);
+    }, [id, allTickets, openModal, closeModal, fetchTickets, allAssignees]);
 
-    const assignees = allAssigneesRef.current;
+    const assignees = allAssignees;
     const currentSprint = allTickets.find((t) => t.sprint)?.sprint;
 
     const setParam = (key, value) => {
@@ -294,7 +293,7 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
 
     // Pass current assignees list to onCreateTicket so the modal can populate the dropdown
     const handleCreateClick = () => {
-        onCreateTicket?.(allAssigneesRef.current, currentSprint ?? null);
+        onCreateTicket?.(allAssignees, currentSprint ?? null);
     };
 
     const showAssignee = isAdmin;
@@ -307,7 +306,7 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
     const activeStageGroupLabel = STAGE_GROUPS.find((g) => g.key === activeStageGroup)?.label ?? null;
     const stageGroupOptions = STAGE_GROUPS.map((g) => ({ value: g.key, label: g.label }));
     const activeAssigneeName = activeAssignee
-        ? allAssigneesRef.current.find((a) => String(a.id) === String(activeAssignee))?.name ?? null
+        ? allAssignees.find((a) => String(a.id) === String(activeAssignee))?.name ?? null
         : null;
 
     return (

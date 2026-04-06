@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Inter:wght@400&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Poppins:wght@400;500;600;700&family=Inter:wght@400&display=swap");
 @import "tailwindcss";
 
 /* Hide browser default password reveal icon */
@@ -13,7 +13,7 @@ input[type="password"]::-webkit-credentials-auto-fill-button {
 }
 
 input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: invert(1); 
+  filter: invert(1);
   cursor: pointer;
 }
 
@@ -46,8 +46,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   --color-card-left: #0d1117;
   --color-card-right: #0a0e18;
   --color-input-bg: #111827;
-  --color-info-bg: ##2A303C;
+  --color-info-bg: ##2a303c;
   --color-accent-blue: #3b82f6;
+  --color-accent-green:#16A34A;
   --color-accent-indigo: #6366f1;
   --color-success-green: #22c55e;
   --color-success-dark: #16a34a;
@@ -56,9 +57,9 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   --color-loading-dark: #1d4ed8;
   --color-text-primary: #edf1fa;
   --color-white-btn: #ffffff;
-  --color-admin-btn: #EDF1FA33;
-  --color-dashboard:#EDF1FA20;
-  --color-permissions:#93C5FD;
+  --color-admin-btn: #edf1fa33;
+  --color-dashboard: #edf1fa20;
+  --color-permissions: #93c5fd;
   --color-text-secondary: rgba(237, 241, 250, 0.65);
   --color-text-placeholder: rgba(237, 241, 250, 0.22);
   --color-text-filled: rgba(237, 241, 250, 0.9);
@@ -69,10 +70,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   /* Fonts */
   --font-poppins: "Poppins", sans-serif;
   --font-inter: "Inter", sans-serif;
+  --font-manrope: "Manrope", sans-serif;
 }
 
 @layer utilities {
-
   /* TYPOGRAPHY */
 
   .text-logo {
@@ -162,19 +163,31 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   }
 
   .text-dialog-title {
-  font-size: 17px;
-  font-weight: 600;
-  font-family: var(--font-poppins);
+    font-size: 17px;
+    font-weight: 600;
+    font-family: var(--font-poppins);
   }
 
   .text-dialog-description {
-  font-size: 14px;
-  font-weight: 400;
-  font-family: var(--font-inter);
-  color: var(--color-text-secondary);
+    font-size: 14px;
+    font-weight: 400;
+    font-family: var(--font-inter);
+    color: var(--color-text-secondary);
   }
 
+  .text-profile-sections {
+    font-size: 22px;
+    font-weight: 500;
+    font-family: var(--font-inter);
+    color: var(--color-text-primary);
+  }
 
+  .text-profile-info {
+    font-size: 16px;
+    font-weight: 700;
+    font-family: var(--font-poppins);
+    color: #ffffff;
+  }
   /* PAGE */
 
   .page-canvas {
@@ -182,7 +195,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     min-height: 100dvh;
     margin: 0 auto;
   }
-
 
   /* CARDS */
 
@@ -196,7 +208,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     border-radius: 24px;
   }
 
-
   /* INNER COLUMN */
 
   .inner-column {
@@ -207,7 +218,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     gap: 24px;
   }
 
-
   /* INPUTS */
 
   .input-field {
@@ -217,7 +227,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     border-radius: 12px;
     padding-left: 16px;
   }
-
 
   /* BUTTONS  */
 
@@ -237,7 +246,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     cursor: pointer;
   }
 
-
   /* LOGO */
 
   .logo-icon {
@@ -245,7 +253,6 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     height: 28px;
     border-radius: 8px;
   }
-
 
   /* CHECKBOX */
 
@@ -255,14 +262,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     border-radius: 5px;
   }
 
-
   /* PASSWORD ICON */
 
   .password-eye-icon {
     width: 20px;
     height: 20px;
   }
-
 
   /* SUCCESS / ERROR ICONS */
 
@@ -284,15 +289,10 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     border-radius: 50%;
   }
   .skeleton {
-  background: linear-gradient(
-    90deg,
-    #1C2333 0%,
-    #252D3D 50%,
-    #1C2333 100%
-  );
-  background-size: 200% 100%;
-  animation: skeleton-loading 1.5s infinite;
-}
+    background: linear-gradient(90deg, #1c2333 0%, #252d3d 50%, #1c2333 100%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+  }
 }
 
 @keyframes skeleton-loading {

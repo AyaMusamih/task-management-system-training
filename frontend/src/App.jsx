@@ -6,8 +6,8 @@ import MainLayout from './layouts/MainLayout';
 import Login from './pages/auth/Login'
 import Signup from './pages/auth/Signup';
 import Profile from './pages/Profile';
-import ChangePassword from './pages/ChangePassword';
-import Reports from './pages/admin/Reports';
+import AdminReports from './pages/admin/AdminReports';
+import UserReports from './pages/user/UserReports';
 import AllTickets from './pages/admin/AllTickets';
 import TaskManagement from './pages/admin/TaskManagement';
 import DeletedTickets from './pages/admin/DeletedTickets ';
@@ -39,11 +39,7 @@ function App() {
               <Profile />
             </ProtectedRoute>
           } />
-          <Route path='/profile/password' element={
-            <ProtectedRoute>
-              <ChangePassword />
-            </ProtectedRoute>
-          } />
+          
 
           {/* User */}
           <Route path='/user/dashboard' element={
@@ -55,6 +51,12 @@ function App() {
           <Route path='/user/dashboard/tickets/:id' element={
             <ProtectedRoute role="USER">
               <UserDashboard />
+            </ProtectedRoute>
+          } />
+
+          <Route path='/user/reports' element={
+            <ProtectedRoute role="USER">
+              <UserReports />
             </ProtectedRoute>
           } />
 
@@ -83,9 +85,9 @@ function App() {
             </ProtectedRoute>
           } />
 
-          <Route path='/reports' element={
+          <Route path='/admin/reports' element={
             <ProtectedRoute role="ADMIN">
-              <Reports />
+              <AdminReports />
             </ProtectedRoute>
           } />
 

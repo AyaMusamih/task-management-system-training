@@ -38,10 +38,9 @@ const Login = () => {
             setLoading(true);
             setErrors({});
 
-            const { accessToken, user, refreshToken } = await loginUser(email, password);
+            const { accessToken, user } = await loginUser(email, password);
 
             localStorage.setItem("accessToken", accessToken);
-            localStorage.setItem("refreshToken", refreshToken);
             localStorage.setItem("user", JSON.stringify(user));
 
             setSuccess(true);

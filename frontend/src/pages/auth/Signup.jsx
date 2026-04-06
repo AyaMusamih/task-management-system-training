@@ -72,10 +72,9 @@ const Signup = () => {
       setLoading(true);
       setErrors({});
 
-      const { accessToken, user, refreshToken } = await signupUser(form);
+      const { accessToken, user } = await signupUser(form);
 
       localStorage.setItem("accessToken", accessToken);
-      localStorage.setItem("refreshToken", refreshToken);
       localStorage.setItem("user", JSON.stringify(user));
 
       setSuccess(true);

@@ -4,11 +4,13 @@ import { logoutUser } from "../services/auth.service";
 const axiosInstance = axios.create({
   baseURL: "http://localhost:3000",
   headers: { "Content-Type": "application/json" },
+  withCredentials: true,
 });
 
 const refreshClient = axios.create({
   baseURL: "http://localhost:3000",
   headers: { "Content-Type": "application/json" },
+  withCredentials: true,
 });
 
 let isRefreshing = false;
@@ -35,25 +37,20 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    const isAuthRoute = originalRequest.url.includes("/auth/");
-    
-    if (error.response?.status === 401 && !isAuthRoute) {
+    const isAuthRoute = originalRequest?.url?.includes("/auth/");
+    const message = error.response?.data?.error;
+
+    if (
+      error.response?.status === 401 &&
+      message !== "Invalid current password" &&
+      !isAuthRoute
+    ) {
+
       if (originalRequest._retry) {
         return Promise.reject(error);
       }
 
       originalRequest._retry = true;
-      const refreshToken = localStorage.getItem("refreshToken");
-
-      if (!refreshToken) {
-        await logoutUser(refreshToken);
-
-        if (typeof window !== "undefined") {
-          window.dispatchEvent(new Event("sessionExpired"));
-        }
-
-        return Promise.reject(error);
-      }
 
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
@@ -67,26 +64,23 @@ axiosInstance.interceptors.response.use(
       }
 
       isRefreshing = true;
-      originalRequest._retry = true;
 
       try {
         if (typeof window !== "undefined") {
           window.dispatchEvent(new Event("sessionRefreshing"));
         }
 
-        const response = await refreshClient.post("/auth/refresh", {
-          refreshToken,
-        });
+        const response = await refreshClient.post("/auth/refresh");
+        console.log(response.data.data + "\n Refresh Error!");
 
-        const newToken = response.data.data.accessToken;
-        const newRefreshToken = response.data.data.refreshToken;
+        const newToken = response.data.data;
 
         localStorage.setItem("accessToken", newToken);
-        localStorage.setItem("refreshToken", newRefreshToken);
 
-        axiosInstance.defaults.headers.Authorization = `Bearer ${newToken}`;
+        axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
 
         processQueue(null, newToken);
+
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
 
         if (typeof window !== "undefined") {
@@ -96,7 +90,8 @@ axiosInstance.interceptors.response.use(
         return axiosInstance(originalRequest);
       } catch (refreshError) {
         processQueue(refreshError, null);
-        await logoutUser(refreshToken);
+
+        await logoutUser();
 
         if (typeof window !== "undefined") {
           window.dispatchEvent(new Event("sessionExpired"));

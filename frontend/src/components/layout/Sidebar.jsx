@@ -25,12 +25,6 @@ const SidebarContent = ({ links, initials, user, onClose, onLogoutClick }) => {
                         <p className="text-hint text-text-hint">Project Alpha</p>
                     </div>
                 </div>
-                {/* <button
-                    onClick={onClose}
-                    className="lg:hidden w-8 h-8 flex items-center justify-center rounded-lg text-text-hint hover:text-text-primary hover:bg-white/5 transition-colors"
-                >
-                    <X className="w-4 h-40" />
-                </button> */}
             </div>
 
             <div className="border-b border-divider/30 mb-4 mt-[-16px]" />
@@ -90,13 +84,14 @@ const Sidebar = ({ user, isOpen, onClose, onLogoutClick }) => {
     const userLinks = [
         { name: "Dashboard", path: "/user/dashboard", icon: LayoutDashboard },
         { name: "Projects", path: "/projects", icon: FolderOpen },
+        { name: "Reports", path: "/user/reports", icon: BarChart2 },
         { name: "Settings", path: "/settings", icon: Settings },
     ];
 
     const adminLinks = [
         { name: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard },
         { name: "Projects", path: "/projects", icon: FolderOpen },
-        { name: "Reports", path: "/reports", icon: BarChart2 },
+        { name: "Reports", path: "/admin/reports", icon: BarChart2 },
         { name: "Settings", path: "/settings", icon: Settings },
     ];
 

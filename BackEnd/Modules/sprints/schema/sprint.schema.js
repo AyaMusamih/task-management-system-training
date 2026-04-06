@@ -1,5 +1,8 @@
 const { z } = require("zod");
-const { bigIntIdSchema } = require("../../utils/schema.utils");
+const {
+  bigIntIdSchema,
+  paginationSchema,
+} = require("../../utils/schema.utils");
 
 const sprintShape = {
   name: z
@@ -33,12 +36,12 @@ const updateSprintSchema = z
       if (data.startDate && data.endDate) {
         return data.endDate > data.startDate;
       }
-      return true; 
+      return true;
     },
     {
       message: "End date must be after the start date",
       path: ["endDate"],
-    }
+    },
   )
   .strict();
 const updateSprintParamSchema = z
@@ -47,11 +50,7 @@ const updateSprintParamSchema = z
   })
   .strict();
 
-const SprintRequestSchema =  z.object({
-      page: z.coerce.number().int().positive().default(1),
-      limit: z.coerce.number().int().positive().max(100).default(20),
-    })
-  .strict();
+const SprintRequestSchema = paginationSchema.strict();
 
 module.exports = {
   createSprintSchema,

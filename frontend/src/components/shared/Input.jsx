@@ -84,7 +84,7 @@ const Input = ({
                 </div>
             ) : (
                 /* Text / Password */
-                <div className="relative">
+                <div className="relative max-w-[493px]">
                     <input
                         type={inputType}
                         name={name}
@@ -106,7 +106,6 @@ const Input = ({
                             type="button"
                             onClick={() => setShowPassword((prev) => !prev)}
                             disabled={disabled}
-                            aria
                             className="absolute right-4 top-1/2 -translate-y-1/2 focus:outline-none"
                         >
                             {showPassword ? (

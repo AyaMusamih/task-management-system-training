@@ -1,6 +1,10 @@
 const authService = require("./auth.service");
 const userService = require("../user/user.service");
 const bcrypt = require("bcrypt");
+const {
+  setRefreshTokenCookie,
+  clearRefreshTokenCookie,
+} = require("./utils/auth.util");
 
 const register = async (req, res, next) => {
   const { name, email, password } = req.body;
@@ -20,9 +24,11 @@ const register = async (req, res, next) => {
       hashedPassword,
     );
 
+    setRefreshTokenCookie(res, refreshToken);
+
     res.status(201).json({
       success: true,
-      data: { user, accessToken, refreshToken },
+      data: { user, accessToken },
     });
   } catch (error) {
     next(error);
@@ -35,9 +41,12 @@ const login = async (req, res, next) => {
       req.body.email,
       req.body.password,
     );
+
+    setRefreshTokenCookie(res, refreshToken);
+
     res.status(200).json({
       success: true,
-      data: { user, accessToken, refreshToken },
+      data: { user, accessToken },
     });
   } catch (err) {
     next(err);
@@ -46,11 +55,14 @@ const login = async (req, res, next) => {
 
 const refresh = async (req, res, next) => {
   try {
-    const { refreshToken } = req.body;
-    const authSession = await authService.refresh(refreshToken);
+    const refreshToken = req.cookies.refreshToken;
+    console.log(refreshToken);
+    const { accessToken, refreshToken: newRefreshToken } =
+      await authService.refresh(refreshToken);
+    setRefreshTokenCookie(res, newRefreshToken);
     res.status(200).json({
       success: true,
-      data: authSession,
+      data: accessToken,
     });
   } catch (err) {
     next(err);
@@ -59,7 +71,13 @@ const refresh = async (req, res, next) => {
 
 const logout = async (req, res, next) => {
   try {
-    await authService.logout(req.body.refreshToken);
+    const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken) {
+      return res.status(200).json({ success: true, data: null });
+    }
+    console.log(refreshToken);
+    await authService.logout(refreshToken);
+    clearRefreshTokenCookie(res);
     res.status(200).json({
       success: true,
       data: null,
@@ -70,27 +88,26 @@ const logout = async (req, res, next) => {
 };
 
 const forgotPassword = async (req, res, next) => {
-  try{
-   await authService.forgotPassword(req.body.email);
+  try {
+    await authService.forgotPassword(req.body.email);
     res.status(200).json({
       success: true,
-      data: 'Reset Link sent if email exsists'
+      data: "Reset Link sent if email exsists",
     });
-
-  } catch(err){
+  } catch (err) {
     next(err);
   }
-}
+};
 
 const resetPassword = async (req, res, next) => {
   try {
     const { token, newPassword } = req.body;
-    
+
     await authService.resetPassword(token, newPassword);
 
     res.status(200).json({
       data: null,
-      message: 'Password has been successfully reset',
+      message: "Password has been successfully reset",
     });
   } catch (err) {
     next(err);
@@ -103,5 +120,5 @@ module.exports = {
   refresh,
   logout,
   forgotPassword,
-  resetPassword
+  resetPassword,
 };

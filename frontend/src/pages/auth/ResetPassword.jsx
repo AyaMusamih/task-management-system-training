@@ -21,6 +21,8 @@ const ResetPassword = () => {
         const newErrors = {};
         if (password.length < 8) {
             newErrors.password = "Password must be at least 8 characters";
+        } else if (password.length > 100) {
+            newErrors.password = "Password is too long";
         } else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).+$/.test(password)) {
             newErrors.password = "Password must contain uppercase, lowercase, number and special character";
         }
@@ -126,7 +128,7 @@ const ResetPassword = () => {
                     disabled={loading}
                     error={errors.password || (errors.confirmPassword === "Passwords do not match" ? " " : undefined)}
                     success={password && !errors.password && submitted}
-                        helperText={errors.confirmPassword === "Passwords do not match" ? undefined : "Must be at least 8 characters and include letters and numbers"}
+                    helperText={errors.confirmPassword === "Passwords do not match" ? undefined : "Must be at least 8 characters and include letters and numbers"}
                     className="input-field"
                 />
 
