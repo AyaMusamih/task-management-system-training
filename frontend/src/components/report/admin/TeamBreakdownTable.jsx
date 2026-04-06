@@ -1,4 +1,4 @@
-import Loading from "../common-ui/Loading";
+import Loading from "../../common-ui/Loading";
 
 const CompletionRateBar = ({ rate, color }) => {
     return (

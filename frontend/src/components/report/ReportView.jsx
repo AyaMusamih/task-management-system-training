@@ -1,13 +1,13 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useSearchParams, useNavigate, useParams, useOutletContext, useLocation } from "react-router-dom";
 import { Download, ChevronLeft, ChevronRight, Bell } from "lucide-react";
-import StatsCard from "../report/StatsCard"
+import StatsCard from "./StatsCard"
 import FilterDropdown from "../report/FilterDropdown"
-import WeeklyChart from "../report/WeeklyChart"
+import WeeklyChart from "./admin/WeeklyChart"
 import Button from "../shared/Button";
 import { showToast } from "../../utils/showToast";
-import TeamBreakdownTable from "./TeamBreakdownTable";
-import UserTicketsTable from "./UserTicketsTable";
+import TeamBreakdownTable from "./admin/TeamBreakdownTable";
+import UserTicketsTable from "./user/UserTicketsTable";
 import Error from "../common-ui/Error";
 import Empty from "../common-ui/Empty";
 import ErrorIcon from "../../assets/images/ErrorIcon_reports.png";

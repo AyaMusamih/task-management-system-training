@@ -1,4 +1,4 @@
-import Loading from "../common-ui/Loading";
+import Loading from "../../common-ui/Loading";
 
 const PRIORITY_STYLES = {
     CRITICAL: "bg-red-600/15 text-red-500 border border-red-600/40",
