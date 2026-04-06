@@ -21,8 +21,7 @@ const MainLayout = () => {
 
     const handleLogoutConfirm = async () => {
         setLoading(true);
-        const refreshToken = localStorage.getItem("refreshToken");
-        const success = await logoutUser(refreshToken);
+        const success = await logoutUser();
 
         if (success) {
             showToast({
