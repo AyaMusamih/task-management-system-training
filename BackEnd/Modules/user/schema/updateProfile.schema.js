@@ -1,7 +1,7 @@
 const { z } = require("zod");
 
 const updateProfileSchema = z.object({
-  name: z.string().min(2).max(100),
+  name: z.string().min(2, ({message: "Name is required"})).max(100),
   email: z
     .string()
     .trim()
