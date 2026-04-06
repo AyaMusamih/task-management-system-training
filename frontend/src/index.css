@@ -48,6 +48,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   --color-input-bg: #111827;
   --color-info-bg: ##2a303c;
   --color-accent-blue: #3b82f6;
+  --color-accent-green:#16A34A;
   --color-accent-indigo: #6366f1;
   --color-success-green: #22c55e;
   --color-success-dark: #16a34a;
