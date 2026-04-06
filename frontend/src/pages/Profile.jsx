@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Bell, Pencil, Camera, CircleCheckBig, XCircle } from "lucide-react";
 import { getProfile, updateProfile } from "../services/profile.service";
 import Input from "../components/shared/Input";
@@ -12,16 +12,23 @@ const getInitials = (name = "") =>
 
 const validate = ({ name, email }) => {
     const errors = {};
+
     if (!name || !name.trim()) {
-        errors.name = "Name cannot be empty";
+        errors.name = "Name is required";
     } else if (name.trim().length < 2) {
-        errors.name = "Enter your full name";
+        errors.name = "Name must be at least 2 characters";
+    } else if (name.trim().length > 100) {
+        errors.name = "Name must be at most 100 characters";
     }
+
     if (!email || !email.trim()) {
-        errors.email = "Email cannot be empty";
+        errors.email = "Email is required";
+    } else if (email.trim().length > 255) {
+        errors.email = "Email must be at most 255 characters";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-        errors.email = "Enter a valid email address";
+        errors.email = "Invalid email format";
     }
+
     return errors;
 };
 
@@ -173,6 +180,8 @@ const Profile = () => {
     const [errors, setErrors] = useState({});
     const [saving, setSaving] = useState(false);
     const [submitted, setSubmitted] = useState(false);
+    const nameRef = useRef(null);
+    const emailRef = useRef(null);
 
     const fetchProfile = async () => {
         setLoading(true);
@@ -217,6 +226,11 @@ const Profile = () => {
 
         if (Object.keys(validationErrors).length > 0) {
             setErrors(validationErrors);
+            if (validationErrors.name) {
+                nameRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+            } else if (validationErrors.email) {
+                emailRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
             showToast({
                 title: "Validation Error",
                 description: "Please fix the errors below before saving",
@@ -283,12 +297,13 @@ const Profile = () => {
         }
     };
 
-    const localTime = new Intl.DateTimeFormat("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-        timeZoneName: "shortOffset",
-    }).format(new Date());
+    const memberSince = profile?.createdAt
+        ? new Intl.DateTimeFormat("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+        }).format(new Date(profile.createdAt))
+        : "—";
 
     return (
         <div className="flex flex-col h-full bg-card-left">
@@ -342,6 +357,7 @@ const Profile = () => {
                             {isEdit ? (
                                 <>
                                     <Input
+                                        ref={nameRef}
                                         label="Full name"
                                         type="text"
                                         value={form.name}
@@ -352,8 +368,8 @@ const Profile = () => {
                                         disabled={saving}
                                     />
                                     <div className="flex flex-col gap-0.5">
-                                        <p className="text-field-label text-text-secondary">Local time</p>
-                                        <p className="text-profile-info">{localTime}</p>
+                                        <p className="text-field-label text-text-secondary">Member since</p>
+                                        <p className="text-profile-info">{memberSince}</p>
                                     </div>
                                 </>
                             ) : (
@@ -361,8 +377,8 @@ const Profile = () => {
                                     <ProfileField label="Full name*" loading={loading}>
                                         <p className="text-profile-info">{profile?.name}</p>
                                     </ProfileField>
-                                    <ProfileField label="Local time*" loading={loading} skeletonWidth="w-40">
-                                        <p className="text-profile-info">{localTime}</p>
+                                    <ProfileField label="Member since" loading={loading} skeletonWidth="w-40">
+                                        <p className="text-profile-info">{memberSince}</p>
                                     </ProfileField>
                                 </>
                             )}
@@ -381,6 +397,7 @@ const Profile = () => {
                                         </p>
                                     </div>
                                     <Input
+                                        ref={emailRef}
                                         label="New Email address"
                                         type="email"
                                         value={form.email}
