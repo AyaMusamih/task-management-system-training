@@ -38,16 +38,15 @@ axiosInstance.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     const isAuthRoute = originalRequest?.url?.includes("/auth/");
+    const message = error.response?.data?.error;
 
-    if (error.response?.status === 401 && !isAuthRoute) {
+    if (
+      error.response?.status === 401 &&
+      message !== "Invalid current password" &&
+      !isAuthRoute
+    ) {
 
       if (originalRequest._retry) {
-        await logoutUser();
-
-        if (typeof window !== "undefined") {
-          window.dispatchEvent(new Event("sessionExpired"));
-        }
-
         return Promise.reject(error);
       }
 
@@ -72,12 +71,13 @@ axiosInstance.interceptors.response.use(
         }
 
         const response = await refreshClient.post("/auth/refresh");
+        console.log(response.data.data + "\n Refresh Error!");
 
-        const newToken = response.data.data.accessToken;
+        const newToken = response.data.data;
 
         localStorage.setItem("accessToken", newToken);
 
-        axiosInstance.defaults.headers.Authorization = `Bearer ${newToken}`;
+        axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
 
         processQueue(null, newToken);
 
