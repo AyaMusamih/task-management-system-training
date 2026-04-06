@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { CircleAlert, Check } from 'lucide-react';
 
-const Input = ({
+const Input = forwardRef(({
     label,
     type = "text",
     page,
@@ -17,7 +17,7 @@ const Input = ({
     disabled = false,
     className = "",
     ...props
-}) => {
+}, ref) => {
     const [showPassword, setShowPassword] = useState(false);
 
     const isDate = type === "date";
@@ -86,6 +86,7 @@ const Input = ({
                 /* Text / Password */
                 <div className="relative max-w-[493px]">
                     <input
+                        ref={ref}
                         type={inputType}
                         name={name}
                         value={value}
@@ -147,6 +148,6 @@ const Input = ({
             )}
         </div>
     );
-}
+});
 
 export default Input;
