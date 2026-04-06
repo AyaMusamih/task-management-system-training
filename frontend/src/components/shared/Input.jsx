@@ -84,7 +84,7 @@ const Input = ({
                 </div>
             ) : (
                 /* Text / Password */
-                <div className="relative">
+                <div className="relative max-w-[493px]">
                     <input
                         type={inputType}
                         name={name}
