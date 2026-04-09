@@ -60,7 +60,7 @@ const isOverdue = (ticket, now = new Date()) => {
   );
 };
  
-const getChartRange = (dateRange, defaultDays = 7) => {
+const getChartRange = (dateRange, defaultDays = 42) => {
   if (dateRange) return dateRange;
  
   const end = endOfDay(new Date());
@@ -68,6 +68,14 @@ const getChartRange = (dateRange, defaultDays = 7) => {
   start.setDate(start.getDate() - defaultDays);
  
   return { start: startOfDay(start), end };
+};
+
+const getPreviousRange = (dateRange) => {
+  if (!dateRange) return null;
+  const durationMs = dateRange.end.getTime() - dateRange.start.getTime();
+  const prevEnd = new Date(dateRange.start.getTime() - 1);
+  const prevStart = new Date(prevEnd.getTime() - durationMs);
+  return { start: prevStart, end: prevEnd };
 };
  
 const getIsoWeekParts = (date) => {
@@ -83,12 +91,19 @@ const getIsoWeekLabel = (date) => {
   const paddedWeek = String(week).padStart(2, "0");
   return `${year}-W${paddedWeek}`;
 };
- 
+
 const getIsoWeekSortKey = (date) => {
   const { year, week } = getIsoWeekParts(date);
   return year * 100 + week;
 };
- 
+
+const calcDelta = (current, previous) => {
+  if (current === 0 && previous === 0) return 0; 
+  if (previous === 0) return null; 
+  return Math.round(((current - previous) / previous) * 100) / 100;
+};
+
+
 module.exports = {
   normalizeDateRange,
   buildFiltersApplied,
@@ -97,4 +112,6 @@ module.exports = {
   getChartRange,
   getIsoWeekLabel,
   getIsoWeekSortKey,
+  calcDelta,
+  getPreviousRange
 };

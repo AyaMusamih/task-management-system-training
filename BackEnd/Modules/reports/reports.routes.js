@@ -17,5 +17,11 @@ router.get(
   reportsController.getAdminReport,
 );
 
+router.get(
+  "/me",
+  validate({ query: userReportSchema }),
+  reportsController.getMyReport,
+);
+
 
 module.exports = router;
