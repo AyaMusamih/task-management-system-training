@@ -188,3 +188,65 @@ const buildMembers = async (where, now) => {
     };
   });
 };
+
+const getAdminReport = async (filters) => {
+  const now = new Date();
+  const dateRange = normalizeDateRange(filters.date_from, filters.date_to);
+  const chartRange = getChartRange(dateRange);;
+  const baseWhere = buildBaseWhere({
+    dateRange: chartRange,
+    status: filters.status,
+    assigneeId: filters.assignee_id,
+    sprintId: filters.sprint_id,
+  });
+
+  const [summary, members, chart] = await Promise.all([
+    getStatusSummary(baseWhere, now),
+    buildMembers(baseWhere, now),
+    buildChart(
+      {
+        status: filters.status,
+        assigneeId: filters.assignee_id,
+        sprintId: filters.sprint_id,
+      },
+      chartRange,
+    ),
+  ]);
+  const delta = await calcPeriodDelta(filters, chartRange, summary, now);
+
+  return {
+    summary: {
+      ...summary,
+      period_delta: delta,
+    },
+    chart,
+    members,
+    filters_applied: buildFiltersApplied({
+      dateRange,
+      status: filters.status,
+      assigneeId: filters.assignee_id,
+      sprintId: filters.sprint_id,
+    }),
+  };
+};
+
+const calcPeriodDelta = async( filters, dateRange, summary, now) => {
+    const previousRange = getPreviousRange(dateRange);
+    console.log("previousRange:", previousRange);
+    const prevWhere = buildBaseWhere({
+      dateRange: previousRange,
+      status: filters.status,
+      assigneeId: filters.assignee_id,
+      sprintId: filters.sprint_id,
+    });
+    const prevSummary = await getStatusSummary(prevWhere, now);
+  console.log("current summary:", summary);
+  console.log("prev summary:", prevSummary);
+    return {
+      total:       calcDelta(summary.total,       prevSummary.total),
+      completed:   calcDelta(summary.completed,   prevSummary.completed),
+      in_progress: calcDelta(summary.in_progress, prevSummary.in_progress),
+      overdue:     calcDelta(summary.overdue,      prevSummary.overdue),
+    };
+
+}
