@@ -104,3 +104,87 @@ const getStatusSummary = async (where, now) => {
     .sort((a, b) => a[0] - b[0])
     .map((entry) => entry[1]);
 };
+
+const buildMembers = async (where, now) => {
+  const memberWhere = { ...where };
+  if (!memberWhere.assigneeId) memberWhere.assigneeId = { not: null };
+
+  const [grouped, overdueGrouped] = await Promise.all([
+    prisma.ticket.groupBy({
+      by: ["assigneeId", "status"],
+      where: memberWhere,
+      _count: { _all: true },
+    }),
+    prisma.ticket.groupBy({
+      by: ["assigneeId"],
+      where: {
+        ...memberWhere,
+        deadline: { lt: now },
+        status: { notIn: COMPLETED_STATUSES },
+      },
+      _count: { _all: true },
+    }),
+  ]);
+
+  // Guard against unexpected non-array results
+  if (!Array.isArray(grouped) || !Array.isArray(overdueGrouped)) {
+    console.error("Unexpected groupBy result:", { grouped, overdueGrouped });
+    return [];
+  }
+
+  const assigneeIds = Array.from(
+    new Set(grouped.map((row) => row.assigneeId).filter(Boolean)),
+  );
+
+  if (assigneeIds.length === 0) return [];
+
+  const users = await prisma.user.findMany({
+    where: { id: { in: assigneeIds } },
+    select: { id: true, name: true },
+  });
+
+  // Normalize IDs to string for consistent map key comparison
+  const userMap = new Map(users.map((user) => [String(user.id), user]));
+  const countsMap = new Map();
+
+  for (const row of grouped) {
+    if (!row.assigneeId) continue;
+    const key = String(row.assigneeId);
+    const current = countsMap.get(key) ?? {
+      assigned: 0,
+      completed: 0,
+      in_progress: 0,
+    };
+    current.assigned += row._count._all;
+    if (row.status === TicketStatus.DONE) current.completed += row._count._all;
+    if (row.status === TicketStatus.IN_PROGRESS) current.in_progress += row._count._all;
+    countsMap.set(key, current);
+  }
+
+  const overdueMap = new Map(
+    overdueGrouped
+      .filter((row) => row.assigneeId != null)
+      .map((row) => [String(row.assigneeId), row._count._all]),
+  );
+
+  return assigneeIds.map((assigneeId) => {
+    const key = String(assigneeId);
+    const user = userMap.get(key);
+    const counts = countsMap.get(key) ?? { assigned: 0, completed: 0, in_progress: 0 };
+    const overdue = overdueMap.get(key) ?? 0;
+    const completionRate =
+      counts.assigned > 0
+        ? Number((counts.completed / counts.assigned).toFixed(2))
+        : 0;
+
+    return {
+      user_id: key,
+      name: user?.name ?? "unknown",
+      assigned: counts.assigned,
+      completed: counts.completed,
+      in_progress: counts.in_progress,
+      overdue,
+      completion_rate: completionRate,
+    };
+  });
+};
