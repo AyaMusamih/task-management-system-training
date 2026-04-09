@@ -315,5 +315,10 @@ const calcPeriodDelta = async( filters, dateRange, summary, now) => {
       in_progress: calcDelta(summary.in_progress, prevSummary.in_progress),
       overdue:     calcDelta(summary.overdue,      prevSummary.overdue),
     };
-
 }
+
+module.exports = {
+    getAdminReport,
+    getMyReport
+}
+
