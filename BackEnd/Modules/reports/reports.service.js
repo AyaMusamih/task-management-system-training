@@ -230,6 +230,73 @@ const getAdminReport = async (filters) => {
   };
 };
 
+const getMyReport = async (userId, filters) => {
+  const now = new Date();
+  const dateRange = normalizeDateRange(filters.date_from, filters.date_to);
+  const chartRange = getChartRange(dateRange, 7);
+  const baseWhere = buildBaseWhere({
+    dateRange: chartRange,
+    status: filters.status,
+    assigneeId: userId,
+    sprintId: filters.sprint_id,
+  });
+
+  const summaryCounts = await getStatusSummary(baseWhere, now);
+  const completionRate =
+    summaryCounts.total > 0
+      ? Number((summaryCounts.completed / summaryCounts.total).toFixed(2))
+      : 0;
+
+   const delta = await calcPeriodDelta({...filters, assignee_id: userId}, chartRange, summaryCounts);    
+
+  const recentTickets = await prisma.ticket.findMany({
+    where: baseWhere,
+    orderBy: { updatedAt: "desc" },
+    take: 10,
+    select: {
+      id: true,
+      title: true,
+      priority: true,
+      status: true,
+      deadline: true,
+      sprint: { select: { id: true, name: true } },
+    },
+  });
+
+  return {
+    summary: {
+      my_tickets: summaryCounts.total,
+      completed: summaryCounts.completed,
+      overdue: summaryCounts.overdue,
+      completion_rate: completionRate,
+    },
+    recent_tickets: recentTickets.map((ticket) => ({
+      id: ticket.id,
+      title: ticket.title,
+      priority: ticket.priority,
+      status: ticket.status,
+      sprint: ticket.sprint
+        ? { id: ticket.sprint.id, label: ticket.sprint.name }
+        : null,
+      deadline: ticket.deadline,
+      is_overdue: isOverdue(ticket, now),
+    })),
+    delta,
+    filters_applied: {
+      date_range: dateRange
+        ? {
+            from: dateRange.start.toISOString().slice(0, 10),
+            to: dateRange.end.toISOString().slice(0, 10),
+          }
+        : null,
+      status: filters.status || null,
+      sprint_id: filters.sprint_id ? filters.sprint_id.toString() : null,
+    },
+  };
+};
+
+
+
 const calcPeriodDelta = async( filters, dateRange, summary, now) => {
     const previousRange = getPreviousRange(dateRange);
     console.log("previousRange:", previousRange);
