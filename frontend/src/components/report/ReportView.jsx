@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useSearchParams, useNavigate, useParams, useOutletContext, useLocation } from "react-router-dom";
-import { Download, ChevronLeft, ChevronRight, Bell } from "lucide-react";
+import { Download, ChevronLeft, ChevronRight, Bell, XCircle } from "lucide-react";
 import StatsCard from "./StatsCard"
 import FilterDropdown from "../report/FilterDropdown"
 import WeeklyChart from "./admin/WeeklyChart"
@@ -12,22 +12,24 @@ import Error from "../common-ui/Error";
 import Empty from "../common-ui/Empty";
 import ErrorIcon from "../../assets/images/ErrorIcon_reports.png";
 import EmptyIcon from "../../assets/images/EmptyIcon_reports.png";
+import { getMyReports } from "../../services/report.service";
+import { getSprints } from "../../services/sprints.service";
+import Input from "../shared/Input";
 
-const PRIORITY_OPTIONS = ["CRITICAL", "HIGH", "MEDIUM", "LOW"];
-
-const ReportView = ({ isAdmin, basePath, onCreateTicket, onRetry, header }) => {
+const ReportView = ({ isAdmin, onRetry, header }) => {
     const [searchParams, setSearchParams] = useSearchParams();
-    const navigate = useNavigate();
-    const location = useLocation();
-    const { id } = useParams();
-    const { openModal, closeModal } = useOutletContext();
+    // const navigate = useNavigate();
+    // const location = useLocation();
+    // const { id } = useParams();
+    // const { openModal, closeModal } = useOutletContext();
     const user = JSON.parse(localStorage.getItem("user")) || null;
-
     const activeStatus = searchParams.get("status") || null;
-    const activePriority = searchParams.get("priority") || null;
-    const activeAssignee = searchParams.get("assignee") || null;
+    const activeAssignee = searchParams.get("assignee_id") || null;
     const activeSprint = searchParams.get("sprint") || null;
     const currentPage = parseInt(searchParams.get("page") || "1", 10);
+    const activeFrom = searchParams.get("date_from") || "";
+    const activeTo = searchParams.get("date_to") || "";
+    const activeSprintFilter = searchParams.get("sprint") || null;
 
     // -------------------- Mock Data --------------------
     const mockAssignees = [
@@ -35,11 +37,6 @@ const ReportView = ({ isAdmin, basePath, onCreateTicket, onRetry, header }) => {
         { id: 2, name: "Bob" },
         { id: 3, name: "Charlie" },
         { id: 14, name: "Rand Haymouni" },
-    ];
-
-    const mockSprints = [
-        { id: 101, name: "Sprint 1" },
-        { id: 102, name: "Sprint 2" },
     ];
 
     const STAGES = [
@@ -53,46 +50,59 @@ const ReportView = ({ isAdmin, basePath, onCreateTicket, onRetry, header }) => {
         { key: "DEPLOYED", label: "Deployed" },
     ];
 
-    const mockTickets = Array.from({ length: 25 }).map((_, i) => {
-        const status = STAGES[i % STAGES.length].key;
-        const priority = PRIORITY_OPTIONS[i % PRIORITY_OPTIONS.length];
-        const assignee = mockAssignees[i % mockAssignees.length];
-
-        const now = new Date();
-        const randomDays = Math.floor(Math.random() * 30);
-        const deadline = new Date(now.getTime() + randomDays * 24 * 60 * 60 * 1000);
-
-        const isOverdue = status !== "DONE" && deadline < now;
-
-        const createdAt = new Date(now.getTime() - Math.floor(Math.random() * 15) * 24 * 60 * 60 * 1000);
-
-        return {
-            id: i + 1,
-            title: `Ticket ${i + 1}`,
-            status,
-            priority,
-            assignee,
-            sprint: mockSprints[i % mockSprints.length],
-            deadline: deadline.toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-            }),
-            isOverdue,
-            createdAt,
-        };
-    });
-
-    const [allTickets, setAllTickets] = useState(mockTickets);
-    const [pagination, setPagination] = useState({ total: mockTickets.length, totalPages: 3 });
+    const [allTickets, setAllTickets] = useState([]);
+    const [summary, setSummary] = useState(null);
+    const [delta, setDelta] = useState(null);
+    const [pagination, setPagination] = useState({ total: allTickets.length, totalPages: 3 });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [allSprints, setAllSprints] = useState([]);
     const allAssigneesRef = useRef(mockAssignees);
+    const assignees = allAssigneesRef.current;
+    const activeStatusLabel = STAGES.find((g) => g.key === activeStatus)?.label ?? null;
+    const statusGroupOptions = STAGES.map((g) => ({ value: g.key, label: g.label }));
+    const activeAssigneeName = activeAssignee
+        ? allAssigneesRef.current.find((a) => String(a.id) === String(activeAssignee))?.name ?? null
+        : null;
 
+    const buildParams = () => {
+        return {
+            status: activeStatus || undefined,
+            sprint_id: activeSprint || undefined,
+            date_from: activeFrom || null,
+            date_to: activeTo || null,
+        };
+    };
 
     const setParam = (key, value) => {
         const next = new URLSearchParams(searchParams);
         if (value) next.set(key, value);
         else next.delete(key);
+        next.delete("page");
+        setSearchParams(next);
+    };
+
+    const handleDateChange = (key, value) => {
+        const next = new URLSearchParams(searchParams);
+
+        const newFrom = key === "date_from" ? value : activeFrom;
+        const newTo = key === "date_to" ? value : activeTo;
+        const fromDate = new Date(newFrom);
+        const toDate = new Date(newTo);
+
+        if (fromDate > toDate) {
+            showToast({
+                title: "Invalid Date Range",
+                description: "From date must be before To date",
+                icon: <XCircle className="w-4 h-4" />,
+                type: "error",
+            });
+            return;
+        }
+
+        if (value) next.set(key, value);
+        else next.delete(key);
+
         next.delete("page");
         setSearchParams(next);
     };
@@ -114,59 +124,48 @@ const ReportView = ({ isAdmin, basePath, onCreateTicket, onRetry, header }) => {
     };
 
     const handleCreateClick = () => {
-        onCreateTicket?.(allAssigneesRef.current, mockSprints[0]);
+        console.log("Export CSV Button Clicked");
     };
 
-    const assignees = allAssigneesRef.current;
-    const currentSprint = mockSprints[0];
+    const refreshSprints = useCallback(() => {
+        getSprints(1, 100)
+            .then((res) => setAllSprints(res.data?.items || []))
+            .catch(() => { });
+    }, []);
 
-    const total = pagination?.total ?? 0;
-    const totalPages = pagination?.totalPages ?? 1;
+    useEffect(() => {
+        refreshSprints();
+    }, [refreshSprints]);
 
-    const activeStatusLabel = STAGES.find((g) => g.key === activeStatus)?.label ?? null;
-    const statusGroupOptions = STAGES.map((g) => ({ value: g.key, label: g.label }));
-    const activeSprintName = activeSprint
-        ? mockSprints.find((s) => String(s.id) === String(activeSprint))?.name ?? null
-        : null;
-    const activeAssigneeName = activeAssignee
-        ? allAssigneesRef.current.find((a) => String(a.id) === String(activeAssignee))?.name ?? null
-        : null;
-
-    const filteredTickets = useMemo(() => {
-        let filtered = [...allTickets];
-
-        if (!isAdmin && user) {
-            filtered = filtered.filter(
-                t => String(t.assignee?.id) === String(user.id)
-            );
-        }
-
-        if (activeStatus) {
-            filtered = filtered.filter(t => t.status === activeStatus);
-        }
-
-        if (activePriority) {
-            filtered = filtered.filter(t => t.priority === activePriority);
-        }
-
-        if (activeAssignee) {
-            filtered = filtered.filter(
-                t => String(t.assignee?.id) === String(activeAssignee)
-            );
-        }
-        if (activeSprint) {
-            filtered = filtered.filter(
-                t => String(t.sprint?.id) === String(activeSprint)
-            );
-        }
-
-        return filtered;
-    }, [allTickets, activeStatus, activePriority, activeAssignee, user, isAdmin]);
+    const formattedTickets = useMemo(() => {
+        return allTickets.map(t => ({
+            id: t.id,
+            title: t.title,
+            status: t.status,
+            priority: t.priority,
+            sprint: t.sprint,
+            assignee: {
+                id: user?.id,
+                name: user?.name || "Me",
+            },
+            deadline: t.deadline
+                ? new Date(t.deadline).toLocaleDateString("en-CA", {
+                    timeZone: "UTC",
+                    month: "short",
+                    day: "numeric",
+                })
+                : null,
+            isOverdue: t.is_overdue,
+        }));
+    }, [allTickets, user]);
+    
+    const total = formattedTickets.length;
+    console.log(formattedTickets);
 
     const teamStats = useMemo(() => {
         const grouped = {};
 
-        filteredTickets.forEach(t => {
+        formattedTickets.forEach(t => {
             const userId = t.assignee?.id;
             const userName = t.assignee?.name;
 
@@ -210,65 +209,59 @@ const ReportView = ({ isAdmin, basePath, onCreateTicket, onRetry, header }) => {
                 : 0,
         }));
 
-    }, [filteredTickets]);
+    }, [formattedTickets]);
+
+    const getTrendColor = (value) => {
+        if (value > 0) return "green";
+        if (value === 0 || value === null) return "blue";
+        return "red";
+    };
 
     const stats = useMemo(() => {
-        const total = filteredTickets.length;
-
-        const completed = filteredTickets.filter(t =>
-            ["DONE", "DEPLOYED"].includes(t.status)
-        ).length;
-
-        const inProgress = filteredTickets.filter(t =>
-            t.status === "IN_PROGRESS"
-        ).length;
-
-        const overdue = filteredTickets.filter(t => {
-            if (!t.deadline) return false;
-            const now = new Date();
-            return new Date(t.deadline) < now && t.status !== "DONE";
-        }).length;
-
-        const isAdmin = user?.role === "ADMIN";
+        if (!summary) return [];
 
         const baseStats = [
             {
                 title: isAdmin ? "Total Tickets" : "My Tickets",
-                value: total,
-                change: 0,
-                color: "blue",
+                value: summary.my_tickets,
+                change: delta?.total,
+                color: getTrendColor(delta?.total),
             },
             {
                 title: "Completed",
-                value: completed,
-                change: 12,
-                color: "green",
+                value: summary.completed,
+                change: delta?.completed,
+                color: getTrendColor(delta?.completed),
             },
             {
                 title: "Overdue",
-                value: overdue,
-                change: -10,
-                color: "red",
+                value: summary.overdue,
+                change: delta?.overdue,
+                color:
+                    delta?.overdue > 0
+                        ? "red"
+                        : delta?.overdue === 0 || delta?.overdue === null
+                            ? "blue"
+                            : "green",
             },
         ];
 
         if (isAdmin) {
-            baseStats.splice(2, 0, {
+            baseStats.splice(1, 0, {
                 title: "In Progress",
-                value: inProgress,
-                change: -5,
-                color: "red",
+                value: summary.in_progress || 0,
+                change: delta?.in_progress,
+                color: getTrendColor(delta?.in_progress),
             });
         }
 
         return baseStats;
-
-    }, [filteredTickets, user]);
+    }, [summary, delta, isAdmin]);
 
     const chartData = useMemo(() => {
         const grouped = {};
 
-        filteredTickets.forEach(t => {
+        formattedTickets.forEach(t => {
             const date = new Date(t.createdAt);
             const week = `${date.getFullYear()}-W${Math.ceil(date.getDate() / 7)}`;
 
@@ -296,7 +289,7 @@ const ReportView = ({ isAdmin, basePath, onCreateTicket, onRetry, header }) => {
         });
 
         return Object.values(grouped).slice(-6);
-    }, [filteredTickets]);
+    }, [formattedTickets]);
 
     const MocdataWeeks = [
         { week: "Week1", completed: 10, inProgress: 5, overdue: 3 },
@@ -304,6 +297,97 @@ const ReportView = ({ isAdmin, basePath, onCreateTicket, onRetry, header }) => {
         { week: "Week3", completed: 2, inProgress: 6, overdue: 7 },
         { week: "Week4", completed: 10, inProgress: 10, overdue: 10 },
     ];
+
+    const DateRangeFilter = ({ from, to, onChange }) => {
+        return (
+            <div className="flex items-center gap-3 bg-background border border-divider/40 rounded-lg px-3 py-2">
+
+                <div className="flex flex-col">
+                    <span className="text-[12px] text-text-hint">From</span>
+                    <input
+                        type="date"
+                        value={from}
+                        onChange={(e) => onChange("date_from", e.target.value)}
+                        className="bg-transparent text-sm text-text-primary outline-none"
+                    />
+                </div>
+
+                <div className="w-px h-8 bg-divider/40" />
+
+                <div className="flex flex-col">
+                    <span className="text-[12px] text-text-hint">To</span>
+                    <input
+                        type="date"
+                        value={to}
+                        onChange={(e) => onChange("date_to", e.target.value)}
+                        className="bg-transparent text-sm text-text-primary outline-none"
+                    />
+                </div>
+            </div>
+        );
+    };
+
+    const fetchReports = useCallback(async () => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            const res = await getMyReports(buildParams());
+
+            setSummary(res.summary);
+            setDelta(res.delta);
+            setAllTickets(res.recent_tickets || []);
+
+        } catch (err) {
+            let message = "Something went wrong";
+
+            if (err?.type === "forbidden") {
+                showToast({
+                    title: "Forbidden",
+                    description: err.message,
+                    type: "error",
+                    icon: <XCircle className="w-4 h-4" />,
+                });
+                return;
+            }
+
+            if (err?.type === "validation") {
+                showToast({
+                    title: "Validation Error",
+                    description: err.message,
+                    type: "error",
+                    icon: <XCircle className="w-4 h-4" />,
+                });
+
+                setError(null);
+                return;
+            }
+            message = "Failed to load reports";
+            setError(message);
+
+            showToast({
+                title: "Error",
+                description: message,
+                type: "error",
+                icon: <XCircle className="w-4 h-4" />,
+            });
+
+        } finally {
+            setLoading(false);
+        }
+    }, [activeStatus, activeSprint, activeFrom, activeTo]);
+
+    useEffect(() => {
+        fetchReports();
+    }, [fetchReports]);
+
+    const ITEMS_PER_PAGE = 10;
+    const totalPages = Math.ceil(formattedTickets.length / ITEMS_PER_PAGE);
+
+    const paginatedTickets = useMemo(() => {
+        const start = (currentPage - 1) * ITEMS_PER_PAGE;
+        return formattedTickets.slice(start, start + ITEMS_PER_PAGE);
+    }, [formattedTickets, currentPage]);
 
     const FiltersSkeleton = () => {
         return (
@@ -341,8 +425,8 @@ const ReportView = ({ isAdmin, basePath, onCreateTicket, onRetry, header }) => {
         setSearchParams({});
     };
 
-    const isEmptyState = !loading && !error && filteredTickets.length === 0;
-    const isErrorState = !!error;
+    const isEmptyState = !loading && !error && formattedTickets.length === 0;
+    const isErrorState = !!error && !loading;
     const shouldHideContent = isEmptyState || isErrorState;
 
     return (
@@ -353,11 +437,6 @@ const ReportView = ({ isAdmin, basePath, onCreateTicket, onRetry, header }) => {
                     {header}
                 </div>
                 <div className="flex items-center gap-2 ml-3 shrink-0">
-                    {!isAdmin && currentSprint && (
-                        <span className="hidden sm:inline-flex px-3 py-1 rounded-full text-hint border border-[#60A5FA]/60 text-[#60A5FA] bg-[#60A5FA]/10">
-                            {currentSprint.name}
-                        </span>
-                    )}
                     <button className="relative w-9 h-9 flex items-center justify-center rounded-md bg-admin-btn/40 hover:bg-admin-btn/60 transition-colors cursor-pointer">
                         <Bell className="w-4 h-4 text-text-primary" />
                         <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
@@ -370,16 +449,15 @@ const ReportView = ({ isAdmin, basePath, onCreateTicket, onRetry, header }) => {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-4 py-[12px] gap-2">
                     <div className="flex items-center gap-2 flex-wrap">
                         {loading
-                            ? Array.from({ length: 3 }).map((_, i) => (
+                            ? Array.from({ length: isAdmin ? 4 : 3 }).map((_, i) => (
                                 <FiltersSkeleton key={i} />
                             ))
                             :
                             <>
-                                <FilterDropdown
-                                    label="Date range"
-                                    options={[]}
-                                    value={null}
-                                    onChange={() => { }}
+                                <DateRangeFilter
+                                    from={activeFrom}
+                                    to={activeTo}
+                                    onChange={handleDateChange}
                                 />
                                 <FilterDropdown
                                     label="Status"
@@ -392,19 +470,17 @@ const ReportView = ({ isAdmin, basePath, onCreateTicket, onRetry, header }) => {
                                         label="Assignee"
                                         options={assignees.map((a) => ({ value: String(a.id), label: a.name }))}
                                         value={activeAssigneeName}
-                                        onChange={(id) => setParam("assignee", id)}
+                                        onChange={(id) => setParam("assignee_id", id)}
                                     />
                                 )}
-                                {!isAdmin && (<FilterDropdown
+                                <FilterDropdown
                                     label="Sprint"
-                                    options={mockSprints.map((s) => ({
-                                        value: String(s.id),
-                                        label: s.name
-                                    }))}
-                                    value={activeSprintName}
-                                    onChange={(id) => setParam("sprint", id)}
+                                    options={allSprints.map((s) => ({ value: String(s.id), label: s.name }))}
+                                    value={activeSprintFilter
+                                        ? allSprints.find((s) => String(s.id) === activeSprintFilter)?.name ?? null
+                                        : null}
+                                    onChange={(s) => setParam("sprint", s)}
                                 />
-                                )}
                             </>
                         }
                     </div>
@@ -427,6 +503,7 @@ const ReportView = ({ isAdmin, basePath, onCreateTicket, onRetry, header }) => {
                     </div>
                 </div>
             </div>
+
             {!shouldHideContent && (
                 <div className={`grid gap-2 mb-8 px-4 ${isAdmin ? "grid-cols-2 md:grid-cols-4" : "grid-cols-2 md:grid-cols-3"}`}>
                     {loading
@@ -436,6 +513,7 @@ const ReportView = ({ isAdmin, basePath, onCreateTicket, onRetry, header }) => {
                         : stats.map((s, i) => (
                             <StatsCard
                                 key={i}
+                                isAdmin={isAdmin}
                                 title={s.title}
                                 value={s.value}
                                 change={s.change}
@@ -457,6 +535,7 @@ const ReportView = ({ isAdmin, basePath, onCreateTicket, onRetry, header }) => {
                     }
                 </div>
             )}
+
             {/* Content area */}
             <div className="mx-3 sm:mx-[16px] my-[7px] bg-background rounded-[10px] flex flex-col flex-1 min-h-0 border border-divider/40">
                 {isErrorState ? (
@@ -465,7 +544,7 @@ const ReportView = ({ isAdmin, basePath, onCreateTicket, onRetry, header }) => {
                             title={error}
                             description="We couldn't load your reports. Please try again."
                             icon={ErrorIcon}
-                            onRetry={() => console.log("retry clicked")}
+                            onRetry={fetchReports}
                         />
                     </div>
                 ) : isEmptyState ? (
@@ -498,7 +577,7 @@ const ReportView = ({ isAdmin, basePath, onCreateTicket, onRetry, header }) => {
                             />
                         ) : (
                             <UserTicketsTable
-                                tickets={filteredTickets}
+                                tickets={formattedTickets}
                                 isLoading={loading}
                                 error={error}
                                 onRetry={onRetry}
@@ -508,15 +587,15 @@ const ReportView = ({ isAdmin, basePath, onCreateTicket, onRetry, header }) => {
                         {/* Footer: count + pagination */}
                         <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 mt-auto">
                             <span className="text-hint text-text-hint hidden sm:inline">
-                                {loading ? "Loading..." : error ? "—" : `Showing ${filteredTickets.length} of ${total} tasks`}
+                                {loading ? "Loading..." : error ? "—" : `Showing ${paginatedTickets.length} of ${formattedTickets.length} tasks`}
                             </span>
                             <span className="text-hint text-text-hint sm:hidden">
-                                {!loading && !error && `${filteredTickets.length} / ${total}`}
+                                {!loading && !error && `${formattedTickets.length} / ${total}`}
                             </span>
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={() => handlePageChange(currentPage - 1)}
-                                    disabled={currentPage <= 1 || loading || !!error}
+                                    disabled={currentPage <= 1 || loading || !!error || currentPage >= totalPages}
                                     className="w-8 h-8 flex items-center justify-center rounded-full bg-[#49475a]/50 text-text-primary hover:bg-[#49475a]/70 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                                 >
                                     <ChevronLeft className="w-4 h-4" />

@@ -1,4 +1,7 @@
 import Loading from "../../common-ui/Loading";
+import Button from "../../shared/Button";
+import { useNavigate } from "react-router-dom";
+import { SquareArrowUpRight, ArrowRight } from "lucide-react";
 
 const PRIORITY_STYLES = {
     CRITICAL: "bg-red-600/15 text-red-500 border border-red-600/40",
@@ -43,6 +46,7 @@ export default function UserTicketsTable({
     isLoading = false,
     error,
     onRetry }) {
+    const navigate = useNavigate();
     return (
         <div className="bg-card-bg rounded-lg p-4">
             <h2 className="font-poppins font-light text-[18px] sm:text-[18px] text-text-primary mb-4">{title}</h2>
@@ -82,10 +86,18 @@ export default function UserTicketsTable({
                                     </td>
                                     <td className="py-2 px-2">
                                         {ticket.sprint ? (
-                                            <Chip
-                                                label={ticket.sprint.name}
-                                                className={SPRINT_CHIP_STYLE}
-                                            />
+                                            <Button
+                                                onClick={() =>
+                                                    navigate(`/user/dashboard/tickets/${ticket.id}?sprint=${ticket.sprint.id}`)
+                                                }
+                                                loading={isLoading}
+                                                disabled={isLoading}
+                                                className="flex justify-start! w-auto! gap-2 items-center! !py-1 !px-2 rounded-lg !text-[14px] cursor-pointer whitespace-nowrap"
+                                            >
+                                                <SquareArrowUpRight className="w-4 h-4" />
+                                                {ticket.sprint.label}
+                                                <ArrowRight className="w-3 h-3" />
+                                            </Button>
                                         ) : (
                                             <span className="text-text-hint text-hint">—</span>
                                         )}

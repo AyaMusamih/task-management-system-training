@@ -5,6 +5,7 @@ const StatsCard = ({
     value,
     change = 0,
     color = "blue",
+    isAdmin
 }) => {
     const iconType = change > 0 ? "up" : change < 0 ? "down" : "neutral";
 
@@ -33,10 +34,10 @@ const StatsCard = ({
             <p className={`text-3xl font-bold ${colorClasses[color]} mt-1`}>
                 {value}
             </p>
-            {change === 0 ? (
+            {change === 0 || change === null ? (
                 <div className="flex items-center justify-center gap-3 mb-1">
                     <p className={`text-xs ${subtitleColors[color]} mt-1`}>
-                        No change
+                        {isAdmin ? "No change" : title === "My Tickets" ? "Total assigned to me" : "No change"}
                     </p>
                 </div>
             ) : (
