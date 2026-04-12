@@ -88,8 +88,8 @@ const ProfileHeader = ({ profile, isEdit, loading, onEditClick }) => {
                 )}
             </div>
 
-            <div className="flex items-end justify-between pl-[65px] pr-3 -mt-15 relative">
-                <div className="flex items-end gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between pl-4 sm:pl-[65px] pr-3 -mt-15 relative gap-3">
+                <div className="flex flex-col sm:flex-row sm:items-end gap-3 items-center sm:items-end">
 
                     {loading ? (
                         <div className="w-[160px] h-[160px] rounded-full skeleton border-[3px] border-background shrink-0" />
@@ -126,7 +126,7 @@ const ProfileHeader = ({ profile, isEdit, loading, onEditClick }) => {
                         </div>
                     )}
 
-                    <div className="flex flex-col gap-1.5 pb-1 mb-2">
+                    <div className="flex flex-col gap-1.5 pb-1 mb-2 min-w-0 items-center sm:items-start text-center sm:text-left">
                         {loading ? (
                             <>
                                 <div className="h-4 w-36 skeleton rounded-md" />
@@ -134,7 +134,7 @@ const ProfileHeader = ({ profile, isEdit, loading, onEditClick }) => {
                             </>
                         ) : (
                             <>
-                                <p className="font-manrope font-extrabold text-[30px] text-text-primary">
+                                <p className="font-manrope font-extrabold text-[20px] sm:text-[30px] text-text-primary break-words">
                                     {profile?.name}
                                 </p>
                                 <span
@@ -158,7 +158,7 @@ const ProfileHeader = ({ profile, isEdit, loading, onEditClick }) => {
                 {!isEdit && (
                     <button
                         onClick={onEditClick}
-                        className="mb-11 mx-6 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-field-typed cursor-pointer transition-colors hover:brightness-90"
+                        className="self-center sm:self-auto mt-2 sm:mt-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-field-typed cursor-pointer transition-colors hover:brightness-90"
                         style={{ backgroundColor: "#DFE3E6", color: "#2C2F31" }}
                     >
                         <Pencil className="w-4 h-4" style={{ color: "#2C2F31" }} />

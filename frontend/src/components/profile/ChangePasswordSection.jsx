@@ -5,6 +5,7 @@ import { changePassword } from "../../services/profile.service";
 import { CircleCheckBig, CircleCheck, ShieldAlert, ShieldCheck, XCircle } from "lucide-react";
 import { showToast } from "../../utils/showToast";
 import { Pencil } from "lucide-react";
+import { useRef } from "react";
 
 const ChangePasswordSection = () => {
     const [form, setForm] = useState({
@@ -16,6 +17,10 @@ const ChangePasswordSection = () => {
     const [loading, setLoading] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+
+    const currentRef = useRef(null);
+    const newRef = useRef(null);
+    const confirmRef = useRef(null);
 
     const passwordRules = {
         length: form.newPassword.length >= 8,
@@ -49,24 +54,39 @@ const ChangePasswordSection = () => {
             newErrors.confirmPassword = "Passwords do not match";
 
         setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
+        return newErrors;
     };
 
     const handleSubmit = async () => {
         setSubmitted(true);
-        const validationErrors = validate(form);
+
+        const validationErrors = validate();
 
         if (Object.keys(validationErrors).length > 0) {
             setErrors(validationErrors);
+
+            const refs = {
+                currentPassword: currentRef,
+                newPassword: newRef,
+                confirmPassword: confirmRef,
+            };
+
+            const firstError = Object.keys(validationErrors)[0];
+
+            refs[firstError]?.current?.scrollIntoView({
+                behavior: "smooth",
+                block: "center",
+            });
+
             showToast({
                 title: "Validation Error",
                 description: "Please fix the errors below before saving",
                 icon: <XCircle className="w-4 h-4" />,
                 type: "error",
             });
+
             return;
         }
-
         setLoading(true);
         try {
             await changePassword({
@@ -140,11 +160,12 @@ const ChangePasswordSection = () => {
                         onClick={() => setIsEditing(true)}
                         className="w-8 h-8 flex items-center justify-center rounded-md bg-admin-btn/40 hover:bg-admin-btn/60 cursor-pointer"
                     >
-                        <Pencil className="w-4 h-4 text-text-primary" />
+                        <Pencil className="w-7 h-4 sm:w-4 sm:h-4 text-text-primary" />
                     </button>
                 )}
             </div>
             <Input
+                ref={currentRef}
                 label="Current Password"
                 type="password"
                 placeholder="Enter current password"
@@ -155,6 +176,7 @@ const ChangePasswordSection = () => {
             />
 
             <Input
+                ref={newRef}
                 label="New Password"
                 type="password"
                 placeholder="Enter new password"
@@ -190,6 +212,7 @@ const ChangePasswordSection = () => {
             />
 
             <Input
+                ref={confirmRef}
                 label="Confirm Password"
                 type="password"
                 placeholder="Confirm new password"

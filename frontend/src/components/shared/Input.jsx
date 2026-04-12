@@ -84,9 +84,8 @@ const Input = forwardRef(({
                 </div>
             ) : (
                 /* Text / Password */
-                <div className="relative max-w-[493px]">
+                <div ref={ref} className="relative max-w-[493px]">
                     <input
-                        ref={ref}
                         type={inputType}
                         name={name}
                         value={value}
