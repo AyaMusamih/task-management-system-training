@@ -39,30 +39,32 @@ const buildCsvRowLine = (headers, row) => {
 const createCsvTransform = (headers) => {
   let headerWritten = false;
 
-  return new Transform({
-    readableObjectMode: false, 
-    writableObjectMode: true,  
+  const transform = new Transform({
+    readableObjectMode: false,
+    writableObjectMode: true,
+  });
 
-    _transform(row, _encoding, callback) {
-      try {
-        if (!headerWritten) {
-          this.push(buildCsvHeaderLine(headers));
-          headerWritten = true;
-        }
-        this.push(buildCsvRowLine(headers, row));
-        callback();
-      } catch (err) {
-        callback(err);
-      }
-    },
-
-    _flush(callback) {
+  transform._transform = function (row, _encoding, callback) {
+    try {
       if (!headerWritten) {
         this.push(buildCsvHeaderLine(headers));
+        headerWritten = true;
       }
+      this.push(buildCsvRowLine(headers, row));
       callback();
-    },
-  });
+    } catch (err) {
+      callback(err);
+    }
+  };
+
+  transform._flush = function (callback) {
+    if (!headerWritten) {
+      this.push(buildCsvHeaderLine(headers));
+    }
+    callback();
+  };
+
+  return transform;
 };
 
 module.exports = {
