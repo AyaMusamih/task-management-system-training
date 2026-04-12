@@ -26,6 +26,18 @@ const adminReportSchema = reportSchema
     path: ["date_from"],
   });
 
+const adminExportSchema = reportSchema
+  .extend({
+    assignee_id: bigIntIdSchema.optional(),
+    page: z.coerce.number().int().min(1).optional(),
+    limit: z.coerce.number().int().min(1).max(5000).optional(),
+  })
+  .strict()
+  .refine(hasValidDateRange, {
+    message: "date_from must be before date_to",
+    path: ["date_from"],
+  });
+
 const userReportSchema = reportSchema.refine(hasValidDateRange, {
   message: "date_from must be before date_to",
   path: ["date_from"],
@@ -33,5 +45,6 @@ const userReportSchema = reportSchema.refine(hasValidDateRange, {
 
 module.exports = {
   adminReportSchema,
+  adminExportSchema,
   userReportSchema,
 };
