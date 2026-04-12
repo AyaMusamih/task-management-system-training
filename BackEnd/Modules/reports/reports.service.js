@@ -2,11 +2,17 @@ const prisma = require("../prismaClient");
 const {Prisma} = require("../../prisma/generated")
 const { TicketStatus, COMPLETED_STATUSES } = require("../Enums/enums");
 const {
+  createCsvTransform
+} = require("./utils/csv.utils");
+const { createCsvTransform } = require("./csvUtils");
+
+const {
   normalizeDateRange,
   buildFiltersApplied,
   buildBaseWhere,
   isOverdue,
   getChartRange,
+  formatDateOnly,
   getIsoWeekLabel,
   getIsoWeekSortKey,
   calcDelta,
@@ -316,9 +322,147 @@ const calcPeriodDelta = async( filters, dateRange, summary, now) => {
       overdue:     calcDelta(summary.overdue,      prevSummary.overdue),
     };
 }
+ 
+const DEFAULT_EXPORT_DAYS = 30;
+const MAX_EXPORT_DAYS = 93;
+const DEFAULT_EXPORT_LIMIT = 1000;
+const MAX_EXPORT_LIMIT = 5000;
+ 
+const assertExportRange = (dateRange) => {
+  if (!dateRange) return;
+  const rangeMs = dateRange.end.getTime() - dateRange.start.getTime();
+  const maxRangeMs = MAX_EXPORT_DAYS * 24 * 60 * 60 * 1000;
+  if (rangeMs > maxRangeMs) {
+    const err = new Error("Export date range too large");
+    err.status = 400;
+    throw err;
+  }
+};
+ 
+const EXPORT_BATCH_SIZE = 500;
+ 
+const getAdminReportExportStream = async (filters) => {
+  const requestedRange = normalizeDateRange(filters.date_from, filters.date_to);
+  const dateRange = getChartRange(requestedRange, DEFAULT_EXPORT_DAYS);
+  assertExportRange(dateRange);
+ 
+  const page = filters.page ? Number(filters.page) : 1;
+  const limit = filters.limit ? Number(filters.limit) : DEFAULT_EXPORT_LIMIT;
+ 
+  if (limit > MAX_EXPORT_LIMIT) {
+    const err = new Error("Export limit exceeds maximum allowed");
+    err.status = 400;
+    throw err;
+  }
+ 
+  const skip = (page - 1) * limit;
+  const baseWhere = buildBaseWhere({
+    dateRange,
+    status: filters.status,
+    assigneeId: filters.assignee_id,
+    sprintId: filters.sprint_id,
+  });
+ 
+  const headers = [
+    { key: "id", label: "Ticket ID" },
+    { key: "title", label: "Title" },
+    { key: "description", label: "Description" },
+    { key: "status", label: "Status" },
+    { key: "priority", label: "Priority" },
+    { key: "deadline", label: "Deadline" },
+    { key: "created_at", label: "Created At" },
+    { key: "updated_at", label: "Updated At" },
+    { key: "assignee_id", label: "Assignee ID" },
+    { key: "assignee_name", label: "Assignee Name" },
+    { key: "assignee_email", label: "Assignee Email" },
+    { key: "created_by_id", label: "Created By ID" },
+    { key: "created_by_name", label: "Created By Name" },
+    { key: "created_by_email", label: "Created By Email" },
+    { key: "sprint_id", label: "Sprint ID" },
+    { key: "sprint_name", label: "Sprint Name" },
+  ];
+ 
+  const select = {
+    id: true,
+    title: true,
+    description: true,
+    status: true,
+    priority: true,
+    deadline: true,
+    createdAt: true,
+    updatedAt: true,
+    assignee: { select: { id: true, name: true, email: true } },
+    createdBy: { select: { id: true, name: true, email: true } },
+    sprint: { select: { id: true, name: true } },
+  };
+ 
+  const toRow = (ticket) => ({
+    id: ticket.id?.toString() || "",
+    title: ticket.title,
+    description: ticket.description || "",
+    status: ticket.status,
+    priority: ticket.priority,
+    deadline: ticket.deadline ? ticket.deadline.toISOString() : "",
+    created_at: ticket.createdAt ? ticket.createdAt.toISOString() : "",
+    updated_at: ticket.updatedAt ? ticket.updatedAt.toISOString() : "",
+    assignee_id: ticket.assignee?.id ? ticket.assignee.id.toString() : "",
+    assignee_name: ticket.assignee?.name || "",
+    assignee_email: ticket.assignee?.email || "",
+    created_by_id: ticket.createdBy?.id ? ticket.createdBy.id.toString() : "",
+    created_by_name: ticket.createdBy?.name || "",
+    created_by_email: ticket.createdBy?.email || "",
+    sprint_id: ticket.sprint?.id ? ticket.sprint.id.toString() : "",
+    sprint_name: ticket.sprint?.name || "",
+  });
+ 
+  const fromLabel = formatDateOnly(dateRange.start);
+  const toLabel = formatDateOnly(dateRange.end);
+  const filename = `admin-report_${fromLabel}_to_${toLabel}_page-${page}.csv`;
+ 
+  const rowSource = require("stream").Readable.from(async function* () {
+    let remaining = limit;
+    let lastId = null;
+    let isFirstBatch = true;
+ 
+    while (remaining > 0) {
+      const take = Math.min(EXPORT_BATCH_SIZE, remaining);
+      const query = {
+        where: baseWhere,
+        take,
+        orderBy: { id: "asc" },
+        select,
+      };
+ 
+      if (lastId) {
+        query.cursor = { id: lastId };
+        query.skip = 1;
+      } else if (isFirstBatch && skip > 0) {
+        query.skip = skip;
+      }
+ 
+      const tickets = await prisma.ticket.findMany(query);
+      if (tickets.length === 0) break;
+ 
+      for (const ticket of tickets) {
+        yield toRow(ticket);
+      }
+ 
+      remaining -= tickets.length;
+      lastId = tickets[tickets.length - 1].id;
+      isFirstBatch = false;
+    }
+  }());
+ 
+  const csvTransform = createCsvTransform(headers);
+  rowSource.on("error", (err) => csvTransform.destroy(err));
+  const stream = rowSource.pipe(csvTransform);
+ 
+  return { stream, filename };
+};
 
 module.exports = {
-    getAdminReport,
-    getMyReport
+  getAdminReport,
+  getMyReport,
+  getAdminReportExportStream
 }
 

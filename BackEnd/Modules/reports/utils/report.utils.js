@@ -110,6 +110,7 @@ module.exports = {
   buildBaseWhere,
   isOverdue,
   getChartRange,
+  formatDateOnly,
   getIsoWeekLabel,
   getIsoWeekSortKey,
   calcDelta,
