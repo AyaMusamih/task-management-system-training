@@ -43,9 +43,8 @@ const Chip = ({ label, className }) => (
 export default function UserTicketsTable({
     tickets,
     title = "My recent tickets",
-    isLoading = false,
-    error,
-    onRetry }) {
+    isLoading = false
+}) {
     const navigate = useNavigate();
     return (
         <div className="bg-card-bg rounded-lg p-4">

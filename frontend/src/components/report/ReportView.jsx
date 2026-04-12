@@ -14,7 +14,6 @@ import ErrorIcon from "../../assets/images/ErrorIcon_reports.png";
 import EmptyIcon from "../../assets/images/EmptyIcon_reports.png";
 import { getMyReports } from "../../services/report.service";
 import { getSprints } from "../../services/sprints.service";
-import Input from "../shared/Input";
 
 const ReportView = ({ isAdmin, onRetry, header }) => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -572,15 +571,11 @@ const ReportView = ({ isAdmin, onRetry, header }) => {
                             <TeamBreakdownTable
                                 members={teamStats}
                                 isLoading={loading}
-                                error={error}
-                                onRetry={onRetry}
                             />
                         ) : (
                             <UserTicketsTable
                                 tickets={formattedTickets}
                                 isLoading={loading}
-                                error={error}
-                                onRetry={onRetry}
                             />
                         )}
 
