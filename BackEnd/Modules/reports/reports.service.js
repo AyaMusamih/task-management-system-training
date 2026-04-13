@@ -27,19 +27,27 @@ const getStatusSummary = async (where, now) => {
   });
 
   const total = statusCounts.reduce((sum, row) => sum + row._count._all, 0);
-  if(!where.status){}
   const completed =
-    statusCounts.find((row) => row.status === TicketStatus.DONE)?._count._all ||
+    statusCounts.find((row) => COMPLETED_STATUSES.includes(row.status))?._count._all ||
     0;
   const inProgress =
     statusCounts.find((row) => row.status === TicketStatus.IN_PROGRESS)?._count
       ._all || 0;
+  if(COMPLETED_STATUSES.includes(where.status))  {  return {
+    total,
+    completed,
+    in_progress: inProgress,
+    overdue: 0
+  };}  
 
   const overdue = await prisma.ticket.count({
     where: {
       ...where,
       deadline: { lt: now },
-      status: { not: TicketStatus.DONE },
+          status: {
+      ...(where.status ? { equals: where.status } : {}),
+      notIn: COMPLETED_STATUSES,
+    },
     },
   });
   return {
@@ -132,7 +140,6 @@ const buildMembers = async (where, now) => {
     }),
   ]);
 
-  // Guard against unexpected non-array results
   if (!Array.isArray(grouped) || !Array.isArray(overdueGrouped)) {
     console.error("Unexpected groupBy result:", { grouped, overdueGrouped });
     return [];
@@ -148,8 +155,6 @@ const buildMembers = async (where, now) => {
     where: { id: { in: assigneeIds } },
     select: { id: true, name: true },
   });
-
-  // Normalize IDs to string for consistent map key comparison
   const userMap = new Map(users.map((user) => [String(user.id), user]));
   const countsMap = new Map();
 
@@ -305,7 +310,6 @@ const getMyReport = async (userId, filters) => {
 
 const calcPeriodDelta = async( filters, dateRange, summary, now) => {
     const previousRange = getPreviousRange(dateRange);
-    console.log("previousRange:", previousRange);
     const prevWhere = buildBaseWhere({
       dateRange: previousRange,
       status: filters.status,
@@ -313,8 +317,6 @@ const calcPeriodDelta = async( filters, dateRange, summary, now) => {
       sprintId: filters.sprint_id,
     });
     const prevSummary = await getStatusSummary(prevWhere, now);
-  console.log("current summary:", summary);
-  console.log("prev summary:", prevSummary);
     return {
       total:       calcDelta(summary.total,       prevSummary.total),
       completed:   calcDelta(summary.completed,   prevSummary.completed),
