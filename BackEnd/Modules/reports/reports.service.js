@@ -167,7 +167,7 @@ const buildMembers = async (where, now) => {
       in_progress: 0,
     };
     current.assigned += row._count._all;
-    if (row.status === TicketStatus.DONE) current.completed += row._count._all;
+    if (COMPLETED_STATUSES.includes(row.status)) current.completed += row._count._all;
     if (row.status === TicketStatus.IN_PROGRESS) current.in_progress += row._count._all;
     countsMap.set(key, current);
   }
