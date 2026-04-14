@@ -44,8 +44,8 @@ const ReportView = ({ isAdmin, header }) => {
     const [recentTickets, setRecentTickets] = useState([]);
     const [summary, setSummary] = useState(null);
     const [delta, setDelta] = useState(null);
-    const [members, setMembers] = useState([]);     
-    const [chart, setChart] = useState([]);          
+    const [members, setMembers] = useState([]);
+    const [chart, setChart] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [allSprints, setAllSprints] = useState([]);
@@ -185,7 +185,7 @@ const ReportView = ({ isAdmin, header }) => {
         return "red";
     };
 
-const formatDelta = (raw) => (raw != null ? Math.round(raw * 100) : null);
+    const formatDelta = (raw) => (raw != null ? Math.round(raw * 100) : null);
 
     const stats = useMemo(() => {
         if (!summary) return [];
@@ -404,6 +404,7 @@ const formatDelta = (raw) => (raw != null ? Math.round(raw * 100) : null);
     const isEmptyState = !loading && !error && tableIsEmpty;
     const isErrorState = !!error && !loading;
     const shouldHideContent = isEmptyState || isErrorState || (!isAdmin && !!activeStatus);
+    const shouldHideCards = shouldHideContent || (isAdmin && !!activeStatus);
 
     return (
         <div className="flex flex-col h-full bg-card-left">
@@ -483,7 +484,7 @@ const formatDelta = (raw) => (raw != null ? Math.round(raw * 100) : null);
                 </div>
             </div>
 
-            {!shouldHideContent && (
+            {!shouldHideCards && (
                 <div className={`grid gap-2 mb-8 px-4 ${isAdmin ? "grid-cols-2 md:grid-cols-4" : "grid-cols-2 md:grid-cols-3"}`}>
                     {loading
                         ? Array.from({ length: isAdmin ? 4 : 3 }).map((_, i) => (
