@@ -18,10 +18,6 @@ import { getUsers } from "../../services/user.service";
 
 const ReportView = ({ isAdmin, header }) => {
     const [searchParams, setSearchParams] = useSearchParams();
-    // const navigate = useNavigate();
-    // const location = useLocation();
-    // const { id } = useParams();
-    // const { openModal, closeModal } = useOutletContext();
     const user = JSON.parse(localStorage.getItem("user")) || null;
     const activeStatus = searchParams.get("status") || null;
     const activeAssignee = searchParams.get("assignee_id") || null;
@@ -31,8 +27,6 @@ const ReportView = ({ isAdmin, header }) => {
     const activeSprintFilter = searchParams.get("sprint") || null;
 
     const STAGES = [
-        { key: "SCOPED_BACKLOG", label: "Scoped Backlog" },
-        { key: "SPRINT_BACKLOG", label: "Sprint Backlog" },
         { key: "TODO", label: "To Do" },
         { key: "IN_PROGRESS", label: "In Progress" },
         { key: "DONE", label: "Done" },

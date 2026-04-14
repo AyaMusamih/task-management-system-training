@@ -3,6 +3,7 @@ const router = express.Router();
 const validate = require("../Middlewares/validation");
 const {
   adminReportSchema,
+  adminExportSchema,
   userReportSchema,
 } = require("./schema/reports.schema");
 const isAdmin = require("../Middlewares/isAdmin.middleware")
@@ -15,6 +16,13 @@ router.get(
   isAdmin,
   validate({ query: adminReportSchema }),
   reportsController.getAdminReport,
+);
+
+router.get(
+  "/admin/export",
+  isAdmin,
+  validate({ query: adminExportSchema }),
+  reportsController.getAdminReportExport,
 );
 
 router.get(
