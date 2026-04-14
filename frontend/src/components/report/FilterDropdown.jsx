@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ChevronDown } from "lucide-react";
 
 const FilterDropdown = ({ label, options, value, onChange }) => {
@@ -25,7 +25,8 @@ const FilterDropdown = ({ label, options, value, onChange }) => {
                 <ChevronDown className="w-3.5 h-3.5 opacity-60" />
             </button>
             {open && (
-                <div className="absolute top-full mt-1 left-0 z-50 bg-input-bg border border-divider/50 rounded-lg py-1 min-w-36 shadow-xl">
+                <div className="absolute top-full mt-1 left-0 z-50 bg-input-bg border border-divider/50 rounded-lg py-1 min-w-36 shadow-xl max-h-48 overflow-y-auto
+  [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-input-bg [&::-webkit-scrollbar-thumb]:bg-white/30 [&::-webkit-scrollbar-thumb]:rounded-full">
                     <button
                         onClick={() => { onChange(""); setOpen(false); }}
                         className="w-full text-left px-3 py-1.5 text-hint text-text-hint hover:bg-white/5 cursor-pointer"
