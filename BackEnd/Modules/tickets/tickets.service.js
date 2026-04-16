@@ -12,9 +12,17 @@ const getTickets = async (
   limit,
   sortBy,
   search,
+  deletedOnly,
+  includeDeleted,
 ) => {
   const user_id = BigInt(user.id);
-  const where = { deletedAt: null };
+  const where = {};
+
+  if (deletedOnly) {
+    where.deletedAt = { not: null };
+  } else if (!includeDeleted) {
+    where.deletedAt = null;
+  }
 
   if (user.role !== "ADMIN") {
     where.OR = [
@@ -178,10 +186,31 @@ const deleteTicket = async (id) => {
   });
 };
 
+const deletePermanent = async (id) => {
+  const ticket = await prisma.ticket.findUnique({ where: { id: BigInt(id) } });
+
+  if (!ticket) {
+    const err = new Error("Ticket not found");
+    err.status = 404;
+    throw err;
+  }
+
+  if (!ticket.deletedAt) {
+    const err = new Error("Ticket is not deleted");
+    err.status = 400;
+    throw err;
+  }
+
+  return await prisma.ticket.delete({
+    where: { id: BigInt(id) },
+  });
+};
+
 module.exports = {
   getTickets,
   createTicket,
   updateTicket,
   updateTicketStatus,
-  deleteTicket
+  deleteTicket,
+  deletePermanent,
 };
