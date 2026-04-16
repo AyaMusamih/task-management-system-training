@@ -42,6 +42,13 @@ router.patch(
   ticketController.updateTicket,
 );
 
+router.patch(
+  "/:id/restore",
+  isAdmin,
+  validate({ params: updateTicketParamSchema }),
+  ticketController.restoreTicket,
+);
+
 router.delete(
   "/:id",
   isAdmin,

@@ -121,6 +121,17 @@ const deleteTicket = async (req, res, next) => {
   }
 };
 
+const restoreTicket = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    // TODO: Audit log ticket restore.
+    await ticketService.restoreTicket(id);
+    res.status(200).json({ success: true, message: "Ticket restored" });
+  } catch (err) {
+    next(err);
+  }
+};
+
 const deletePermanent = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -140,5 +151,6 @@ module.exports = {
   updateTicket,
   updateTicketStatus,
   deleteTicket,
+  restoreTicket,
   deletePermanent,
 };
