@@ -21,6 +21,8 @@ const ticketsRouter = require('./Modules/tickets/tickets.route');
 const sprintRouter = require('./Modules/sprints/sprints.route')
 const userRouter = require('./Modules/user/user.routes');
 const adminRouter = require("./Modules/user/admin.routes")
+const reportRouter = require("./Modules/reports/reports.routes")
+
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -38,6 +40,7 @@ app.use('/tickets', ticketsRouter);
 app.use('/sprints', sprintRouter)
 app.use('/profile', userRouter);
 app.use('/admin', adminRouter)
+app.use('/reports', reportRouter)
 
 
 
