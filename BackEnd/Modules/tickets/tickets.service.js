@@ -18,9 +18,9 @@ const getTickets = async (
   const user_id = BigInt(user.id);
   const where = {};
 
-  if (deletedOnly) {
+  if (deletedOnly && user.role === "ADMIN") {
     where.deletedAt = { not: null };
-  } else if (!includeDeleted) {
+  } else if (!includeDeleted && user.role === "ADMIN") {
     where.deletedAt = null;
   }
 
@@ -29,6 +29,7 @@ const getTickets = async (
       { sprintId: { not: null }, assigneeId: user_id },
       { status: "SCOPED_BACKLOG", assigneeId: user_id },
     ];
+    where.deletedAt = null
   } else {
     if (assignee) where.assigneeId = BigInt(assignee);
   }
