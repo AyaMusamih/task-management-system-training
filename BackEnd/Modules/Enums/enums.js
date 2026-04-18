@@ -14,9 +14,17 @@ const sortEnum = {
     status: "status"
 }
 
+const COMPLETED_STATUSES = [
+  TicketStatus.DONE,
+  TicketStatus.TESTED,
+  TicketStatus.STAGED,
+  TicketStatus.DEPLOYED,
+];
+
 module.exports = {
     viewEnum,
     TicketStatus,
     Priority,
-    sortEnum
+    sortEnum,
+    COMPLETED_STATUSES
 }

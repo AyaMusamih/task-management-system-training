@@ -140,7 +140,7 @@ const TicketsTable = ({ tickets, showAssignee = true, showContext = false, onRow
                                 <th className="text-left py-3 px-4 text-hint text-text-hint font-medium w-[12%] hidden lg:table-cell">Context</th>
                             )}
                             <th className="text-left py-3 px-4 text-hint text-text-hint font-medium w-[12%]">Status</th>
-                            <th className="text-left py-3 px-4 text-hint text-text-hint font-medium w-[10%] whitespace-nowrap">Sprint No.</th>
+                            <th className="text-left py-3 px-4 text-hint text-text-hint font-medium w-[10%] whitespace-nowrap">Sprint Name</th>
                         </tr>
                     </thead>
                     <tbody>

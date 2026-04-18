@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { useSearchParams, useNavigate, useParams, useOutletContext, useLocation } from "react-router-dom";
-import { Download, ChevronLeft, ChevronRight, Bell } from "lucide-react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
+import { Download, Bell, XCircle, CircleCheckBig } from "lucide-react";
 import StatsCard from "./StatsCard"
 import FilterDropdown from "../report/FilterDropdown"
 import WeeklyChart from "./admin/WeeklyChart"
@@ -12,39 +12,21 @@ import Error from "../common-ui/Error";
 import Empty from "../common-ui/Empty";
 import ErrorIcon from "../../assets/images/ErrorIcon_reports.png";
 import EmptyIcon from "../../assets/images/EmptyIcon_reports.png";
+import { getMyReports, getAdminReports, getAdminReportExport } from "../../services/report.service";
+import { getSprints } from "../../services/sprints.service";
+import { getUsers } from "../../services/user.service";
 
-const PRIORITY_OPTIONS = ["CRITICAL", "HIGH", "MEDIUM", "LOW"];
-
-const ReportView = ({ isAdmin, basePath, onCreateTicket, onRetry, header }) => {
+const ReportView = ({ isAdmin, header }) => {
     const [searchParams, setSearchParams] = useSearchParams();
-    const navigate = useNavigate();
-    const location = useLocation();
-    const { id } = useParams();
-    const { openModal, closeModal } = useOutletContext();
     const user = JSON.parse(localStorage.getItem("user")) || null;
-
     const activeStatus = searchParams.get("status") || null;
-    const activePriority = searchParams.get("priority") || null;
-    const activeAssignee = searchParams.get("assignee") || null;
+    const activeAssignee = searchParams.get("assignee_id") || null;
     const activeSprint = searchParams.get("sprint") || null;
-    const currentPage = parseInt(searchParams.get("page") || "1", 10);
-
-    // -------------------- Mock Data --------------------
-    const mockAssignees = [
-        { id: 1, name: "Alice" },
-        { id: 2, name: "Bob" },
-        { id: 3, name: "Charlie" },
-        { id: 14, name: "Rand Haymouni" },
-    ];
-
-    const mockSprints = [
-        { id: 101, name: "Sprint 1" },
-        { id: 102, name: "Sprint 2" },
-    ];
+    const activeFrom = searchParams.get("date_from") || "";
+    const activeTo = searchParams.get("date_to") || "";
+    const activeSprintFilter = searchParams.get("sprint") || null;
 
     const STAGES = [
-        { key: "SCOPED_BACKLOG", label: "Scoped Backlog" },
-        { key: "SPRINT_BACKLOG", label: "Sprint Backlog" },
         { key: "TODO", label: "To Do" },
         { key: "IN_PROGRESS", label: "In Progress" },
         { key: "DONE", label: "Done" },
@@ -53,46 +35,48 @@ const ReportView = ({ isAdmin, basePath, onCreateTicket, onRetry, header }) => {
         { key: "DEPLOYED", label: "Deployed" },
     ];
 
-    const mockTickets = Array.from({ length: 25 }).map((_, i) => {
-        const status = STAGES[i % STAGES.length].key;
-        const priority = PRIORITY_OPTIONS[i % PRIORITY_OPTIONS.length];
-        const assignee = mockAssignees[i % mockAssignees.length];
-
-        const now = new Date();
-        const randomDays = Math.floor(Math.random() * 30);
-        const deadline = new Date(now.getTime() + randomDays * 24 * 60 * 60 * 1000);
-
-        const isOverdue = status !== "DONE" && deadline < now;
-
-        const createdAt = new Date(now.getTime() - Math.floor(Math.random() * 15) * 24 * 60 * 60 * 1000);
-
-        return {
-            id: i + 1,
-            title: `Ticket ${i + 1}`,
-            status,
-            priority,
-            assignee,
-            sprint: mockSprints[i % mockSprints.length],
-            deadline: deadline.toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-            }),
-            isOverdue,
-            createdAt,
-        };
-    });
-
-    const [allTickets, setAllTickets] = useState(mockTickets);
-    const [pagination, setPagination] = useState({ total: mockTickets.length, totalPages: 3 });
+    const [recentTickets, setRecentTickets] = useState([]);
+    const [summary, setSummary] = useState(null);
+    const [delta, setDelta] = useState(null);
+    const [members, setMembers] = useState([]);
+    const [chart, setChart] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-    const allAssigneesRef = useRef(mockAssignees);
-
+    const [allSprints, setAllSprints] = useState([]);
+    const [allAssignees, setAllAssignees] = useState([]);
+    const activeStatusLabel = STAGES.find((g) => g.key === activeStatus)?.label ?? null;
+    const statusGroupOptions = STAGES.map((g) => ({ value: g.key, label: g.label }));
+    const activeAssigneeName = activeAssignee
+        ? allAssignees.find((a) => String(a.id) === String(activeAssignee))?.name ?? null
+        : null;
 
     const setParam = (key, value) => {
         const next = new URLSearchParams(searchParams);
         if (value) next.set(key, value);
         else next.delete(key);
+        next.delete("page");
+        setSearchParams(next);
+    };
+
+    const handleDateChange = (key, value) => {
+        const next = new URLSearchParams(searchParams);
+
+        const newFrom = key === "date_from" ? value : activeFrom;
+        const newTo = key === "date_to" ? value : activeTo;
+
+        if (newFrom && newTo && new Date(newFrom) > new Date(newTo)) {
+            showToast({
+                title: "Invalid Date Range",
+                description: "From date must be before To date",
+                icon: <XCircle className="w-4 h-4" />,
+                type: "error",
+            });
+            return;
+        }
+
+        if (value) next.set(key, value);
+        else next.delete(key);
+
         next.delete("page");
         setSearchParams(next);
     };
@@ -107,203 +91,272 @@ const ReportView = ({ isAdmin, basePath, onCreateTicket, onRetry, header }) => {
         setSearchParams(next);
     };
 
-    const handlePageChange = (page) => {
-        const next = new URLSearchParams(searchParams);
-        next.set("page", page);
-        setSearchParams(next);
+
+    const [exporting, setExporting] = useState(false);
+
+    const handleCreateClick = async () => {
+        try {
+            setExporting(true);
+            await getAdminReportExport({
+                status: activeStatus || undefined,
+                sprint_id: activeSprint || undefined,
+                date_from: activeFrom || undefined,
+                date_to: activeTo || undefined,
+                assignee_id: activeAssignee || undefined,
+            });
+
+            showToast({
+                title: "Export Complete",
+                description: "Report exported successfully",
+                icon: <CircleCheckBig className="w-4 h-4" />,
+                type: "success",
+            });
+
+        } catch (err) {
+            if (err?.type === "forbidden") {
+                showToast({
+                    title: "Forbidden",
+                    description: err.message,
+                    type: "error",
+                    icon: <XCircle className="w-4 h-4" />,
+                });
+                return;
+            }
+            showToast({
+                title: "Export Failed",
+                description: "Could not export the report. Please try again.",
+                type: "error",
+                icon: <XCircle className="w-4 h-4" />,
+            });
+        } finally {
+            setExporting(false);
+        }
     };
 
-    const handleCreateClick = () => {
-        onCreateTicket?.(allAssigneesRef.current, mockSprints[0]);
-    };
+    const refreshSprints = useCallback(() => {
+        getSprints(1, 100)
+            .then((res) => setAllSprints(res.data?.items || []))
+            .catch(() => { });
+    }, []);
 
-    const assignees = allAssigneesRef.current;
-    const currentSprint = mockSprints[0];
+    useEffect(() => {
+        refreshSprints();
+    }, [refreshSprints]);
 
-    const total = pagination?.total ?? 0;
-    const totalPages = pagination?.totalPages ?? 1;
+    useEffect(() => {
+        if (!isAdmin) return;
+        getUsers(1, 100)
+            .then((res) => setAllAssignees(res.data?.users || []))
+            .catch(() => { });
+    }, [isAdmin]);
 
-    const activeStatusLabel = STAGES.find((g) => g.key === activeStatus)?.label ?? null;
-    const statusGroupOptions = STAGES.map((g) => ({ value: g.key, label: g.label }));
-    const activeSprintName = activeSprint
-        ? mockSprints.find((s) => String(s.id) === String(activeSprint))?.name ?? null
-        : null;
-    const activeAssigneeName = activeAssignee
-        ? allAssigneesRef.current.find((a) => String(a.id) === String(activeAssignee))?.name ?? null
-        : null;
-
-    const filteredTickets = useMemo(() => {
-        let filtered = [...allTickets];
-
-        if (!isAdmin && user) {
-            filtered = filtered.filter(
-                t => String(t.assignee?.id) === String(user.id)
-            );
-        }
-
-        if (activeStatus) {
-            filtered = filtered.filter(t => t.status === activeStatus);
-        }
-
-        if (activePriority) {
-            filtered = filtered.filter(t => t.priority === activePriority);
-        }
-
-        if (activeAssignee) {
-            filtered = filtered.filter(
-                t => String(t.assignee?.id) === String(activeAssignee)
-            );
-        }
-        if (activeSprint) {
-            filtered = filtered.filter(
-                t => String(t.sprint?.id) === String(activeSprint)
-            );
-        }
-
-        return filtered;
-    }, [allTickets, activeStatus, activePriority, activeAssignee, user, isAdmin]);
-
-    const teamStats = useMemo(() => {
-        const grouped = {};
-
-        filteredTickets.forEach(t => {
-            const userId = t.assignee?.id;
-            const userName = t.assignee?.name;
-
-            if (!userId) return;
-
-            if (!grouped[userId]) {
-                grouped[userId] = {
-                    id: userId,
-                    name: userName,
-                    avatar: userName?.charAt(0) || "?",
-                    assigned: 0,
-                    completed: 0,
-                    inProgress: 0,
-                    overdue: 0,
-                    completionRate: 0,
-                };
-            }
-
-            grouped[userId].assigned++;
-
-            if (["DONE", "DEPLOYED"].includes(t.status)) {
-                grouped[userId].completed++;
-            }
-
-            if (t.status === "IN_PROGRESS") {
-                grouped[userId].inProgress++;
-            }
-
-            if (t.deadline) {
-                const now = new Date();
-                if (new Date(t.deadline) < now && t.status !== "DONE") {
-                    grouped[userId].overdue++;
-                }
-            }
-        });
-
-        return Object.values(grouped).map(user => ({
-            ...user,
-            completionRate: user.assigned
-                ? Math.round((user.completed / user.assigned) * 100)
-                : 0,
+    const formattedTickets = useMemo(() => {
+        return recentTickets.map(t => ({
+            id: t.id,
+            title: t.title,
+            status: t.status,
+            priority: t.priority,
+            sprint: t.sprint,
+            assignee: {
+                id: user?.id,
+                name: user?.name || "Me",
+            },
+            deadline: t.deadline
+                ? new Date(t.deadline).toLocaleDateString("en-CA", {
+                    timeZone: "UTC",
+                    month: "short",
+                    day: "numeric",
+                })
+                : null,
+            isOverdue: t.is_overdue,
         }));
+    }, [recentTickets, user]);
 
-    }, [filteredTickets]);
+
+    const getTrendColor = (value) => {
+        if (value > 0) return "green";
+        if (value === 0 || value === null) return "blue";
+        return "red";
+    };
+
+    const formatDelta = (raw) => (raw != null ? Math.round(raw * 100) : null);
 
     const stats = useMemo(() => {
-        const total = filteredTickets.length;
+        if (!summary) return [];
 
-        const completed = filteredTickets.filter(t =>
-            ["DONE", "DEPLOYED"].includes(t.status)
-        ).length;
+        if (isAdmin) {
+            return [
+                {
+                    title: "Total Tickets",
+                    value: summary.total,
+                    change: formatDelta(delta?.total),
+                    color: getTrendColor(delta?.total),
+                },
+                {
+                    title: "In Progress",
+                    value: summary.in_progress || 0,
+                    change: formatDelta(delta?.in_progress),
+                    color: getTrendColor(delta?.in_progress),
+                },
+                {
+                    title: "Completed",
+                    value: summary.completed,
+                    change: formatDelta(delta?.completed),
+                    color: getTrendColor(delta?.completed),
+                },
+                {
+                    title: "Overdue",
+                    value: summary.overdue,
+                    change: formatDelta(delta?.overdue),
+                    color:
+                        delta?.overdue > 0
+                            ? "red"
+                            : delta?.overdue === 0 || delta?.overdue === null
+                                ? "blue"
+                                : "green",
+                },
+            ];
+        }
 
-        const inProgress = filteredTickets.filter(t =>
-            t.status === "IN_PROGRESS"
-        ).length;
-
-        const overdue = filteredTickets.filter(t => {
-            if (!t.deadline) return false;
-            const now = new Date();
-            return new Date(t.deadline) < now && t.status !== "DONE";
-        }).length;
-
-        const isAdmin = user?.role === "ADMIN";
-
-        const baseStats = [
+        return [
             {
-                title: isAdmin ? "Total Tickets" : "My Tickets",
-                value: total,
-                change: 0,
-                color: "blue",
+                title: "My Tickets",
+                value: summary.my_tickets,
+                change: formatDelta(delta?.total),
+                color: getTrendColor(delta?.total),
             },
             {
                 title: "Completed",
-                value: completed,
-                change: 12,
-                color: "green",
+                value: summary.completed,
+                change: formatDelta(delta?.completed),
+                color: getTrendColor(delta?.completed),
             },
             {
                 title: "Overdue",
-                value: overdue,
-                change: -10,
-                color: "red",
+                value: summary.overdue,
+                change: formatDelta(delta?.overdue),
+                color:
+                    delta?.overdue > 0
+                        ? "red"
+                        : delta?.overdue === 0 || delta?.overdue === null
+                            ? "blue"
+                            : "green",
             },
         ];
+    }, [summary, delta, isAdmin]);
 
-        if (isAdmin) {
-            baseStats.splice(2, 0, {
-                title: "In Progress",
-                value: inProgress,
-                change: -5,
-                color: "red",
+    const DateRangeFilter = ({ from, to, onChange }) => {
+        return (
+            <div className="flex items-center gap-3 bg-background border border-divider/40 rounded-lg px-3 py-2">
+                <div className="flex flex-col">
+                    <span className="text-[12px] text-text-hint">From</span>
+                    <input
+                        type="date"
+                        value={from}
+                        onChange={(e) => onChange("date_from", e.target.value)}
+                        className="bg-transparent text-sm text-text-primary outline-none"
+                    />
+                </div>
+                <div className="w-px h-8 bg-divider/40" />
+                <div className="flex flex-col">
+                    <span className="text-[12px] text-text-hint">To</span>
+                    <input
+                        type="date"
+                        value={to}
+                        onChange={(e) => onChange("date_to", e.target.value)}
+                        className="bg-transparent text-sm text-text-primary outline-none"
+                    />
+                </div>
+            </div>
+        );
+    };
+
+    const fetchReports = useCallback(async () => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            const params = {
+                status: activeStatus || undefined,
+                sprint_id: activeSprint || undefined,
+                date_from: activeFrom || undefined,
+                date_to: activeTo || undefined,
+            };
+
+            if (isAdmin) {
+                if (activeAssignee) params.assignee_id = activeAssignee;
+
+                const res = await getAdminReports(params);
+
+                setSummary(res.summary);
+                setDelta(res.summary.period_delta);
+
+                setMembers((res.members || []).map((m) => ({
+                    id: m.user_id,
+                    name: m.name,
+                    assigned: m.assigned,
+                    completed: m.completed,
+                    inProgress: m.in_progress,
+                    overdue: m.overdue,
+                    completionRate: Math.round(m.completion_rate * 100),
+                })));
+
+                setChart((res.chart || []).map((c) => ({
+                    week: c.week,
+                    completed: c.completed,
+                    inProgress: c.in_progress,
+                    overdue: c.overdue,
+                })));
+
+            } else {
+                const res = await getMyReports(params);
+
+                setSummary(res.summary);
+                setDelta(res.delta);
+                setRecentTickets(res.recent_tickets || []);
+            }
+
+        } catch (err) {
+            let message = "Something went wrong";
+
+            if (err?.type === "forbidden") {
+                showToast({
+                    title: "Forbidden",
+                    description: err.message,
+                    type: "error",
+                    icon: <XCircle className="w-4 h-4" />,
+                });
+                return;
+            }
+
+            if (err?.type === "validation") {
+                showToast({
+                    title: "Validation Error",
+                    description: err.message,
+                    type: "error",
+                    icon: <XCircle className="w-4 h-4" />,
+                });
+                setError(null);
+                return;
+            }
+            message = "Failed to load reports";
+            setError(message);
+
+            showToast({
+                title: "Error",
+                description: message,
+                type: "error",
+                icon: <XCircle className="w-4 h-4" />,
             });
+
+        } finally {
+            setLoading(false);
         }
+    }, [isAdmin, activeStatus, activeSprint, activeFrom, activeTo, activeAssignee]);
 
-        return baseStats;
-
-    }, [filteredTickets, user]);
-
-    const chartData = useMemo(() => {
-        const grouped = {};
-
-        filteredTickets.forEach(t => {
-            const date = new Date(t.createdAt);
-            const week = `${date.getFullYear()}-W${Math.ceil(date.getDate() / 7)}`;
-
-            if (!grouped[week]) {
-                grouped[week] = {
-                    week,
-                    completed: 0,
-                    inProgress: 0,
-                    overdue: 0,
-                };
-            }
-
-            if (["DONE", "DEPLOYED"].includes(t.status)) {
-                grouped[week].completed++;
-            } else if (t.status === "IN_PROGRESS") {
-                grouped[week].inProgress++;
-            }
-
-            if (t.deadline) {
-                const now = new Date();
-                if (new Date(t.deadline) < now && t.status !== "DONE") {
-                    grouped[week].overdue++;
-                }
-            }
-        });
-
-        return Object.values(grouped).slice(-6);
-    }, [filteredTickets]);
-
-    const MocdataWeeks = [
-        { week: "Week1", completed: 10, inProgress: 5, overdue: 3 },
-        { week: "Week2", completed: 5, inProgress: 2, overdue: 1 },
-        { week: "Week3", completed: 2, inProgress: 6, overdue: 7 },
-        { week: "Week4", completed: 10, inProgress: 10, overdue: 10 },
-    ];
+    useEffect(() => {
+        fetchReports();
+    }, [fetchReports]);
 
     const FiltersSkeleton = () => {
         return (
@@ -341,9 +394,11 @@ const ReportView = ({ isAdmin, basePath, onCreateTicket, onRetry, header }) => {
         setSearchParams({});
     };
 
-    const isEmptyState = !loading && !error && filteredTickets.length === 0;
-    const isErrorState = !!error;
-    const shouldHideContent = isEmptyState || isErrorState;
+    const tableIsEmpty = isAdmin ? members.length === 0 : formattedTickets.length === 0;
+    const isEmptyState = !loading && !error && tableIsEmpty;
+    const isErrorState = !!error && !loading;
+    const shouldHideContent = isEmptyState || isErrorState || (!isAdmin && !!activeStatus);
+    const shouldHideCards = shouldHideContent || (isAdmin && !!activeStatus);
 
     return (
         <div className="flex flex-col h-full bg-card-left">
@@ -353,11 +408,6 @@ const ReportView = ({ isAdmin, basePath, onCreateTicket, onRetry, header }) => {
                     {header}
                 </div>
                 <div className="flex items-center gap-2 ml-3 shrink-0">
-                    {!isAdmin && currentSprint && (
-                        <span className="hidden sm:inline-flex px-3 py-1 rounded-full text-hint border border-[#60A5FA]/60 text-[#60A5FA] bg-[#60A5FA]/10">
-                            {currentSprint.name}
-                        </span>
-                    )}
                     <button className="relative w-9 h-9 flex items-center justify-center rounded-md bg-admin-btn/40 hover:bg-admin-btn/60 transition-colors cursor-pointer">
                         <Bell className="w-4 h-4 text-text-primary" />
                         <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
@@ -370,16 +420,15 @@ const ReportView = ({ isAdmin, basePath, onCreateTicket, onRetry, header }) => {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-4 py-[12px] gap-2">
                     <div className="flex items-center gap-2 flex-wrap">
                         {loading
-                            ? Array.from({ length: 3 }).map((_, i) => (
+                            ? Array.from({ length: isAdmin ? 4 : 3 }).map((_, i) => (
                                 <FiltersSkeleton key={i} />
                             ))
                             :
                             <>
-                                <FilterDropdown
-                                    label="Date range"
-                                    options={[]}
-                                    value={null}
-                                    onChange={() => { }}
+                                <DateRangeFilter
+                                    from={activeFrom}
+                                    to={activeTo}
+                                    onChange={handleDateChange}
                                 />
                                 <FilterDropdown
                                     label="Status"
@@ -390,21 +439,19 @@ const ReportView = ({ isAdmin, basePath, onCreateTicket, onRetry, header }) => {
                                 {isAdmin && (
                                     <FilterDropdown
                                         label="Assignee"
-                                        options={assignees.map((a) => ({ value: String(a.id), label: a.name }))}
+                                        options={allAssignees.map((a) => ({ value: String(a.id), label: a.name }))}
                                         value={activeAssigneeName}
-                                        onChange={(id) => setParam("assignee", id)}
+                                        onChange={(id) => setParam("assignee_id", id)}
                                     />
                                 )}
-                                {!isAdmin && (<FilterDropdown
+                                <FilterDropdown
                                     label="Sprint"
-                                    options={mockSprints.map((s) => ({
-                                        value: String(s.id),
-                                        label: s.name
-                                    }))}
-                                    value={activeSprintName}
-                                    onChange={(id) => setParam("sprint", id)}
+                                    options={allSprints.map((s) => ({ value: String(s.id), label: s.name }))}
+                                    value={activeSprintFilter
+                                        ? allSprints.find((s) => String(s.id) === activeSprintFilter)?.name ?? null
+                                        : null}
+                                    onChange={(s) => setParam("sprint", s)}
                                 />
-                                )}
                             </>
                         }
                     </div>
@@ -417,17 +464,21 @@ const ReportView = ({ isAdmin, basePath, onCreateTicket, onRetry, header }) => {
                             isAdmin && (
                                 <Button
                                     onClick={handleCreateClick}
-                                    className="flex items-center justify-center gap-1.5 cursor-pointer bg-accent-blue hover:bg-accent-blue/80 transition-colors !rounded-lg"
+                                    disabled={exporting}
+                                    className="flex items-center justify-center gap-1.5 cursor-pointer bg-accent-blue hover:bg-accent-blue/80 transition-colors !rounded-lg disabled:opacity-60 disabled:cursor-not-allowed"
                                 >
                                     <Download className="w-4 h-4 text-text-primary" />
-                                    <span className="text-white-btn font-inter text-[12px] sm:text-[13.5px] font-medium">Export CSV</span>
+                                    <span className="text-white-btn font-inter text-[12px] sm:text-[13.5px] font-medium">
+                                        {exporting ? "Exporting..." : "Export CSV"}
+                                    </span>
                                 </Button>
                             )
                         }
                     </div>
                 </div>
             </div>
-            {!shouldHideContent && (
+
+            {!shouldHideCards && (
                 <div className={`grid gap-2 mb-8 px-4 ${isAdmin ? "grid-cols-2 md:grid-cols-4" : "grid-cols-2 md:grid-cols-3"}`}>
                     {loading
                         ? Array.from({ length: isAdmin ? 4 : 3 }).map((_, i) => (
@@ -436,6 +487,7 @@ const ReportView = ({ isAdmin, basePath, onCreateTicket, onRetry, header }) => {
                         : stats.map((s, i) => (
                             <StatsCard
                                 key={i}
+                                isAdmin={isAdmin}
                                 title={s.title}
                                 value={s.value}
                                 change={s.change}
@@ -453,27 +505,38 @@ const ReportView = ({ isAdmin, basePath, onCreateTicket, onRetry, header }) => {
                             <ChartsSkeleton key={i} />
                         ))
                         :
-                        <WeeklyChart data={MocdataWeeks} />
+                        <WeeklyChart data={chart} />
                     }
                 </div>
             )}
+
             {/* Content area */}
             <div className="mx-3 sm:mx-[16px] my-[7px] bg-background rounded-[10px] flex flex-col flex-1 min-h-0 border border-divider/40">
                 {isErrorState ? (
                     <div className="flex flex-1 items-center justify-center">
-                        <Error
-                            title={error}
-                            description="We couldn't load your reports. Please try again."
-                            icon={ErrorIcon}
-                            onRetry={() => console.log("retry clicked")}
-                        />
+                        {isAdmin ? (
+                            <Error
+                                title={error}
+                                description="Something went wrong. Please check your connection and try again."
+                                icon={ErrorIcon}
+                                onRetry={fetchReports}
+                            />
+                        ) : (
+                            <Error
+                                title={error}
+                                description="We couldn't load your reports. Please try again."
+                                icon={ErrorIcon}
+                                onRetry={fetchReports}
+                            />
+                        )}
                     </div>
+
                 ) : isEmptyState ? (
                     isAdmin ? (
                         <div className="flex flex-1 items-center justify-center">
                             <Empty
-                                title="No tickets yet"
-                                description="You haven't been assigned any tickets yet."
+                                title="No data for selected range"
+                                description="Try adjusting the date range or status filter."
                                 icon={EmptyIcon}
                                 onRetry={handleClearFilters}
                             />
@@ -491,45 +554,23 @@ const ReportView = ({ isAdmin, basePath, onCreateTicket, onRetry, header }) => {
                     <>
                         {isAdmin ? (
                             <TeamBreakdownTable
-                                members={teamStats}
+                                members={members}
                                 isLoading={loading}
-                                error={error}
-                                onRetry={onRetry}
                             />
                         ) : (
                             <UserTicketsTable
-                                tickets={filteredTickets}
+                                tickets={formattedTickets}
                                 isLoading={loading}
-                                error={error}
-                                onRetry={onRetry}
                             />
                         )}
 
-                        {/* Footer: count + pagination */}
-                        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 mt-auto">
-                            <span className="text-hint text-text-hint hidden sm:inline">
-                                {loading ? "Loading..." : error ? "—" : `Showing ${filteredTickets.length} of ${total} tasks`}
-                            </span>
-                            <span className="text-hint text-text-hint sm:hidden">
-                                {!loading && !error && `${filteredTickets.length} / ${total}`}
-                            </span>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => handlePageChange(currentPage - 1)}
-                                    disabled={currentPage <= 1 || loading || !!error}
-                                    className="w-8 h-8 flex items-center justify-center rounded-full bg-[#49475a]/50 text-text-primary hover:bg-[#49475a]/70 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                                >
-                                    <ChevronLeft className="w-4 h-4" />
-                                </button>
-                                <button
-                                    onClick={() => handlePageChange(currentPage + 1)}
-                                    disabled={currentPage >= totalPages || loading || !!error}
-                                    className="w-8 h-8 flex items-center justify-center rounded-full bg-[#49475a]/50 text-text-primary hover:bg-[#49475a]/70 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                                >
-                                    <ChevronRight className="w-4 h-4" />
-                                </button>
+                        {!isAdmin && (
+                            <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 mt-auto">
+                                <span className="text-hint text-text-hint">
+                                    {loading ? "Loading..." : error ? "—" : `Showing ${formattedTickets.length} recent tasks`}
+                                </span>
                             </div>
-                        </div>
+                        )}
                     </>
                 )}
             </div>

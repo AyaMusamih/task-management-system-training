@@ -38,9 +38,8 @@ const getAvatarColor = (name = "") => {
 export default function TeamBreakdownTable({
     members,
     title = "Per-user breakdown",
-    isLoading = false,
-    error,
-    onRetry }) {
+    isLoading = false
+}) {
     return (
         <div className="bg-background rounded-lg p-4">
             <h2 className="font-poppins font-semibold text-[18px] sm:text-[20px] text-text-primary mb-4">{title}</h2>
