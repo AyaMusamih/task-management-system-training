@@ -7,6 +7,7 @@ import {
     Settings,
     X,
     LogOut,
+    Trash2,
 } from "lucide-react";
 
 const SidebarContent = ({ links, initials, user, onClose, onLogoutClick }) => {
@@ -92,6 +93,7 @@ const Sidebar = ({ user, isOpen, onClose, onLogoutClick }) => {
         { name: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard },
         { name: "Projects", path: "/projects", icon: FolderOpen },
         { name: "Reports", path: "/admin/reports", icon: BarChart2 },
+        { name: "Trash", path: "/deleted-tickets", icon: Trash2 },
         { name: "Settings", path: "/settings", icon: Settings },
     ];
 

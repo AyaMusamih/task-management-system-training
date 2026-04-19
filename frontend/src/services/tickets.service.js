@@ -69,6 +69,38 @@ export const permanentDeleteTicket = async (id) => {
     }
 };
 
+export const restoreTicket = async (id) => {
+    try {
+        const { data } = await axiosInstance.patch(`/tickets/${id}/restore`);
+        return data;
+    } catch (error) {
+        throw {
+            status: error?.response?.status,
+            message:
+                error?.response?.data?.error ||
+                error?.response?.data?.message ||
+                "Something went wrong",
+        };
+    }
+};
+
+export const getDeletedTickets = async (params = {}) => {
+    try {
+        const { data } = await axiosInstance.get("/tickets/getTickets", {
+            params: { ...params, deletedOnly: true },
+        });
+        return data;
+    } catch (error) {
+        throw {
+            status: error?.response?.status,
+            message:
+                error?.response?.data?.error ||
+                error?.response?.data?.message ||
+                "Something went wrong",
+        };
+    }
+};
+ 
 export const updateTicketStatus = async (id, status) => {
     try {
         const { data } = await axiosInstance.patch(`/tickets/${id}/status`, {

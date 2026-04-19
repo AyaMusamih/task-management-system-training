@@ -176,7 +176,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   }
 
 .text-delete-dialog-description {
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 400;
     font-family: var(--font-inter);
     color: var(--color-text-secondary);

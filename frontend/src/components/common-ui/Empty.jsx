@@ -7,7 +7,9 @@ const Empty = ({
   icon,
   action,
   className = "",
-  onRetry
+  onRetry,
+  retryLabel = "Clear filters",
+  showRetryIcon  = true,
 }) => {
   return (
     <div className={`flex flex-col items-center justify-center py-16 text-center ${className}`}>
@@ -35,8 +37,8 @@ const Empty = ({
           className="flex gap-2 items-center justify-center px-8 bg-accent-blue text-white rounded-lg hover:bg-blue-400 transition duration-100 cursor-pointer mx-auto"
           onClick={onRetry}
         >
-          <RotateCcw className="h-5 w-5"/>
-          Clear filters
+          {showRetryIcon && <RotateCcw className="h-5 w-5" />}
+          {retryLabel}
         </Button>
       )}
 
