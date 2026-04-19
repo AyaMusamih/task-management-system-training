@@ -42,6 +42,13 @@ router.patch(
   ticketController.updateTicket,
 );
 
+router.patch(
+  "/:id/restore",
+  isAdmin,
+  validate({ params: updateTicketParamSchema }),
+  ticketController.restoreTicket,
+);
+
 router.delete(
   "/:id",
   isAdmin,
@@ -49,11 +56,11 @@ router.delete(
   ticketController.deleteTicket,
 );
 
-router.patch(
-  "/:id",
+router.delete(
+  "/:id/permanent",
   isAdmin,
-  validate({ params: updateTicketParamSchema, body: updateTicketSchema }),
-  ticketController.updateTicket,
+  validate({ params: updateTicketParamSchema }),
+  ticketController.deletePermanent,
 );
 
 module.exports = router;
