@@ -30,14 +30,41 @@ export const updateTicket = async (id, payload) => {
     }
 };
 
-export const deleteTicket = async (id) => {
+export const softDeleteTicket = async (id) => {
     try {
         const { data } = await axiosInstance.delete(`/tickets/${id}`);
         return data;
     } catch (error) {
         throw {
             status: error?.response?.status,
-            message: error?.response?.data?.error || "Something went wrong",
+            message:
+                error?.response?.data?.error ||
+                error?.response?.data?.message ||
+                "Something went wrong",
+        };
+    }
+};
+
+export const permanentDeleteTicket = async (id) => {
+    try {
+        const { data } = await axiosInstance.delete(`/tickets/${id}/permanent`);
+
+        // If backend requires a body in DELETE request
+        // const { data } = await axiosInstance.delete(
+        //     `/tickets/${id}/permanent`,
+        //     {
+        //         data: payload,
+        //     }
+        // );
+        
+        return data;
+    } catch (error) {
+        throw {
+            status: error?.response?.status,
+            message:
+                error?.response?.data?.error ||
+                error?.response?.data?.message ||
+                "Something went wrong",
         };
     }
 };
