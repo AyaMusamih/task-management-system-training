@@ -13,6 +13,7 @@ const Input = forwardRef(({
     placeholder,
     error,
     success,
+    danger = false,
     helperText,
     disabled = false,
     className = "",
@@ -57,15 +58,29 @@ const Input = forwardRef(({
                         />
 
                         <div
-                            onClick={!disabled ? onChange : undefined}
+                            onClick={() => {
+                                if (!disabled) {
+                                    onChange?.({
+                                        target: {
+                                            checked: !checked,
+                                            name,
+                                        },
+                                    });
+                                }
+                            }}
                             className={`checkbox border-2 flex items-center justify-center cursor-pointer transition-all duration-200
                                 ${checked
-                                    ? success
+                                    ? (success
                                         ? "bg-success-green border-success-green"
-                                        : "bg-accent-blue border-accent-blue"
+                                        : danger
+                                            ? "bg-red-500 border-red-500"
+                                            : "bg-accent-blue border-accent-blue"
+                                    )
                                     : "bg-transparent border-divider"
                                 }
-                                ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+                                ${disabled ? "opacity-50 cursor-not-allowed" : ""} 
+                                ${className}
+                                `}
                         >
                             {checked && (
                                 <Check className="w-12 h-12 text-white-btn stroke-3" />
@@ -76,7 +91,16 @@ const Input = forwardRef(({
                     {label && (
                         <label
                             className="text-checkbox text-text-secondary cursor-pointer select-none"
-                            onClick={!disabled ? onChange : undefined}
+                            onClick={() => {
+                                if (!disabled) {
+                                    onChange?.({
+                                        target: {
+                                            checked: !checked,
+                                            name,
+                                        },
+                                    });
+                                }
+                            }}
                         >
                             {label}
                         </label>

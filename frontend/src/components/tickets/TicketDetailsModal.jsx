@@ -4,7 +4,7 @@ import ConfirmDialog from "../shared/ConfirmDialog";
 import { useState } from "react";
 import { showToast } from "../../utils/showToast";
 import { CircleCheckBig, XCircle, Trash2 } from "lucide-react";
-import { deleteTicket } from "../../services/tickets.service";
+import { softDeleteTicket } from "../../services/tickets.service";
 import StatusControl from "../tickets/StatusControl";
 import TaskFormModal from "./TaskFormModal";
 
@@ -40,28 +40,32 @@ const TicketDetailsModal = ({ ticket, openModal, closeModal, onRefresh, assignee
         try {
             setLoading(true);
 
-            const res = await deleteTicket(ticket.id);
+            const res = await softDeleteTicket(ticket.id);
 
             showToast({
-                title: "Ticket Deleted",
-                description: res.message || `Ticket "${ticket.title}" deleted successfully`,
+                title: "Moved to Trash",
+                description:
+                    res.message || `Ticket "${ticket.title}" moved to trash`,
                 icon: <CircleCheckBig className="w-4 h-4" />,
                 type: "success",
             });
 
             setShowConfirm(false);
-            closeModal?.()
-
+            closeModal?.();
             onRefresh?.();
 
         } catch (err) {
-
             let message = "Something went wrong";
+            const status = err.status;
 
-            if (err.status === 403) {
+            if (status === 403) {
                 message = err.message || "Admin access only";
-            } else if (err.status === 400) {
+            } else if (status === 400) {
                 message = err.message || "Ticket already deleted";
+            } else if (status === 401) {
+                message = err.message || "Token expired";
+            } else if (status === 404) {
+                message = err.message || "Ticket not found";
             } else {
                 message = err.message;
             }
@@ -151,6 +155,7 @@ const TicketDetailsModal = ({ ticket, openModal, closeModal, onRefresh, assignee
                     <Button
                         variant="destructive"
                         size="md"
+                        disabled={loading}
                         className="w-full h-10 rounded-lg !text-[15px] cursor-pointer"
                         onClick={handleDeleteClick}
                     >
@@ -171,11 +176,14 @@ const TicketDetailsModal = ({ ticket, openModal, closeModal, onRefresh, assignee
                     <div className="relative z-10">
                         <ConfirmDialog
                             icon={<Trash2 className="w-5 h-5" />}
-                            title="Delete Ticket?"
-                            description={`This will delete " ${ticket.id} : ${ticket.title} ". This action cannot be undone.`}
-                            confirmText="Delete Ticket"
-                            cancelText="Cancel"
-                            variant="danger"
+                            ticket={{
+                                id: `${ticket.id}`,
+                                title: `${ticket.title}`
+                            }}
+                            title="Move ticket to trash?"
+                            description="This ticket will be hidden from all views"
+                            confirmText="Move to trash"
+                            variant="softDanger"
                             loading={loading}
                             onConfirm={handleDelete}
                             onCancel={() => setShowConfirm(false)}

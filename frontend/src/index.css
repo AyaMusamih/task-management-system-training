@@ -175,6 +175,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     color: var(--color-text-secondary);
   }
 
+.text-delete-dialog-description {
+    font-size: 12px;
+    font-weight: 400;
+    font-family: var(--font-inter);
+    color: var(--color-text-secondary);
+  }
+  
   .text-profile-sections {
     font-size: 22px;
     font-weight: 500;
