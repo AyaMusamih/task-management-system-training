@@ -134,7 +134,10 @@ const buildMembers = async (where, now) => {
       where: {
         ...memberWhere,
         deadline: { lt: now },
-        status: { notIn: COMPLETED_STATUSES },
+              status: {
+      ...(memberWhere.status ? { equals: memberWhere.status } : {}),
+      notIn: COMPLETED_STATUSES,
+    },
       },
       _count: { _all: true },
     }),

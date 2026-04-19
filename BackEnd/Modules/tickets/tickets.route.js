@@ -9,9 +9,9 @@ const {
   updateTicketStatusSchema,
 } = require("./schema/updateTicket.schema");
 const {
-  checkUpdatePermission
+  checkUpdatePermission,
 } = require("./middlewares/ticketAuth.middleware");
-const isAdmin = require("../Middlewares/isAdmin.middleware")
+const isAdmin = require("../Middlewares/isAdmin.middleware");
 const ticketController = require("./tickets.controller");
 const authMiddleware = require("../Middlewares/auth.middleware");
 
@@ -40,7 +40,14 @@ router.patch(
   isAdmin,
   validate({ params: updateTicketParamSchema, body: updateTicketSchema }),
   ticketController.updateTicket,
-); 
+);
+
+router.patch(
+  "/:id/restore",
+  isAdmin,
+  validate({ params: updateTicketParamSchema }),
+  ticketController.restoreTicket,
+);
 
 router.delete(
   "/:id",
@@ -49,5 +56,11 @@ router.delete(
   ticketController.deleteTicket,
 );
 
+router.delete(
+  "/:id/permanent",
+  isAdmin,
+  validate({ params: updateTicketParamSchema }),
+  ticketController.deletePermanent,
+);
 
 module.exports = router;
