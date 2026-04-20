@@ -23,7 +23,7 @@ const Error = ({
             </p>
 
             {description && (
-                <p className="text-[#64748B] mb-6">
+                <p className="text-[#64748B] mb-6 max-w-sm mx-auto">
                     {description}
                 </p>
             )}
