@@ -16,10 +16,11 @@ const getTickets = async (req, res, next) => {
       search,
       deletedOnly,
       includeDeleted,
+      sprintId,
     } = req.query;
 
-    const result = await ticketService.getTickets(
-      req.user,
+    const result = await ticketService.getTickets({
+      user: req.user,
       view,
       status,
       assignee,
@@ -32,7 +33,8 @@ const getTickets = async (req, res, next) => {
       search,
       deletedOnly,
       includeDeleted,
-    );
+      sprintId,
+    });
     const resultWithFlags = attachPermissionFlags(result, req.user);
 
     res.status(200).json({
