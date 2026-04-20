@@ -1,4 +1,3 @@
-const { success } = require("zod");
 const ticketService = require("./tickets.service");
 const { attachPermissionFlags } = require("./utils/ticket-permissions.util");
 
@@ -145,6 +144,17 @@ const deletePermanent = async (req, res, next) => {
   }
 };
 
+const deleteAllPermanent = async (req, res, next) => {
+  try {
+    await ticketService.deleteAllPermanent();
+    res
+      .status(200)
+      .json({ success: true, message: "Tickets permanently deleted" });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   getTickets,
   addTicket,
@@ -153,4 +163,5 @@ module.exports = {
   deleteTicket,
   restoreTicket,
   deletePermanent,
+  deleteAllPermanent
 };

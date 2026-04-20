@@ -222,6 +222,16 @@ const deletePermanent = async (id) => {
   });
 };
 
+const deleteAllPermanent = async () => {
+  const result = await prisma.ticket.deleteMany({
+    where: {
+      deletedAt: { not: null },
+    },
+  });
+  console.log(result);
+  return result; 
+};
+
 module.exports = {
   getTickets,
   createTicket,
@@ -230,4 +240,5 @@ module.exports = {
   deleteTicket,
   restoreTicket,
   deletePermanent,
+  deleteAllPermanent
 };
