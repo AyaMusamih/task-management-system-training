@@ -100,7 +100,22 @@ export const getDeletedTickets = async (params = {}) => {
         };
     }
 };
- 
+
+export const deleteAllPermanent = async () => {
+    try {
+        const { data } = await axiosInstance.delete("/tickets/permanent");
+        return data;
+    } catch (error) {
+        throw {
+            status: error?.response?.status,
+            message:
+                error?.response?.data?.error ||
+                error?.response?.data?.message ||
+                "Something went wrong",
+        };
+    }
+};
+
 export const updateTicketStatus = async (id, status) => {
     try {
         const { data } = await axiosInstance.patch(`/tickets/${id}/status`, {
