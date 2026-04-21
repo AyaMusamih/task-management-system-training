@@ -44,8 +44,7 @@ const TicketDetailsModal = ({ ticket, openModal, closeModal, onRefresh, assignee
 
             showToast({
                 title: "Moved to Trash",
-                description:
-                    res.message || `Ticket "${ticket.title}" moved to trash`,
+                description:`Ticket "${ticket.title}" has been moved to trash successfully.`,
                 icon: <CircleCheckBig className="w-4 h-4" />,
                 type: "success",
             });

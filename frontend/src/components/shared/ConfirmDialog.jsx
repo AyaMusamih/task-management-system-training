@@ -79,13 +79,13 @@ const ConfirmDialog = ({
 
                 {/* Title + Description */}
                 <div>
-                    <h2 className="text-dialog-title mb-3">
+
+                    <h2 className={variant === "permDanger" || variant === "softDanger" ? "" : "mb-3 text-dialog-title"}>
                         {title}
                     </h2>
 
                     <p
-                        className={`text-delete-dialog-description mb-4 leading-relaxed ${variant === "permDanger" ? "!text-[#DC2626]" : "text-gray-400"
-                            }`}>
+                        className={`text-delete-dialog-description mb-4 leading-relaxed ${variant === "permDanger" ? "!text-[#DC2626]" : "text-gray-400"}`}>
                         {description}
                     </p>
                 </div>
@@ -153,6 +153,7 @@ const ConfirmDialog = ({
                     onClick={onConfirm}
                     loading={loading}
                     disabled={loading || (currentMessage?.needsConfirm && !isChecked)}
+                    disabledClassName={"opacity-50"}
                     className={`flex-1 h-10 rounded-lg w-full !text-[14px] cursor-pointer ${variant === "softDanger"
                         ? "!bg-[#D97706] hover:bg-[#D97706]/90!"
                         : ""}`}

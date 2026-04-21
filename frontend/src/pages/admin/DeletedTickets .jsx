@@ -178,7 +178,7 @@ const DeletedTickets = () => {
             await restoreTicket(restoreTarget.id);
             showToast({
                 title: "Ticket Restored",
-                description: `"${restoreTarget.title}" has been restored successfully.`,
+                description: `Ticket "${restoreTarget.title}" has been restored successfully.`,
                 icon: <CircleCheckBig className="w-4 h-4" />,
                 type: "success",
             });
