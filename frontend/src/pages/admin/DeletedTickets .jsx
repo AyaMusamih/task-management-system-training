@@ -18,7 +18,8 @@ import { showToast } from "../../utils/showToast";
 import { CircleCheckBig, XCircle } from "lucide-react";
 import ErrorIcon from "../../assets/images/ErrorIcon_trash.png";
 import EmptyIcon from "../../assets/images/EmptyIcon_trash.png";
-import { getDeletedTickets, restoreTicket, permanentDeleteTicket } from "../../services/tickets.service";
+import { getDeletedTickets, restoreTicket, permanentDeleteTicket, deleteAllPermanent } from "../../services/tickets.service";
+import { getSprints } from "../../services/sprints.service";
 import { getUsers } from "../../services/user.service";
 
 
@@ -116,6 +117,7 @@ const DeletedTickets = () => {
     const activeAssignee = searchParams.get("assignee") || null;
     const searchQuery = searchParams.get("search") || "";
     const currentPage = parseInt(searchParams.get("page") || "1", 10);
+    const activeSprintFilter = searchParams.get("sprint") || null;
 
     const navigate = useNavigate();
     const [tickets, setTickets] = useState([]);
@@ -124,6 +126,17 @@ const DeletedTickets = () => {
     const [error, setError] = useState(null);
 
     const [allAssignees, setAllAssignees] = useState([]);
+    const [allSprints, setAllSprints] = useState([]);
+
+    const refreshSprints = useCallback(() => {
+        getSprints(1, 100)
+            .then((res) => setAllSprints(res.data?.items || []))
+            .catch(() => { });
+    }, []);
+
+    useEffect(() => {
+        refreshSprints();
+    }, [refreshSprints]);
 
     useEffect(() => {
         getUsers(1, 100)
@@ -135,6 +148,8 @@ const DeletedTickets = () => {
     const [restoreLoading, setRestoreLoading] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState(null);
     const [deleteLoading, setDeleteLoading] = useState(false);
+    const [showDeleteAll, setShowDeleteAll] = useState(false);
+    const [deleteAllLoading, setDeleteAllLoading] = useState(false);
 
     const fetchTickets = useCallback(async () => {
         setLoading(true);
@@ -144,6 +159,7 @@ const DeletedTickets = () => {
             if (activePriority) params.priority = activePriority;
             if (activeAssignee) params.assignee = activeAssignee;
             if (searchQuery) params.search = searchQuery;
+            if (activeSprintFilter) params.sprintId = activeSprintFilter;
 
             const res = await getDeletedTickets(params);
             setTickets(res.items || []);
@@ -153,7 +169,7 @@ const DeletedTickets = () => {
         } finally {
             setLoading(false);
         }
-    }, [currentPage, activePriority, activeAssignee, searchQuery]);
+    }, [currentPage, activePriority, activeAssignee, searchQuery, activeSprintFilter]);
 
     useEffect(() => { fetchTickets(); }, [fetchTickets]);
 
@@ -234,6 +250,30 @@ const DeletedTickets = () => {
         }
     };
 
+    const handleDeleteAll = async () => {
+        setDeleteAllLoading(true);
+        try {
+            await deleteAllPermanent();
+            showToast({
+                title: "Trash Emptied",
+                description: "All deleted tickets have been permanently removed.",
+                icon: <CircleCheckBig className="w-4 h-4" />,
+                type: "success",
+            });
+            setShowDeleteAll(false);
+            fetchTickets();
+        } catch (err) {
+            showToast({
+                title: "Failed to Empty Trash",
+                description: err?.message || "Something went wrong",
+                icon: <XCircle className="w-4 h-4" />,
+                type: "error",
+            });
+        } finally {
+            setDeleteAllLoading(false);
+        }
+    };
+
     const total = pagination?.total ?? 0;
     const totalPages = pagination?.totalPages ?? 1;
 
@@ -246,7 +286,7 @@ const DeletedTickets = () => {
                     <h1 className="font-inter font-medium text-[24px] text-text-primary" style={{ letterSpacing: "-0.45px" }}>
                         Trash
                     </h1>
-                    <p className="font-inter font-normal text-[15px] text-text-secondary">
+                    <p className="font-inter font-normal text-[15px] text-text-primary">
                         Items in trash will be permanently deleted after 30 days.
                         <br />
                         You can restore them to their original location.
@@ -284,6 +324,14 @@ const DeletedTickets = () => {
                             value={null}
                             onChange={() => { }}
                         />
+                        <FilterDropdown
+                            label="Sprint"
+                            options={allSprints.map((s) => ({ value: String(s.id), label: s.name }))}
+                            value={activeSprintFilter
+                                ? allSprints.find((s) => String(s.id) === activeSprintFilter)?.name ?? null
+                                : null}
+                            onChange={(v) => setParam("sprint", v)}
+                        />
                     </div>
                     <div className="flex items-center gap-2 px-3 py-1.5 bg-card-left border border-divider/50 rounded-lg w-full sm:w-[280px] lg:w-[442px]">
                         <Search className="w-3.5 h-3.5 text-[#6B7280] shrink-0" />
@@ -305,6 +353,15 @@ const DeletedTickets = () => {
                         <h2 className="font-poppins font-semibold text-[18px] sm:text-[20px] text-text-primary">
                             Deleted Tickets
                         </h2>
+                        {tickets.length > 0 && (
+                            <button
+                                onClick={() => setShowDeleteAll(true)}
+                                className="flex items-center gap-1.5 px-3 py-2 rounded-[8px] border-2 border-error-red text-white-btn hover:bg-error-red/10 transition-colors cursor-pointer"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                                <span className="text-sm font-medium">Delete All</span>
+                            </button>
+                        )}
                     </div>
 
                     {/* Table */}
@@ -487,6 +544,28 @@ const DeletedTickets = () => {
                             loading={deleteLoading}
                             onConfirm={handlePermanentDelete}
                             onCancel={() => setDeleteTarget(null)}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {showDeleteAll && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center">
+                    <div
+                        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                        onClick={() => setShowDeleteAll(false)}
+                    />
+                    <div className="relative z-10">
+                        <ConfirmDialog
+                            icon={<Trash2 className="w-5 h-5" />}
+                            title="Delete ticket permanently?"
+                            description="All tickets in trash will be permanently deleted. This action cannot be undone."
+                            confirmText="Delete All"
+                            cancelText="Cancel"
+                            variant="permDanger"
+                            loading={deleteAllLoading}
+                            onConfirm={handleDeleteAll}
+                            onCancel={() => setShowDeleteAll(false)}
                         />
                     </div>
                 </div>

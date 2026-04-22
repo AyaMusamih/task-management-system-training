@@ -249,7 +249,7 @@ const ReportView = ({ isAdmin, header }) => {
         return (
             <div className="flex items-center gap-3 bg-background border border-divider/40 rounded-lg px-3 py-2">
                 <div className="flex flex-col">
-                    <span className="text-[12px] text-text-hint">From</span>
+                    <span className="text-[12px] text-text-hint">Created From</span>
                     <input
                         type="date"
                         value={from}

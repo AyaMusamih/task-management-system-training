@@ -105,6 +105,31 @@ const iconMap = {
     error: <CircleAlert className="w-4 h-4" />,
 };
 
+const DateRangeFilter = ({ from, to, onChange }) => {
+    return (
+        <div className="flex items-center gap-3 bg-background border border-divider/40 rounded-lg px-3 py-2">
+            <div className="flex flex-col">
+                <span className="text-[12px] text-text-hint">Deadline From</span>
+                <input
+                    type="date"
+                    value={from}
+                    onChange={(e) => onChange("date_from", e.target.value)}
+                    className="bg-transparent text-sm text-text-primary outline-none"
+                />
+            </div>
+            <div className="w-px h-8 bg-divider/40" />
+            <div className="flex flex-col">
+                <span className="text-[12px] text-text-hint">To</span>
+                <input
+                    type="date"
+                    value={to}
+                    onChange={(e) => onChange("date_to", e.target.value)}
+                    className="bg-transparent text-sm text-text-primary outline-none"
+                />
+            </div>
+        </div>
+    );
+};
 
 const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, header }) => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -124,8 +149,9 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
     const activeAssignee = searchParams.get("assignee") || null;
     const searchQuery = searchParams.get("search") || "";
     const currentPage = parseInt(searchParams.get("page") || "1", 10);
+    const activeStartDate = searchParams.get("startDate") || "";
+    const activeEndDate = searchParams.get("endDate") || "";
 
-    const [allTickets, setAllTickets] = useState([]);
     const [tickets, setTickets] = useState([]);
     const [pagination, setPagination] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -191,17 +217,25 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
             if (activeAssignee && isAdmin) params.assignee = activeAssignee;
             if (searchQuery) params.search = searchQuery;
 
+            if (activeStageGroup && !activeStatus) {
+                const group = STAGE_GROUPS.find((g) => g.key === activeStageGroup);
+                if (group) params.status = group.statuses.join(",");
+            }
+
+            if (activeSprintFilter) params.sprintId = activeSprintFilter;
+
+            if (activeStartDate) params.startDate = activeStartDate;
+            if (activeEndDate) params.endDate = activeEndDate;
+
             const res = await getTickets(params);
-            console.log("Backend response:", res);
-            setAllTickets(res.items || res);
+            setTickets(res.items || res);
             setPagination(res.paginationMeta || null);
         } catch (err) {
-            console.error("Full error:", err);
             setError(err.response?.data?.error || err.message || "Failed to load tickets");
         } finally {
             setLoading(false);
         }
-    }, [activeTab, activeStatus, activePriority, activeAssignee, searchQuery, currentPage, isAdmin]);
+    }, [activeTab, activeStatus, activePriority, activeAssignee, searchQuery, currentPage, isAdmin, activeStageGroup, activeSprintFilter, activeStartDate, activeEndDate]);
 
     // Register refresh function with parent (AdminDashboard)
     useEffect(() => {
@@ -212,26 +246,11 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
 
     useEffect(() => { fetchTickets(); }, [fetchTickets]);
 
-    useEffect(() => {
-        let filtered = allTickets;
-
-        if (activeStageGroup) {
-            const group = STAGE_GROUPS.find((g) => g.key === activeStageGroup);
-            if (group) filtered = filtered.filter((t) => group.statuses.includes(t.status));
-        }
-
-        if (activeSprintFilter) {
-            filtered = filtered.filter((t) => String(t.sprint?.id) === String(activeSprintFilter));
-        }
-
-        setTickets(filtered);
-    }, [allTickets, activeStageGroup, activeSprintFilter]);
-
     const hasOpenedModal = useRef(false);
     useEffect(() => {
         if (!id) { hasOpenedModal.current = false; return; }
-        if (!allTickets.length || hasOpenedModal.current) return;
-        const ticket = allTickets.find((t) => String(t.id) === String(id));
+        if (!tickets.length || hasOpenedModal.current) return;
+        const ticket = tickets.find((t) => String(t.id) === String(id));
         if (!ticket) return;
         hasOpenedModal.current = true;
 
@@ -247,10 +266,10 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
                 />
             ),
         });
-    }, [id, allTickets, openModal, closeModal, fetchTickets, allAssignees]);
+    }, [id, tickets, openModal, closeModal, fetchTickets, allAssignees]);
 
     const assignees = allAssignees;
-    const currentSprint = allTickets.find((t) => t.sprint)?.sprint;
+    const currentSprint = tickets.find((t) => t.sprint)?.sprint;
 
     const setParam = (key, value) => {
         const next = new URLSearchParams(searchParams);
@@ -286,6 +305,15 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
     };
 
     const handleSearch = (e) => { setParam("search", e.target.value || null); };
+
+    const handleDateChange = (key, value) => {
+        const next = new URLSearchParams(searchParams);
+        if (value) next.set(key === "date_from" ? "startDate" : "endDate", value);
+        else next.delete(key === "date_from" ? "startDate" : "endDate");
+        next.delete("page");
+        setSearchParams(next);
+    };
+
     const handlePageChange = (page) => {
         const next = new URLSearchParams(searchParams);
         next.set("page", page);
@@ -380,6 +408,11 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
             <div className="mx-3 sm:mx-[16px] mt-[32px] mb-[25px] rounded-[10px] bg-background py-[7px]">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-4 py-[10px] gap-2">
                     <div className="flex items-center gap-2 flex-wrap">
+                        <DateRangeFilter
+                            from={activeStartDate}
+                            to={activeEndDate}
+                            onChange={handleDateChange}
+                        />
                         <FilterDropdown
                             label="Stage"
                             options={stageGroupOptions}
@@ -399,12 +432,6 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
                             options={PRIORITY_OPTIONS}
                             value={activePriority}
                             onChange={(v) => setParam("priority", v)}
-                        />
-                        <FilterDropdown
-                            label="Date"
-                            options={[]}
-                            value={null}
-                            onChange={() => { }}
                         />
                         <FilterDropdown
                             label="Sprint"
