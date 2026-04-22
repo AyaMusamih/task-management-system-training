@@ -250,6 +250,23 @@ const deleteAllPermanent = async () => {
   return result; 
 };
 
+const cleanupExpiredTickets = async () => {
+  const cutoff = new Date();
+  cutoff.setUTCDate(cutoff.getUTCDate() - 30);
+
+  const result = await prisma.ticket.deleteMany({
+    where: {
+      deletedAt: {
+        not: null,
+        lt: cutoff,
+      },
+    },
+  });
+
+  console.log(`[Cleanup] Permanently deleted ${result.count} expired tickets.`);
+  return result;
+};
+
 module.exports = {
   getTickets,
   createTicket,
@@ -258,5 +275,6 @@ module.exports = {
   deleteTicket,
   restoreTicket,
   deletePermanent,
-  deleteAllPermanent
+  deleteAllPermanent,
+  cleanupExpiredTickets
 };
