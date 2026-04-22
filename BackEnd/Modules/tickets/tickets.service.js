@@ -52,7 +52,12 @@ const getTickets = async (filters) => {
     where.status = status;
   }
   if (priority) where.priority = priority;
-  if (startDate || endDate) {
+  if ((startDate || endDate) && filters.deletedOnly) {
+    where.deletedAt = {};
+    if (startDate) where.deletedAt.gte = startDate;
+    if (endDate) where.deletedAt.lte = endDate;
+  } 
+  else if (startDate || endDate)  {
     where.deadline = {};
     if (startDate) where.deadline.gte = startDate;
     if (endDate) where.deadline.lte = endDate;
