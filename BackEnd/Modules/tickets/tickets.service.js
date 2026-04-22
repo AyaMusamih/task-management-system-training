@@ -1,4 +1,5 @@
 const prisma = require("../prismaClient");
+const {startOfDay, endOfDay} = require("../reports/utils/report.utils")
 
 const getTickets = async (filters) => {
   const {
@@ -40,9 +41,8 @@ const getTickets = async (filters) => {
   if (sprintId) {
     where.sprintId = BigInt(sprintId);
   }
-  if (view === "sprint") {
+  else if (view === "sprint") {
     where.sprintId = { not: null };
- 
   }
   const statusList = Array.isArray(status) ? status : null;
   if (view === "scoped" && !status) where.status = "SCOPED_BACKLOG";
@@ -52,16 +52,15 @@ const getTickets = async (filters) => {
     where.status = status;
   }
   if (priority) where.priority = priority;
-  if ((startDate || endDate) && filters.deletedOnly) {
-    where.deletedAt = {};
-    if (startDate) where.deletedAt.gte = startDate;
-    if (endDate) where.deletedAt.lte = endDate;
-  } 
-  else if (startDate || endDate)  {
-    where.deadline = {};
-    if (startDate) where.deadline.gte = startDate;
-    if (endDate) where.deadline.lte = endDate;
-  }
+if ((startDate || endDate) && filters.deletedOnly) {
+  where.deletedAt = {};
+  if (startDate) where.deletedAt.gte = startOfDay(startDate);
+  if (endDate) where.deletedAt.lte = endOfDay(endDate);
+} else if (startDate || endDate) {
+  where.deadline = {};
+  if (startDate) where.deadline.gte = startOfDay(startDate);
+  if (endDate) where.deadline.lte = endOfDay(endDate);
+}
   if (search) {
     where.title = {
       contains: search,
