@@ -1,4 +1,3 @@
-const { success } = require("zod");
 const ticketService = require("./tickets.service");
 const { attachPermissionFlags } = require("./utils/ticket-permissions.util");
 
@@ -17,10 +16,11 @@ const getTickets = async (req, res, next) => {
       search,
       deletedOnly,
       includeDeleted,
+      sprintId,
     } = req.query;
 
-    const result = await ticketService.getTickets(
-      req.user,
+    const result = await ticketService.getTickets({
+      user: req.user,
       view,
       status,
       assignee,
@@ -33,7 +33,8 @@ const getTickets = async (req, res, next) => {
       search,
       deletedOnly,
       includeDeleted,
-    );
+      sprintId,
+    });
     const resultWithFlags = attachPermissionFlags(result, req.user);
 
     res.status(200).json({
@@ -145,6 +146,17 @@ const deletePermanent = async (req, res, next) => {
   }
 };
 
+const deleteAllPermanent = async (req, res, next) => {
+  try {
+    await ticketService.deleteAllPermanent();
+    res
+      .status(200)
+      .json({ success: true, message: "Tickets permanently deleted" });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   getTickets,
   addTicket,
@@ -153,4 +165,5 @@ module.exports = {
   deleteTicket,
   restoreTicket,
   deletePermanent,
+  deleteAllPermanent
 };
