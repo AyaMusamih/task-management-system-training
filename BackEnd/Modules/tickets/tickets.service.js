@@ -1,25 +1,29 @@
 const prisma = require("../prismaClient");
 
-const getTickets = async (
-  user,
-  view,
-  status,
-  assignee,
-  priority,
-  startDate,
-  endDate,
-  page,
-  limit,
-  sortBy,
-  search,
-  deletedOnly,
-  includeDeleted,
-) => {
+const getTickets = async (filters) => {
+  const {
+    user,
+    view,
+    status,
+    assignee,
+    priority,
+    startDate,
+    endDate,
+    page,
+    limit,
+    sortBy,
+    search,
+    deletedOnly,
+    includeDeleted,
+    sprintId,
+  } = filters;
   const user_id = BigInt(user.id);
   const where = {};
+  const resolvedSortBy = sortBy || (deletedOnly ? "deletedAt" : "deadline");
 
   if (deletedOnly && user.role === "ADMIN") {
     where.deletedAt = { not: null };
+    
   } else if (!includeDeleted && user.role === "ADMIN") {
     where.deletedAt = null;
   }
@@ -29,21 +33,29 @@ const getTickets = async (
       { sprintId: { not: null }, assigneeId: user_id },
       { status: "SCOPED_BACKLOG", assigneeId: user_id },
     ];
-    where.deletedAt = null
+    where.deletedAt = null;
   } else {
     if (assignee) where.assigneeId = BigInt(assignee);
+  }
+  if (sprintId) {
+    where.sprintId = BigInt(sprintId);
   }
   if (view === "sprint") {
     where.sprintId = { not: null };
  
   }
+  const statusList = Array.isArray(status) ? status : null;
   if (view === "scoped" && !status) where.status = "SCOPED_BACKLOG";
-  if (status) where.status = status;
+  if (statusList?.length) {
+    where.status = { in: statusList };
+  } else if (status) {
+    where.status = status;
+  }
   if (priority) where.priority = priority;
   if (startDate || endDate) {
-    where.createdAt = {};
-    if (startDate) where.createdAt.gte = startDate;
-    if (endDate) where.createdAt.lte = endDate;
+    where.deadline = {};
+    if (startDate) where.deadline.gte = startDate;
+    if (endDate) where.deadline.lte = endDate;
   }
   if (search) {
     where.title = {
@@ -57,7 +69,7 @@ const getTickets = async (
       where,
       skip,
       take: limit,
-      orderBy: { [sortBy]: "desc" },
+      orderBy: { [resolvedSortBy]: "desc" },
       select: {
         id: true,
         title: true,
@@ -65,6 +77,7 @@ const getTickets = async (
         status: true,
         priority: true,
         deadline: true,
+        deletedAt: true,
         createdAt: true,
         updatedAt: true,
         assignee: { select: { id: true, name: true, email: true } },
@@ -222,6 +235,16 @@ const deletePermanent = async (id) => {
   });
 };
 
+const deleteAllPermanent = async () => {
+  const result = await prisma.ticket.deleteMany({
+    where: {
+      deletedAt: { not: null },
+    },
+  });
+  console.log(result);
+  return result; 
+};
+
 module.exports = {
   getTickets,
   createTicket,
@@ -230,4 +253,5 @@ module.exports = {
   deleteTicket,
   restoreTicket,
   deletePermanent,
+  deleteAllPermanent
 };

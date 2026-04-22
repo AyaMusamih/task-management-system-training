@@ -14,6 +14,7 @@ const {
 const isAdmin = require("../Middlewares/isAdmin.middleware");
 const ticketController = require("./tickets.controller");
 const authMiddleware = require("../Middlewares/auth.middleware");
+const { ticket } = require("../prismaClient");
 
 router.use(authMiddleware);
 
@@ -49,6 +50,8 @@ router.patch(
   ticketController.restoreTicket,
 );
 
+router.delete("/permanent", isAdmin, ticketController.deleteAllPermanent);
+
 router.delete(
   "/:id",
   isAdmin,
@@ -62,5 +65,6 @@ router.delete(
   validate({ params: updateTicketParamSchema }),
   ticketController.deletePermanent,
 );
+
 
 module.exports = router;
