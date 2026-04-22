@@ -114,6 +114,10 @@ const TicketDetailsModal = ({ ticket, openModal, closeModal, onRefresh, assignee
                     <p className="text-gray-500">Created By</p>
                     <p className="font-medium text-text-primary">{ticket.createdBy?.name}</p>
                 </div>
+                <div>
+                    <p className="text-gray-500">Deadline</p>
+                    <p className="font-medium text-text-primary">{ticket.deadline ? new Date(ticket.deadline).toLocaleDateString('en-GB', { timeZone: 'UTC' }) : "No deadline"}</p>
+                </div>
 
             </div>
             <div className="mb-4 m-auto">
