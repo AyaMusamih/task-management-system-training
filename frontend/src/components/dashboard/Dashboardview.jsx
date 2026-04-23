@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate, useParams, useOutletContext, useLocation } from "react-router-dom";
-import { Search, ChevronDown, Plus, ChevronLeft, ChevronRight, Bell, CircleAlert, CircleCheckBig, ClockArrowDown } from "lucide-react";
+import { Search, ChevronDown, Plus, ChevronLeft, ChevronRight, Bell, CircleAlert, CircleCheckBig, ClockArrowDown, XCircle } from "lucide-react";
 import { getTickets } from "../../services/tickets.service";
 import { getUsers } from "../../services/user.service";
 import TicketsTable from "../tickets/TicketsTable";
@@ -308,8 +308,23 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
 
     const handleDateChange = (key, value) => {
         const next = new URLSearchParams(searchParams);
+
+        const start = key === "date_from" ? value : activeStartDate;
+        const end = key === "date_to" ? value : activeEndDate;
+
+        if (start && end && new Date(start) > new Date(end)) {
+            showToast({
+                title: "Invalid Date Range",
+                description: "From date must be before To date",
+                icon: <XCircle className="w-4 h-4" />,
+                type: "error",
+            });
+            return;
+        }
+
         if (value) next.set(key === "date_from" ? "startDate" : "endDate", value);
         else next.delete(key === "date_from" ? "startDate" : "endDate");
+
         next.delete("page");
         setSearchParams(next);
     };
