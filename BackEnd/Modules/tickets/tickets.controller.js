@@ -14,10 +14,13 @@ const getTickets = async (req, res, next) => {
       limit,
       sortBy,
       search,
+      deletedOnly,
+      includeDeleted,
+      sprintId,
     } = req.query;
 
-    const result = await ticketService.getTickets(
-      req.user,
+    const result = await ticketService.getTickets({
+      user: req.user,
       view,
       status,
       assignee,
@@ -28,7 +31,10 @@ const getTickets = async (req, res, next) => {
       limit,
       sortBy,
       search,
-    );
+      deletedOnly,
+      includeDeleted,
+      sprintId,
+    });
     const resultWithFlags = attachPermissionFlags(result, req.user);
 
     res.status(200).json({
@@ -74,7 +80,7 @@ const addTicket = async (req, res, next) => {
 const updateTicket = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const {deadline, ...data } = req.body;
+    const { deadline, ...data } = req.body;
     const payload = {
       ...data,
       deadline: deadline ? new Date(deadline) : deadline,
@@ -87,22 +93,65 @@ const updateTicket = async (req, res, next) => {
 };
 
 const updateTicketStatus = async (req, res, next) => {
-    try{
-        const {id} = req.params;
-        const {status} = req.body;
-        const updated = await ticketService.updateTicketStatus(id, status, req.ticket, req.user.role)
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const updated = await ticketService.updateTicketStatus(
+      id,
+      status,
+      req.ticket,
+      req.user.role,
+    );
 
-        res.status(200).json({success: true, data: updated})
-    }
-    catch(err){
-        next(err);
-    }
-}
+    res.status(200).json({ success: true, data: updated });
+  } catch (err) {
+    next(err);
+  }
+};
+
 const deleteTicket = async (req, res, next) => {
   try {
     const { id } = req.params;
+    // TODO: Audit log ticket soft-delete.
     await ticketService.deleteTicket(id);
-    res.status(200).json({ success: true, message: "Ticket deleted successfully" });
+    res
+      .status(200)
+      .json({ success: true, message: "Ticket deleted successfully" });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const restoreTicket = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    // TODO: Audit log ticket restore.
+    await ticketService.restoreTicket(id);
+    res.status(200).json({ success: true, message: "Ticket restored" });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const deletePermanent = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    // TODO: Audit log ticket permanent delete.
+    await ticketService.deletePermanent(id);
+    res
+      .status(200)
+      .json({ success: true, message: "Ticket permanently deleted" });
+  } catch (err) {
+    next(err);
+  }
+};
+
+const deleteAllPermanent = async (req, res, next) => {
+  try {
+    await ticketService.deleteAllPermanent();
+    res
+      .status(200)
+      .json({ success: true, message: "Tickets permanently deleted" });
   } catch (err) {
     next(err);
   }
@@ -113,5 +162,8 @@ module.exports = {
   addTicket,
   updateTicket,
   updateTicketStatus,
-  deleteTicket
+  deleteTicket,
+  restoreTicket,
+  deletePermanent,
+  deleteAllPermanent
 };
