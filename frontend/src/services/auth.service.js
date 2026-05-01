@@ -7,18 +7,22 @@ export const loginUser = async (email, password) => {
       email,
       password,
     });
+
     return response.data.data;
   } catch (err) {
     const data = err.response?.data;
+    const status = err.response?.status;
+
     if (data?.errors) {
       const formatted = {};
       data.errors.forEach((e) => (formatted[e.param] = e.msg));
       throw { type: "validation", errors: formatted };
-    } else if (data?.error) {
-      throw { type: "general", message: data.error };
-    } else {
-      throw { type: "general", message: "Login failed. Please try again." };
     }
+    throw {
+      type: "general",
+      message: data?.error || "Login failed. Please try again.",
+      status: status
+    };
   }
 };
 
