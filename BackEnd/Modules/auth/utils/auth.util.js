@@ -19,6 +19,7 @@ const generateAuthSession = async (user) => {
     id: user.id.toString(),
     email: user.email,
     role: user.role,
+    plan: user.plan
   };
   const accessToken = signAccessToken(payload);
   const refreshToken = signRefreshToken(payload);
