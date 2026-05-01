@@ -23,6 +23,11 @@ router.get(
   validate({ query: getTicketsSchema }),
   ticketController.getTickets,
 );
+router.get(
+  "/:id",
+  validate({ params: updateTicketParamSchema }),
+  ticketController.getTicketById,
+);
 router.post(
   "",
   isAdmin,

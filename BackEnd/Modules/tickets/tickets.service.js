@@ -102,6 +102,56 @@ if ((startDate || endDate) && filters.deletedOnly) {
   };
 };
 
+const getTicketById = async (id, user) => {
+  const ticket = await prisma.ticket.findUnique({
+    where: { id: BigInt(id) },
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      status: true,
+      priority: true,
+      deadline: true,
+      deletedAt: true,
+      createdAt: true,
+      updatedAt: true,
+      assigneeId: true,
+      assignee: { select: { id: true, name: true, email: true } },
+      createdBy: { select: { id: true, name: true } },
+      sprint: { select: { id: true, name: true } },
+    },
+  });
+
+  if (!ticket) {
+    const err = new Error("Ticket not found");
+    err.status = 404;
+    throw err;
+  }
+
+  if (user.role !== "ADMIN") {
+    if (ticket.deletedAt) {
+      const err = new Error("Forbidden");
+      err.status = 403;
+      throw err;
+    }
+
+    const userId = BigInt(user.id);
+    const isAssignedToUser = ticket.assigneeId?.toString() === userId.toString();
+    const isScopedBacklog = ticket.status === "SCOPED_BACKLOG";
+    const isSprintTicket = ticket.sprint?.id != null;
+
+    if (!isAssignedToUser || (!isScopedBacklog && !isSprintTicket)) {
+      const err = new Error("Forbidden");
+      err.status = 403;
+      throw err;
+    }
+  }
+
+  return {
+    items: [ticket],
+  };
+};
+
 const createTicket = async (payload, userId) => {
   const { sprintId, assigneeId, ...details } = payload;
   return await prisma.ticket.create({
@@ -268,6 +318,7 @@ const cleanupExpiredTickets = async () => {
 
 module.exports = {
   getTickets,
+  getTicketById,
   createTicket,
   updateTicket,
   updateTicketStatus,

@@ -16,7 +16,7 @@ app.use(cors({
   origin: "http://localhost:5173",   
   credentials: true,                 
 }));
-app.post("/webhook", express.raw({ type: "application/json" }), handleWebhook);
+
 const healthRouter = require('./Modules/health');
 const authRouter = require('./Modules/auth/auth.routes');
 const ticketsRouter = require('./Modules/tickets/tickets.route');
