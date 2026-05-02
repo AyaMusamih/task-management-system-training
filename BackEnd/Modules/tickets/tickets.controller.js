@@ -46,6 +46,21 @@ const getTickets = async (req, res, next) => {
   }
 };
 
+const getTicketById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const result = await ticketService.getTicketById(id, req.user);
+    const resultWithFlags = attachPermissionFlags(result, req.user);
+
+    res.status(200).json({
+      success: true,
+      ...resultWithFlags,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const addTicket = async (req, res, next) => {
   try {
     const {
@@ -159,6 +174,7 @@ const deleteAllPermanent = async (req, res, next) => {
 
 module.exports = {
   getTickets,
+  getTicketById,
   addTicket,
   updateTicket,
   updateTicketStatus,

@@ -14,6 +14,8 @@ const {
 const isAdmin = require("../Middlewares/isAdmin.middleware");
 const ticketController = require("./tickets.controller");
 const authMiddleware = require("../Middlewares/auth.middleware");
+const commentsController = require("../comments/comments.controller");
+const { addCommentSchema } = require("../comments/schema/addComment.schema");
 const { ticket } = require("../prismaClient");
 
 router.use(authMiddleware);
@@ -22,6 +24,21 @@ router.get(
   "/getTickets",
   validate({ query: getTicketsSchema }),
   ticketController.getTickets,
+);
+router.get(
+  "/:id",
+  validate({ params: updateTicketParamSchema }),
+  ticketController.getTicketById,
+);
+router.get(
+  "/:id/comments",
+  validate({ params: updateTicketParamSchema }),
+  commentsController.getTicketComments,
+);
+router.post(
+  "/:id/comments",
+  validate({ params: updateTicketParamSchema, body: addCommentSchema }),
+  commentsController.addTicketComment,
 );
 router.post(
   "",
