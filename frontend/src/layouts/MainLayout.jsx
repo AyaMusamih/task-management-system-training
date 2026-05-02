@@ -7,12 +7,14 @@ import ConfirmDialog from "../components/shared/ConfirmDialog";
 import { AlarmClock, TriangleAlert, BadgeInfo, LogOut, CircleCheckBig } from "lucide-react";
 import { showToast } from "../utils/showToast";
 import { logoutUser } from "../services/auth.service";
+import ConnectionLostIcon from "../assets/images/ConnectionLostIcon.png";
 
 const MainLayout = () => {
     const [modalState, setModalState] = useState(null);
     const [sessionExpired, setSessionExpired] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [Refreshed, setRefreshed] = useState(false);
+    const [connectionLost, setConnectionLost] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -69,17 +71,24 @@ const MainLayout = () => {
             setRefreshed(true);
         }
 
+        const handleConnectionLost = () => setConnectionLost(true);
+        const handleConnectionRestored = () => setConnectionLost(false);
+
         window.addEventListener("sessionExpired", handleSessionExpired);
         window.addEventListener("sessionRefreshing", handleRefreshing);
         window.addEventListener("sessionRefreshed", handleRefreshed);
+        window.addEventListener("connectionLost", handleConnectionLost);
+        window.addEventListener("connectionRestored", handleConnectionRestored);
 
         return () => {
             window.removeEventListener("sessionExpired", handleSessionExpired);
             window.removeEventListener("sessionRefreshing", handleRefreshing);
             window.removeEventListener("sessionRefreshed", handleRefreshed);
+            window.removeEventListener("connectionLost", handleConnectionLost);
+            window.removeEventListener("connectionRestored", handleConnectionRestored);
         };
     }, []);
-    
+
     useEffect(() => {
         if (Refreshed) {
             showToast({
@@ -101,6 +110,16 @@ const MainLayout = () => {
         localStorage.setItem("redirect_after_login", currentPath);
 
         window.location.replace("/login");
+    };
+
+    const handleRetryConnection = () => {
+        setConnectionLost(false);
+        window.__retryRequest?.();
+    };
+
+    const handleCancelConnection = () => {
+        setConnectionLost(false);
+        window.__cancelRequest?.();
     };
 
     useEffect(() => {
@@ -221,6 +240,20 @@ const MainLayout = () => {
                         icon={<AlarmClock className="w-5 h-5" />}
                         variant="warning"
                         onConfirm={handleSessionConfirm}
+                    />
+                </div>
+            )}
+            {connectionLost && (
+                <div className="fixed inset-0 flex items-center justify-center z-[999] bg-black/40 backdrop-blur-sm">
+                    <ConfirmDialog
+                        title="Connection lost"
+                        description="Please check your internet connection and try again."
+                        confirmText="Retry"
+                        cancelText="Cancel"
+                        icon={<img src={ConnectionLostIcon} alt="Connection Lost" className="w-7 h-7" />}
+                        variant="warning"
+                        onConfirm={handleRetryConnection}
+                        onCancel={handleCancelConnection}
                     />
                 </div>
             )}

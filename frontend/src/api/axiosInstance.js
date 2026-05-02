@@ -30,7 +30,7 @@ axiosInstance.interceptors.request.use(
     if (token) config.headers.Authorization = `Bearer ${token}`;
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 axiosInstance.interceptors.response.use(
@@ -45,7 +45,6 @@ axiosInstance.interceptors.response.use(
       message !== "Invalid current password" &&
       !isAuthRoute
     ) {
-
       if (originalRequest._retry) {
         return Promise.reject(error);
       }
@@ -77,7 +76,8 @@ axiosInstance.interceptors.response.use(
 
         localStorage.setItem("accessToken", newToken);
 
-        axiosInstance.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
+        axiosInstance.defaults.headers.common["Authorization"] =
+          `Bearer ${newToken}`;
 
         processQueue(null, newToken);
 
@@ -103,8 +103,19 @@ axiosInstance.interceptors.response.use(
       }
     }
 
+    if (!error.response && error.request) {
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("connectionLost"));
+      }
+      return new Promise((resolve, reject) => {
+        window.__retryRequest = () =>
+          axiosInstance(originalRequest).then(resolve).catch(reject);
+        window.__cancelRequest = () => reject(error);
+      });
+    }
+
     return Promise.reject(error);
-  }
+  },
 );
 
 export default axiosInstance;
