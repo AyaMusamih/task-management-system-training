@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE `users` ADD COLUMN `plan` ENUM('FREE', 'PREMIUM') NOT NULL DEFAULT 'FREE',
+    ADD COLUMN `premiumUntil` DATETIME(3) NULL;

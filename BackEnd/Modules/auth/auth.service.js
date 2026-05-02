@@ -19,6 +19,7 @@ const registerUser = async (name, email, hashedPassword) => {
       name: true,
       email: true,
       role: true,
+      plan: true
     },
   });
   const { accessToken, refreshToken } = await generateAuthSession(newUser);
