@@ -5,11 +5,11 @@ const validate = require("../Middlewares/validation");
 const registerUserSchema = require("./schema/RegisterUser");
 const loginSchema = require("./schema/login.schema");
 const {refreshSchema, forgotPasswordSchema, resetPasswordSchema} = require("./schema/resetAuth.schema")
-
+const loginRateLimit = require("../Middlewares/loginRateLimit.middleware");
 
 router.post('/register', validate({body: registerUserSchema}) , authController.register )
 
-router.post('/login', validate({body: loginSchema}), authController.login);
+router.post('/login', loginRateLimit, validate({body: loginSchema}), authController.login);
 
 router.post('/refresh',  authController.refresh)
 
