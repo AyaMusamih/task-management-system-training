@@ -124,7 +124,7 @@ const getTicketById = async (id, user) => {
     },
   });
 
-  if (!ticket) {
+  if (!ticket || ticket.deletedAt) {
     const err = new Error("Ticket not found");
     err.status = 404;
     throw err;
