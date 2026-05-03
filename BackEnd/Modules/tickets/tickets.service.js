@@ -1,5 +1,7 @@
 const prisma = require("../prismaClient");
 const {startOfDay, endOfDay} = require("../reports/utils/report.utils")
+const {audit} = require("../utils/audit")
+const { AuditAction } = require("../../prisma/generated");
 
 const getTickets = async (filters) => {
   const {
@@ -152,33 +154,47 @@ const getTicketById = async (id, user) => {
   };
 };
 
-const createTicket = async (payload, userId) => {
+const createTicket = async (payload, actor) => {
   const { sprintId, assigneeId, ...details } = payload;
-  return await prisma.ticket.create({
-    data: {
-      ...details,
-      createdBy: {
-        connect: {
-          id: BigInt(userId),
-        },
+
+  return await prisma.$transaction(async (tx) => {
+    const ticket = await tx.ticket.create({
+      data: {
+        ...details,
+        createdBy: { connect: { id: BigInt(actor.id) } },
+        assignee:  assigneeId ? { connect: { id: assigneeId } } : undefined,
+        sprint:    sprintId   ? { connect: { id: sprintId } }   : undefined,
       },
-      assignee: assigneeId ? { connect: { id: assigneeId } } : undefined,
-      sprint: sprintId ? { connect: { id: sprintId } } : undefined,
-    },
-    include: {
-      assignee: {
-        select: { id: true, name: true, email: true },
+      include: {
+        assignee: { select: { id: true, name: true, email: true } },
       },
-    },
+    });
+
+    await audit({
+      ticketId:  ticket.id,
+      actorId:   actor.id,
+      actorRole: actor.role,
+      action:    AuditAction.TICKET_CREATED,
+      newValue:  {
+        title:      ticket.title,
+        status:     ticket.status,
+        priority:   ticket.priority,
+        assigneeId: assigneeId?.toString() ?? null,
+        sprintId:   sprintId?.toString()   ?? null,
+      },
+      tx,
+    });
+
+    return ticket;
   });
 };
 
-const updateTicket = async (id, payload) => {
+const updateTicket = async (id, payload, actor) => {
   const { assigneeId, sprintId, ...data } = payload;
 
-  const ticket = await prisma.ticket.findUnique({ where: { id } });
+  const old = await prisma.ticket.findUnique({ where: { id } });
 
-  if (!ticket) {
+  if (!old) {
     const err = new Error("Ticket not found");
     err.status = 404;
     throw err;
@@ -195,47 +211,85 @@ const updateTicket = async (id, payload) => {
   } else if (sprintId) {
     data.sprint = { connect: { id: sprintId } };
   }
-  return await prisma.ticket.update({
-    where: { id },
-    data: data,
-    include: {
-      assignee: {
-        select: { id: true, name: true, email: true },
+
+  return await prisma.$transaction(async (tx) => {
+    const updated = await tx.ticket.update({
+      where: { id },
+      data,
+      include: {
+        assignee: { select: { id: true, name: true, email: true } },
       },
-    },
+    });
+
+    await audit({
+      ticketId:  updated.id,
+      actorId:   actor.id,
+      actorRole: actor.role,
+      action:    AuditAction.TICKET_UPDATED,
+      oldValue:  {
+        title:       old.title,
+        description: old.description,
+        priority:    old.priority,
+        assigneeId:  old.assigneeId?.toString() ?? null,
+        sprintId:    old.sprintId?.toString()   ?? null,
+      },
+      newValue:  {
+        title:       updated.title,
+        description: updated.description,
+        priority:    updated.priority,
+        assigneeId:  updated.assigneeId?.toString() ?? null,
+        sprintId:    updated.sprintId?.toString()   ?? null,
+      },
+      tx,
+    });
+
+    return updated;
   });
 };
 
-const updateTicketStatus = async (id, status, ticket, userRole) => {
+const updateTicketStatus = async (id, status, ticket, actor) => {
   if (ticket.status === status) {
     const err = new Error("Ticket is already in this status");
     err.status = 400;
     throw err;
   }
 
-  if (userRole !== "ADMIN") {
+  if (actor.role !== "ADMIN") {
     const allowed = {
-      TODO: ["IN_PROGRESS"],
+      TODO:        ["IN_PROGRESS"],
       IN_PROGRESS: ["DONE"],
     };
 
     if (!allowed[ticket.status]?.includes(status)) {
-      const err = new Error(
-        `Cannot transition from ${ticket.status} to ${status}`,
-      );
+      const err = new Error(`Cannot transition from ${ticket.status} to ${status}`);
       err.status = 409;
       throw err;
     }
   }
-  return await prisma.ticket.update({
-    where: { id: BigInt(id) },
-    data: { status },
+
+  return await prisma.$transaction(async (tx) => {
+    const updated = await tx.ticket.update({
+      where: { id: BigInt(id) },
+      data:  { status },
+    });
+
+    await audit({
+      ticketId:  updated.id,
+      actorId:   actor.id,
+      actorRole: actor.role,
+      action:    AuditAction.STATUS_CHANGED,
+      oldValue:  { status: ticket.status },
+      newValue:  { status },
+      tx,
+    });
+
+    return updated;
   });
 };
 
-const deleteTicket = async (id) => {
+const deleteTicket = async (id, actor) => {
   const ticket = await prisma.ticket.findUnique({ where: { id: BigInt(id) } });
-  
+
   if (!ticket) {
     const err = new Error("Ticket not found");
     err.status = 404;
@@ -248,13 +302,27 @@ const deleteTicket = async (id) => {
     throw err;
   }
 
-  return await prisma.ticket.update({
-    where: { id: BigInt(id) },
-    data: { deletedAt: new Date() },
+  return await prisma.$transaction(async (tx) => {
+    const deleted = await tx.ticket.update({
+      where: { id: BigInt(id) },
+      data:  { deletedAt: new Date() },
+    });
+
+    await audit({
+      ticketId:  deleted.id,
+      actorId:   actor.id,
+      actorRole: actor.role,
+      action:    AuditAction.TICKET_DELETED,
+      oldValue:  { deletedAt: null },
+      newValue:  { deletedAt: deleted.deletedAt },
+      tx,
+    });
+
+    return deleted;
   });
 };
 
-const restoreTicket = async (id) => {
+const restoreTicket = async (id, actor) => {
   const ticket = await prisma.ticket.findUnique({ where: { id: BigInt(id) } });
 
   if (!ticket || !ticket.deletedAt) {
@@ -263,9 +331,23 @@ const restoreTicket = async (id) => {
     throw err;
   }
 
-  return await prisma.ticket.update({
-    where: { id: BigInt(id) },
-    data: { deletedAt: null },
+  return await prisma.$transaction(async (tx) => {
+    const restored = await tx.ticket.update({
+      where: { id: BigInt(id) },
+      data:  { deletedAt: null },
+    });
+
+    await audit({
+      ticketId:  restored.id,
+      actorId:   actor.id,
+      actorRole: actor.role,
+      action:    AuditAction.TICKET_RESTORED,
+      oldValue:  { deletedAt: ticket.deletedAt },
+      newValue:  { deletedAt: null },
+      tx,
+    }).catch(err => console.error("[audit] TICKET_RESTORED failed:", err)); //;
+
+    return restored;
   });
 };
 
