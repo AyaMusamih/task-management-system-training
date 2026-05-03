@@ -11,15 +11,6 @@ export const getMyReports = async (params) => {
     const res = err.response;
     const data = res?.data;
 
-    // Network error
-    if (!res) {
-      throw {
-        type: "network",
-        message: "Network error. Please check your connection.",
-        status: null,
-      };
-    }
-
     //Forbidden error
     if (res?.status === 403) {
       throw {
@@ -70,13 +61,6 @@ export const getAdminReports = async (params) => {
     const res = err.response;
     const data = res?.data;
 
-    if (!res) {
-      throw {
-        type: "network",
-        message: "Network error. Please check your connection.",
-        status: null,
-      };
-    }
     if (res?.status === 403) {
       throw {
         type: "forbidden",
@@ -133,11 +117,6 @@ export const getAdminReportExport = async (params) => {
   } catch (err) {
     const res = err.response;
 
-    if (!res)
-      throw {
-        type: "network",
-        message: "Network error. Please check your connection.",
-      };
     if (res?.status === 403)
       throw {
         type: "forbidden",

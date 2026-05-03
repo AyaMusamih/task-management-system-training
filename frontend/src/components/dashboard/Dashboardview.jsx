@@ -249,16 +249,14 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
     const hasOpenedModal = useRef(false);
     useEffect(() => {
         if (!id) { hasOpenedModal.current = false; return; }
-        if (!tickets.length || hasOpenedModal.current) return;
-        const ticket = tickets.find((t) => String(t.id) === String(id));
-        if (!ticket) return;
+        if (hasOpenedModal.current) return;
         hasOpenedModal.current = true;
 
         openModal({
-            title: "Ticket Details",
+            transparent: true,
             content: (
                 <TicketDetailsModal
-                    ticket={ticket}
+                    ticketId={id}
                     assignees={allAssignees}
                     onRefresh={fetchTickets}
                     openModal={openModal}
@@ -266,7 +264,7 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
                 />
             ),
         });
-    }, [id, tickets, openModal, closeModal, fetchTickets, allAssignees]);
+    }, [id, openModal, closeModal, fetchTickets, allAssignees]);
 
     const assignees = allAssignees;
     const currentSprint = tickets.find((t) => t.sprint)?.sprint;

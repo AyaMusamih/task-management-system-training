@@ -118,6 +118,8 @@ const DeletedTickets = () => {
     const searchQuery = searchParams.get("search") || "";
     const currentPage = parseInt(searchParams.get("page") || "1", 10);
     const activeSprintFilter = searchParams.get("sprint") || null;
+    const activeStartDate = searchParams.get("startDate") || "";
+    const activeEndDate = searchParams.get("endDate") || "";
 
     const navigate = useNavigate();
     const [tickets, setTickets] = useState([]);
@@ -160,6 +162,8 @@ const DeletedTickets = () => {
             if (activeAssignee) params.assignee = activeAssignee;
             if (searchQuery) params.search = searchQuery;
             if (activeSprintFilter) params.sprintId = activeSprintFilter;
+            if (activeStartDate) params.startDate = activeStartDate;
+            if (activeEndDate) params.endDate = activeEndDate;
 
             const res = await getDeletedTickets(params);
             setTickets(res.items || []);
@@ -169,7 +173,7 @@ const DeletedTickets = () => {
         } finally {
             setLoading(false);
         }
-    }, [currentPage, activePriority, activeAssignee, searchQuery, activeSprintFilter]);
+    }, [currentPage, activePriority, activeAssignee, searchQuery, activeSprintFilter, activeStartDate, activeEndDate]);
 
     useEffect(() => { fetchTickets(); }, [fetchTickets]);
 
@@ -177,6 +181,24 @@ const DeletedTickets = () => {
         const next = new URLSearchParams(searchParams);
         if (value) next.set(key, value);
         else next.delete(key);
+        next.delete("page");
+        setSearchParams(next);
+    };
+    const handleDateChange = (key, value) => {
+        const next = new URLSearchParams(searchParams);
+        const start = key === "date_from" ? value : activeStartDate;
+        const end = key === "date_to" ? value : activeEndDate;
+        if (start && end && new Date(start) > new Date(end)) {
+            showToast({
+                title: "Invalid Date Range",
+                description: "From date must be before To date",
+                icon: <XCircle className="w-4 h-4" />,
+                type: "error",
+            });
+            return;
+        }
+        if (value) next.set(key === "date_from" ? "startDate" : "endDate", value);
+        else next.delete(key === "date_from" ? "startDate" : "endDate");
         next.delete("page");
         setSearchParams(next);
     };
@@ -304,6 +326,27 @@ const DeletedTickets = () => {
             <div className="mx-3 sm:mx-[16px] mt-[32px] mb-[25px] rounded-[10px] bg-background py-[7px]">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-4 py-[10px] gap-2">
                     <div className="flex items-center gap-2 flex-wrap">
+                        <div className="flex items-center gap-3 bg-background border border-divider/40 rounded-lg px-3 py-2">
+                            <div className="flex flex-col">
+                                <span className="text-[12px] text-text-hint">Deleted From</span>
+                                <input
+                                    type="date"
+                                    value={activeStartDate}
+                                    onChange={(e) => handleDateChange("date_from", e.target.value)}
+                                    className="bg-transparent text-sm text-text-primary outline-none"
+                                />
+                            </div>
+                            <div className="w-px h-8 bg-divider/40" />
+                            <div className="flex flex-col">
+                                <span className="text-[12px] text-text-hint">To</span>
+                                <input
+                                    type="date"
+                                    value={activeEndDate}
+                                    onChange={(e) => handleDateChange("date_to", e.target.value)}
+                                    className="bg-transparent text-sm text-text-primary outline-none"
+                                />
+                            </div>
+                        </div>
                         <FilterDropdown
                             label="Assignee"
                             options={allAssignees.map((a) => ({ value: String(a.id), label: a.name }))}
@@ -317,12 +360,6 @@ const DeletedTickets = () => {
                             options={PRIORITY_OPTIONS}
                             value={activePriority}
                             onChange={(v) => setParam("priority", v)}
-                        />
-                        <FilterDropdown
-                            label="Date"
-                            options={[]}
-                            value={null}
-                            onChange={() => { }}
                         />
                         <FilterDropdown
                             label="Sprint"
