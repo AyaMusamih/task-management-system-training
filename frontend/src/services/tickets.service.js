@@ -12,6 +12,21 @@ export const getTickets = async (params = {}) => {
     }
 };
 
+export const getTicketById = async (id) => {
+    try {
+        const { data } = await axiosInstance.get(`/tickets/${id}`);
+        return data;
+    } catch (error) {
+        throw {
+            status: error?.response?.status,
+            message:
+                error?.response?.data?.error ||
+                error?.response?.data?.message ||
+                "Something went wrong",
+        };
+    }
+};
+
 export const createTicket = async (payload) => {
     try {
         const { data } = await axiosInstance.post("/tickets", payload);

@@ -205,7 +205,7 @@ const MainLayout = () => {
                     isOpen={true}
                     onClose={closeModal}
                     title={modalState.title}
-                    width={modalState.width}
+                    transparent={modalState.transparent}
                 >
                     {modalState.content}
                 </Modal>
