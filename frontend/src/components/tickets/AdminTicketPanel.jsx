@@ -48,6 +48,15 @@ const AdminTicketPanel = ({ ticket, allAssignees, allSprints, onSaved, onDelete,
     ];
 
     const handleSave = async () => {
+        if (!editDeadline) {
+            showToast({
+                title: "Deadline Required",
+                description: "Please choose a deadline",
+                icon: <XCircle className="w-4 h-4" />,
+                type: "error",
+            });
+            return;
+        }
         setSaving(true);
         try {
             await updateTicket(ticket.id, {
