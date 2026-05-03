@@ -114,5 +114,7 @@ module.exports = {
   getIsoWeekLabel,
   getIsoWeekSortKey,
   calcDelta,
-  getPreviousRange
+  getPreviousRange,
+  startOfDay,
+  endOfDay
 };

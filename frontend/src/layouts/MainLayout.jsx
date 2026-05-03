@@ -79,6 +79,7 @@ const MainLayout = () => {
             window.removeEventListener("sessionRefreshed", handleRefreshed);
         };
     }, []);
+    
     useEffect(() => {
         if (Refreshed) {
             showToast({
@@ -94,8 +95,27 @@ const MainLayout = () => {
 
     const handleSessionConfirm = () => {
         setSessionExpired(false);
+
+        const currentPath = window.location.pathname + window.location.search;
+
+        localStorage.setItem("redirect_after_login", currentPath);
+
         window.location.replace("/login");
     };
+
+    useEffect(() => {
+        if (sessionExpired) {
+            showToast({
+                title: "Session expired",
+                description: "Please log in again to continue.",
+                icon: <TriangleAlert className="w-4 h-4" />,
+                type: "warning",
+            });
+
+            handleSessionConfirm();
+        }
+    }, [sessionExpired]);
+
     return (
         <div className="min-h-screen flex flex-col bg-background">
 
@@ -140,7 +160,7 @@ const MainLayout = () => {
                         </div>
                     )}
 
-                    {sessionExpired && (
+                    {/* {sessionExpired && (
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3 rounded-xl border border-yellow-500/30 bg-yellow-500/10 text-[#D97706]">
 
                             <div className="flex items-center gap-3 flex-1">
@@ -156,7 +176,7 @@ const MainLayout = () => {
                             </button>
 
                         </div>
-                    )}
+                    )} */}
 
                 </div>
             )}

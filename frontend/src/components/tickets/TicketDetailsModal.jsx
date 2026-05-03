@@ -44,8 +44,7 @@ const TicketDetailsModal = ({ ticket, openModal, closeModal, onRefresh, assignee
 
             showToast({
                 title: "Moved to Trash",
-                description:
-                    res.message || `Ticket "${ticket.title}" moved to trash`,
+                description:`Ticket "${ticket.title}" has been moved to trash successfully.`,
                 icon: <CircleCheckBig className="w-4 h-4" />,
                 type: "success",
             });
@@ -113,6 +112,10 @@ const TicketDetailsModal = ({ ticket, openModal, closeModal, onRefresh, assignee
                 <div>
                     <p className="text-gray-500">Created By</p>
                     <p className="font-medium text-text-primary">{ticket.createdBy?.name}</p>
+                </div>
+                <div>
+                    <p className="text-gray-500">Deadline</p>
+                    <p className="font-medium text-text-primary">{ticket.deadline ? new Date(ticket.deadline).toLocaleDateString('en-GB', { timeZone: 'UTC' }) : "No deadline"}</p>
                 </div>
 
             </div>

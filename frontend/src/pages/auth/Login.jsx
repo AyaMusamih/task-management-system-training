@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { loginUser } from "../../services/auth.service";
 import Input from "../../components/shared/Input";
@@ -16,6 +16,7 @@ const Login = () => {
     const [errors, setErrors] = useState({});
     const [success, setSuccess] = useState(false);
     const [submitted, setSubmitted] = useState(false);
+    const [retryAfter, setRetryAfter] = useState(0);
 
     const validateForm = () => {
         const newErrors = {};
@@ -23,6 +24,43 @@ const Login = () => {
         if (password.length < 8) newErrors.password = "Password must be at least 8 characters";
         return newErrors;
     };
+
+    // restore lock from localStorage
+    useEffect(() => {
+        const lockUntil = localStorage.getItem("login_lock_until");
+
+        if (lockUntil) {
+            const diff = Math.ceil((Number(lockUntil) - Date.now()) / 1000);
+
+            if (diff > 0) {
+                setRetryAfter(diff);
+
+                setErrors({
+                    general: "Too many failed attempts. Please wait 2 minutes before trying again."
+                });
+
+            } else {
+                localStorage.removeItem("login_lock_until");
+            }
+        }
+    }, []);
+
+    // countdown timer
+    useEffect(() => {
+        if (!retryAfter) return;
+
+        const timer = setInterval(() => {
+            setRetryAfter((prev) => {
+                if (prev <= 1) {
+                    localStorage.removeItem("login_lock_until");
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [retryAfter]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -46,38 +84,66 @@ const Login = () => {
             setSuccess(true);
 
             setTimeout(() => {
-                if (user?.role === "ADMIN") {
-                    navigate("/admin/dashboard", {
-                        state: {
-                            toast: {
-                                title: "Logged in successfully!",
-                                description: "Welcome back!",
-                                icon: "success",
-                                type: "success",
-                            }
+                const redirectPath = localStorage.getItem("redirect_after_login");
+
+                const isSafePath = redirectPath && redirectPath.startsWith("/");
+
+                const targetPath =
+                    isSafePath
+                        ? redirectPath
+                        : (user?.role === "ADMIN"
+                            ? "/admin/dashboard"
+                            : "/user/dashboard");
+
+                localStorage.removeItem("redirect_after_login");
+
+                navigate(targetPath, {
+                    state: {
+                        toast: {
+                            title: "Logged in successfully!",
+                            description: "Welcome back!",
+                            icon: "success",
+                            type: "success",
                         }
-                    });
-                } else if (user?.role === "USER") {
-                    navigate("/user/dashboard", {
-                        state: {
-                            toast: {
-                                title: "Logged in successfully!",
-                                description: "Welcome back!",
-                                icon: "success",
-                                type: "success",
-                            }
-                        }
-                    });
-                }
+                    }
+                });
             }, 1500);
 
         } catch (err) {
-            if (err.type === "validation") setErrors(err.errors);
-            else setErrors({ general: err.message });
+            const status = err?.status;
+
+            if (status === 429) {
+                setErrors({
+                    general: "Too many failed attempts. Please wait 2 minutes before trying again."
+                });
+
+                const cooldown = 2 * 60;
+
+                setRetryAfter(cooldown);
+
+                localStorage.setItem(
+                    "login_lock_until",
+                    String(Date.now() + cooldown * 1000)
+                );
+
+            } else if (err?.type === "validation") {
+                setErrors(err.errors);
+
+            } else {
+                setErrors({ general: err.message });
+            }
         } finally {
             setLoading(false);
         }
     };
+
+    const formatTime = (seconds) => {
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        return `${m}:${s.toString().padStart(2, "0")}`;
+    };
+
+    const hasGeneralError = !!errors.general;
 
     return (
         <AuthLayout type="login">
@@ -91,10 +157,12 @@ const Login = () => {
                     </Link>
                 </p>
 
-
                 {errors.general && (
                     <div className="flex items-start gap-2 mt-4 px-4 py-4 rounded-xl text-error-text bg-[#ef444410] border border-[#ef444430] text-error-red">
-                        < CircleAlert className="error-icon" />{errors.general}
+                        <CircleAlert className="error-icon" />
+                        <div>
+                            <div>{errors.general}</div>
+                        </div>
                     </div>
                 )}
             </div>
@@ -107,13 +175,13 @@ const Login = () => {
                     value={email}
                     onChange={(e) => {
                         setEmail(e.target.value);
-                        setErrors((prev) => ({ ...prev, email: undefined }));
-                        setSubmitted(false)
+                        setErrors((prev) => ({ ...prev, email: undefined, general: undefined, }));
+                        setSubmitted(false);
                     }}
                     disabled={loading}
-                    error={errors.email}
+                    error={errors.email || (hasGeneralError ? " " : undefined)}
                     success={email && !errors.email && submitted && !errors.general}
-                    className="input-field"
+                    className={`input-field ${hasGeneralError ? "border-red-500" : ""}`}
                 />
 
                 <Input
@@ -124,13 +192,13 @@ const Login = () => {
                     value={password}
                     onChange={(e) => {
                         setPassword(e.target.value);
-                        setErrors((prev) => ({ ...prev, password: undefined }));
-                        setSubmitted(false)
+                        setErrors((prev) => ({ ...prev, password: undefined, general: undefined, }));
+                        setSubmitted(false);
                     }}
                     disabled={loading}
-                    error={errors.password}
+                    error={errors.password || (hasGeneralError ? " " : undefined)}
                     success={password && !errors.password && submitted && !errors.general}
-                    className="input-field"
+                    className={`input-field ${hasGeneralError ? "border-red-500" : ""}`}
                     helperText={
                         <div className="flex justify-end">
                             <Link to="/forgot-password" className="text-hint text-link cursor-pointer font-medium underline">
@@ -145,22 +213,26 @@ const Login = () => {
                     size="lg"
                     page="login"
                     loading={loading}
-                    disabled={!email || !password}
+                    disabled={!email || !password || retryAfter > 0}
                     className="primary-button w-full mt-2 text-btn-text"
                     success={success}
                     error={errors && submitted && errors.general}
                 >
-                    {loading ? "Logging in…" : success ? "Login successfully!" : "Login"}
+                    {loading
+                        ? "Logging in…"
+                        : retryAfter > 0
+                            ? `Try again in ${formatTime(retryAfter)}`
+                            : success
+                                ? "Login successfully!"
+                                : "Login"}
                 </Button>
 
-                {/* Divider */}
                 <div className="flex items-center gap-4">
                     <div className="flex-1 h-px bg-divider" />
                     <span className="text-[20px] text-text-primary">Or</span>
                     <div className="flex-1 h-px bg-divider" />
                 </div>
 
-                {/* Google Button */}
                 <Button
                     variant="secondary"
                     type="button"
@@ -174,6 +246,6 @@ const Login = () => {
             </form>
         </AuthLayout>
     );
-}
+};
 
 export default Login;
