@@ -1,4 +1,6 @@
 const prisma = require("../prismaClient");
+const {audit} = require("../utils/audit")
+const { AuditAction } = require("../../prisma/generated");
 
 const normalizeId = (id) => (typeof id === "bigint" ? id : BigInt(id));
 
@@ -83,23 +85,33 @@ const getTicketComments = async (ticketId, user) => {
 };
 
 const createTicketComment = async (ticketId, content, user) => {
-	const ticket = await getTicketOrThrow(ticketId);
-	ensureCanCreateComment(ticket, user);
+  const ticket = await getTicketOrThrow(ticketId);
+  ensureCanCreateComment(ticket, user);
 
-	return await prisma.comment.create({
-		data: {
-			content,
-			ticketId: ticket.id,
-			authorId: normalizeId(user.id),
-		},
-		select: {
-			id: true,
-			content: true,
-			createdAt: true,
-			updatedAt: true,
-			author: { select: { id: true, name: true, email: true } },
-		},
-	});
+  const comment = await prisma.comment.create({
+    data: {
+      content,
+      ticketId: ticket.id,
+      authorId: normalizeId(user.id),
+    },
+    select: {
+      id: true,
+      content: true,
+      createdAt: true,
+      updatedAt: true,
+      author: { select: { id: true, name: true, email: true } },
+    },
+  });
+
+  audit({
+    ticketId:  ticket.id,
+    actorId:   user.id,
+    actorRole: user.role,
+    action:    AuditAction.COMMENT_ADDED,
+    newValue:  { commentId: comment.id.toString(), preview: content.slice(0, 100) },
+  }).catch(err => console.error("[audit] COMMENT_ADDED failed:", err));
+
+  return comment;
 };
 
 module.exports = {

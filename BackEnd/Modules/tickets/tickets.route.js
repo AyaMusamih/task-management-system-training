@@ -16,7 +16,7 @@ const ticketController = require("./tickets.controller");
 const authMiddleware = require("../Middlewares/auth.middleware");
 const commentsController = require("../comments/comments.controller");
 const { addCommentSchema } = require("../comments/schema/addComment.schema");
-const { ticket } = require("../prismaClient");
+const auditRouter = require("../audit/audit.routes");
 
 router.use(authMiddleware);
 
@@ -52,6 +52,8 @@ router.patch(
   validate({ params: updateTicketParamSchema, body: updateTicketStatusSchema }),
   ticketController.updateTicketStatus,
 );
+
+router.use("/:id/audit", auditRouter);
 
 router.patch(
   "/:id",
