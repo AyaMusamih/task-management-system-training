@@ -63,15 +63,6 @@ export const softDeleteTicket = async (id) => {
 export const permanentDeleteTicket = async (id) => {
     try {
         const { data } = await axiosInstance.delete(`/tickets/${id}/permanent`);
-
-        // If backend requires a body in DELETE request
-        // const { data } = await axiosInstance.delete(
-        //     `/tickets/${id}/permanent`,
-        //     {
-        //         data: payload,
-        //     }
-        // );
-        
         return data;
     } catch (error) {
         throw {
@@ -144,6 +135,21 @@ export const updateTicketStatus = async (id, status) => {
                 error?.response?.data?.error ||
                 error?.response?.data?.errors?.[0]?.msg ||
                 "Something went wrong",
+        };
+    }
+};
+
+export const getTicketAudit = async (id) => {
+    try {
+        const { data } = await axiosInstance.get(`/tickets/${id}/audit`);
+        return data;
+    } catch (error) {
+        throw {
+            status: error?.response?.status,
+            message:
+                error?.response?.data?.error ||
+                error?.response?.data?.message ||
+                "Failed to fetch audit",
         };
     }
 };
