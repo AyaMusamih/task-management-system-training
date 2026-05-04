@@ -1,6 +1,6 @@
 const prisma = require("../prismaClient");
-const {startOfDay, endOfDay} = require("../reports/utils/report.utils")
-const {audit} = require("../utils/audit")
+const { startOfDay, endOfDay } = require("../reports/utils/report.utils");
+const { audit } = require("../utils/audit");
 const { AuditAction } = require("../../prisma/generated");
 
 const getTickets = async (filters) => {
@@ -26,7 +26,6 @@ const getTickets = async (filters) => {
 
   if (deletedOnly && user.role === "ADMIN") {
     where.deletedAt = { not: null };
-    
   } else if (!includeDeleted && user.role === "ADMIN") {
     where.deletedAt = null;
   }
@@ -42,8 +41,7 @@ const getTickets = async (filters) => {
   }
   if (sprintId) {
     where.sprintId = BigInt(sprintId);
-  }
-  else if (view === "sprint") {
+  } else if (view === "sprint") {
     where.sprintId = { not: null };
   }
   const statusList = Array.isArray(status) ? status : null;
@@ -54,15 +52,15 @@ const getTickets = async (filters) => {
     where.status = status;
   }
   if (priority) where.priority = priority;
-if ((startDate || endDate) && filters.deletedOnly) {
-  where.deletedAt = {};
-  if (startDate) where.deletedAt.gte = startOfDay(startDate);
-  if (endDate) where.deletedAt.lte = endOfDay(endDate);
-} else if (startDate || endDate) {
-  where.deadline = {};
-  if (startDate) where.deadline.gte = startOfDay(startDate);
-  if (endDate) where.deadline.lte = endOfDay(endDate);
-}
+  if ((startDate || endDate) && filters.deletedOnly) {
+    where.deletedAt = {};
+    if (startDate) where.deletedAt.gte = startOfDay(startDate);
+    if (endDate) where.deletedAt.lte = endOfDay(endDate);
+  } else if (startDate || endDate) {
+    where.deadline = {};
+    if (startDate) where.deadline.gte = startOfDay(startDate);
+    if (endDate) where.deadline.lte = endOfDay(endDate);
+  }
   if (search) {
     where.title = {
       contains: search,
@@ -138,7 +136,8 @@ const getTicketById = async (id, user) => {
     }
 
     const userId = BigInt(user.id);
-    const isAssignedToUser = ticket.assigneeId?.toString() === userId.toString();
+    const isAssignedToUser =
+      ticket.assigneeId?.toString() === userId.toString();
     const isScopedBacklog = ticket.status === "SCOPED_BACKLOG";
     const isSprintTicket = ticket.sprint?.id != null;
 
@@ -162,8 +161,8 @@ const createTicket = async (payload, actor) => {
       data: {
         ...details,
         createdBy: { connect: { id: BigInt(actor.id) } },
-        assignee:  assigneeId ? { connect: { id: assigneeId } } : undefined,
-        sprint:    sprintId   ? { connect: { id: sprintId } }   : undefined,
+        assignee: assigneeId ? { connect: { id: assigneeId } } : undefined,
+        sprint: sprintId ? { connect: { id: sprintId } } : undefined,
       },
       include: {
         assignee: { select: { id: true, name: true, email: true } },
@@ -171,17 +170,17 @@ const createTicket = async (payload, actor) => {
     });
 
     await audit({
-      ticketId:  ticket.id,
-      actorId:   actor.id,
+      ticketId: ticket.id,
+      actorId: actor.id,
       actorRole: actor.role,
-      action:    AuditAction.TICKET_CREATED,
-      newValue:  {
-        title:      ticket.title,
-        status:     ticket.status,
-        priority:   ticket.priority,
-        deadline:   ticket.deadline,
+      action: AuditAction.TICKET_CREATED,
+      newValue: {
+        title: ticket.title,
+        status: ticket.status,
+        priority: ticket.priority,
+        deadline: ticket.deadline,
         assigneeId: assigneeId?.toString() ?? null,
-        sprintId:   sprintId?.toString()   ?? null,
+        sprintId: sprintId?.toString() ?? null,
       },
       tx,
     });
@@ -200,6 +199,23 @@ const updateTicket = async (id, payload, actor) => {
     err.status = 404;
     throw err;
   }
+  const effectiveAssigneeId =
+    assigneeId === null
+      ? null
+      : (assigneeId ?? old.assigneeId?.toString() ?? null);
+  const effectiveSprintId =
+    sprintId === null ? null : (sprintId ?? old.sprintId?.toString() ?? null);
+  const changed =
+    ("title" in data && data.title !== old.title) ||
+    ("description" in data && data.description !== old.description) ||
+    ("priority" in data && data.priority !== old.priority) ||
+    ("deadline" in data && String(data.deadline) !== String(old.deadline)) ||
+    (assigneeId !== undefined &&
+      effectiveAssigneeId !== (old.assigneeId?.toString() ?? null)) ||
+    (sprintId !== undefined &&
+      effectiveSprintId !== (old.sprintId?.toString() ?? null));
+
+  if (!changed) return old;
 
   if (assigneeId === null) {
     data.assignee = { disconnect: true };
@@ -223,25 +239,25 @@ const updateTicket = async (id, payload, actor) => {
     });
 
     await audit({
-      ticketId:  updated.id,
-      actorId:   actor.id,
+      ticketId: updated.id,
+      actorId: actor.id,
       actorRole: actor.role,
-      action:    AuditAction.TICKET_UPDATED,
-      oldValue:  {
-        title:       old.title,
+      action: AuditAction.TICKET_UPDATED,
+      oldValue: {
+        title: old.title,
         description: old.description,
-        priority:    old.priority,
-        deadline:    old.deadline,
-        assigneeId:  old.assigneeId?.toString() ?? null,
-        sprintId:    old.sprintId?.toString()   ?? null,
+        priority: old.priority,
+        deadline: old.deadline,
+        assigneeId: old.assigneeId?.toString() ?? null,
+        sprintId: old.sprintId?.toString() ?? null,
       },
-      newValue:  {
-        title:       updated.title,
+      newValue: {
+        title: updated.title,
         description: updated.description,
-        priority:    updated.priority,
-        deadline:    updated.deadline,
-        assigneeId:  updated.assigneeId?.toString() ?? null,
-        sprintId:    updated.sprintId?.toString()   ?? null,
+        priority: updated.priority,
+        deadline: updated.deadline,
+        assigneeId: updated.assigneeId?.toString() ?? null,
+        sprintId: updated.sprintId?.toString() ?? null,
       },
       tx,
     });
@@ -259,12 +275,14 @@ const updateTicketStatus = async (id, status, ticket, actor) => {
 
   if (actor.role !== "ADMIN") {
     const allowed = {
-      TODO:        ["IN_PROGRESS"],
+      TODO: ["IN_PROGRESS"],
       IN_PROGRESS: ["DONE"],
     };
 
     if (!allowed[ticket.status]?.includes(status)) {
-      const err = new Error(`Cannot transition from ${ticket.status} to ${status}`);
+      const err = new Error(
+        `Cannot transition from ${ticket.status} to ${status}`,
+      );
       err.status = 409;
       throw err;
     }
@@ -273,16 +291,16 @@ const updateTicketStatus = async (id, status, ticket, actor) => {
   return await prisma.$transaction(async (tx) => {
     const updated = await tx.ticket.update({
       where: { id: BigInt(id) },
-      data:  { status },
+      data: { status },
     });
 
     await audit({
-      ticketId:  updated.id,
-      actorId:   actor.id,
+      ticketId: updated.id,
+      actorId: actor.id,
       actorRole: actor.role,
-      action:    AuditAction.STATUS_CHANGED,
-      oldValue:  { status: ticket.status },
-      newValue:  { status },
+      action: AuditAction.STATUS_CHANGED,
+      oldValue: { status: ticket.status },
+      newValue: { status },
       tx,
     });
 
@@ -308,16 +326,16 @@ const deleteTicket = async (id, actor) => {
   return await prisma.$transaction(async (tx) => {
     const deleted = await tx.ticket.update({
       where: { id: BigInt(id) },
-      data:  { deletedAt: new Date() },
+      data: { deletedAt: new Date() },
     });
 
     await audit({
-      ticketId:  deleted.id,
-      actorId:   actor.id,
+      ticketId: deleted.id,
+      actorId: actor.id,
       actorRole: actor.role,
-      action:    AuditAction.TICKET_DELETED,
-      oldValue:  { deletedAt: null },
-      newValue:  { deletedAt: deleted.deletedAt },
+      action: AuditAction.TICKET_DELETED,
+      oldValue: { deletedAt: null },
+      newValue: { deletedAt: deleted.deletedAt },
       tx,
     });
 
@@ -337,18 +355,18 @@ const restoreTicket = async (id, actor) => {
   return await prisma.$transaction(async (tx) => {
     const restored = await tx.ticket.update({
       where: { id: BigInt(id) },
-      data:  { deletedAt: null },
+      data: { deletedAt: null },
     });
 
     await audit({
-      ticketId:  restored.id,
-      actorId:   actor.id,
+      ticketId: restored.id,
+      actorId: actor.id,
       actorRole: actor.role,
-      action:    AuditAction.TICKET_RESTORED,
-      oldValue:  { deletedAt: ticket.deletedAt },
-      newValue:  { deletedAt: null },
+      action: AuditAction.TICKET_RESTORED,
+      oldValue: { deletedAt: ticket.deletedAt },
+      newValue: { deletedAt: null },
       tx,
-    }).catch(err => console.error("[audit] TICKET_RESTORED failed:", err)); //;
+    }).catch((err) => console.error("[audit] TICKET_RESTORED failed:", err)); //;
 
     return restored;
   });
@@ -381,7 +399,7 @@ const deleteAllPermanent = async () => {
     },
   });
   console.log(result);
-  return result; 
+  return result;
 };
 
 const cleanupExpiredTickets = async () => {
@@ -411,5 +429,5 @@ module.exports = {
   restoreTicket,
   deletePermanent,
   deleteAllPermanent,
-  cleanupExpiredTickets
+  cleanupExpiredTickets,
 };
