@@ -40,6 +40,33 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   background: #2563eb;
 }
 
+/* Fancy scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.4);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background:#3b82f6;
+}
+
+.comment-textarea::-webkit-scrollbar {
+    width: 4px;
+}
+
+.comment-textarea::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+
 @theme {
   /* Colors */
   --color-background: #080b12;
