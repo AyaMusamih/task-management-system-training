@@ -262,6 +262,7 @@ const AdminTicketPanel = ({
     const [isDescriptionEditing, setIsDescriptionEditing] = useState(false);
     const [saving, setSaving] = useState(false);
     const [statusSaving, setStatusSaving] = useState(false);
+    const [titleError, setTitleError] = useState("");
 
     const assigneeOptions = [
         { value: "", label: "Unassigned" },
@@ -299,19 +300,23 @@ const AdminTicketPanel = ({
     };
 
     const handleSave = async () => {
-        if (!editDeadline) {
+        if (!editTitle.trim()) {
+            setTitleError("Title cannot be empty");
+            setIsTitleEditing(true);
+
             showToast({
-                title: "Deadline Required",
-                description: "Please choose a deadline",
+                title: "Title Required",
+                description: "Title cannot be empty",
                 icon: <XCircle className="w-4 h-4" />,
                 type: "error",
             });
             return;
         }
+        setTitleError("");
 
         const hasChanges =
             editTitle.trim() !== (ticket.title || "") ||
-            editDescription.trim() !== (ticket.description || "") ||
+            editDescription.trim() !== (ticket.description ?? "") ||
             editPriority !== (ticket.priority || "") ||
             editAssigneeId !== (ticket.assignee?.id?.toString() || "") ||
             editSprintId !== (ticket.sprint?.id?.toString() || "") ||
@@ -334,14 +339,14 @@ const AdminTicketPanel = ({
         setSaving(true);
         try {
             await updateTicket(ticket.id, {
-                title: editTitle.trim() || undefined,
-                description: editDescription.trim() || undefined,
+                title: editTitle.trim(),
+                description: editDescription.trim(),
                 priority: editPriority || undefined,
                 assigneeId: editAssigneeId || null,
                 sprintId: editSprintId || null,
                 deadline: editDeadline
                     ? new Date(`${editDeadline}T23:59:59Z`).toISOString()
-                    : undefined,
+                    : null,
             });
             showToast({
                 title: "Ticket Updated",
@@ -371,12 +376,25 @@ const AdminTicketPanel = ({
             {/* Title */}
             <div className="flex items-start gap-2">
                 {isTitleEditing ? (
-                    <input
-                        autoFocus
-                        value={editTitle}
-                        onChange={(e) => setEditTitle(e.target.value)}
-                        className="flex-1 text-xl font-bold text-text-primary bg-input-bg border border-divider/50 rounded-lg px-3 py-1 outline-none focus:border-accent-blue"
-                    />
+                    <div className="flex-1">
+                        <input
+                            autoFocus
+                            value={editTitle}
+                            onChange={(e) => {
+                                setEditTitle(e.target.value);
+                                if (titleError) setTitleError("");
+                            }}
+                            className={`w-full text-xl font-bold text-text-primary bg-input-bg border rounded-lg px-3 py-1 outline-none
+                    ${titleError ? "border-error-red" : "border-divider/50 focus:border-accent-blue"}
+                `}
+                        />
+
+                        {titleError && (
+                            <p className="text-error-red text-xs mt-1">
+                                {titleError}
+                            </p>
+                        )}
+                    </div>
                 ) : (
                     <h2 className="flex-1 text-text-primary" style={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '20px' }}>
                         {editTitle}
