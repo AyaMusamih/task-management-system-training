@@ -153,3 +153,35 @@ export const getTicketAudit = async (id) => {
         };
     }
 };
+
+export const getTicketComments = async (id) => {
+    try {
+        const { data } = await axiosInstance.get(`/tickets/${id}/comments`);
+        return data;
+    } catch (error) {
+        throw {
+            status: error?.response?.status,
+            message:
+                error?.response?.data?.error ||
+                error?.response?.data?.message ||
+                "Failed to fetch comments",
+        };
+    }
+};
+
+export const addTicketComment = async (id, content) => {
+    try {
+        const { data } = await axiosInstance.post(`/tickets/${id}/comments`, {
+            content,
+        });
+        return data;
+    } catch (error) {
+        throw {
+            status: error?.response?.status,
+            message:
+                error?.response?.data?.error ||
+                error?.response?.data?.message ||
+                "Failed to add comment",
+        };
+    }
+};
