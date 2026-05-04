@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CircleCheckBig, XCircle, Pencil, History, ArrowLeftRight, AlertCircle, UserPlus, MessageSquare, Ticket, Trash2, RotateCcw, GitBranch, Ban  } from "lucide-react";
+import { CircleCheckBig, XCircle, Pencil, History, ArrowLeftRight, AlertCircle, UserPlus, MessageSquare, Ticket, Trash2, RotateCcw, GitBranch, Ban } from "lucide-react";
 import Button from "../shared/Button";
 import FilterStyleDropdown from "./FilterStyleDropdown";
 import { showToast } from "../../utils/showToast";
@@ -308,6 +308,29 @@ const AdminTicketPanel = ({
             });
             return;
         }
+
+        const hasChanges =
+            editTitle.trim() !== (ticket.title || "") ||
+            editDescription.trim() !== (ticket.description || "") ||
+            editPriority !== (ticket.priority || "") ||
+            editAssigneeId !== (ticket.assignee?.id?.toString() || "") ||
+            editSprintId !== (ticket.sprint?.id?.toString() || "") ||
+            editDeadline !== (
+                ticket.deadline
+                    ? new Date(ticket.deadline).toISOString().split("T")[0]
+                    : ""
+            );
+
+        if (!hasChanges) {
+            showToast({
+                title: "No Changes",
+                description: "There are no changes to save",
+                icon: <XCircle className="w-4 h-4" />,
+                type: "error",
+            });
+            return;
+        }
+
         setSaving(true);
         try {
             await updateTicket(ticket.id, {
