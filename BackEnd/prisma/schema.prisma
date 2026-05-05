@@ -19,6 +19,20 @@ enum Role {
   USER
 }
 
+enum Plan {
+  FREE
+  PREMIUM
+}
+
+enum AuditAction {
+  TICKET_CREATED
+  TICKET_UPDATED
+  STATUS_CHANGED
+  TICKET_DELETED
+  TICKET_RESTORED
+  COMMENT_ADDED
+}
+
 enum TicketStatus {
   SCOPED_BACKLOG
   SPRINT_BACKLOG
@@ -45,6 +59,8 @@ model User {
   role      Role     @default(USER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  premiumUntil DateTime?
+  plan      Plan     @default(FREE)
 
   refreshTokens  RefreshToken[]
   passwordResetTokens PasswordResetToken[]
@@ -133,17 +149,18 @@ model Comment {
 model AuditLog {
   id        BigInt      @id @default(autoincrement())
   ticketId  BigInt
-  userId   BigInt
-  action    String   @db.VarChar(255) 
+  actorId   BigInt
+  actorRole Role
+  action    AuditAction 
   oldValue Json?
   newValue Json?
   createdAt DateTime @default(now())
 
   ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user  User   @relation(fields: [actorId], references: [id], onDelete: Cascade)
 
   @@index([ticketId])
-  @@index([userId])
+  @@index([actorId])
   @@map("audit_logs")
 }
 

@@ -6,7 +6,8 @@ const {
   adminExportSchema,
   userReportSchema,
 } = require("./schema/reports.schema");
-const isAdmin = require("../Middlewares/isAdmin.middleware")
+const isAdmin = require("../Middlewares/isAdmin.middleware");
+const isPremium = require("../Middlewares/isPremium.middleware")
 const authMiddleware = require("../Middlewares/auth.middleware");
 const reportsController = require("./reports.controller")
 
@@ -14,6 +15,7 @@ router.use(authMiddleware)
 router.get(
   "/admin",
   isAdmin,
+  isPremium,
   validate({ query: adminReportSchema }),
   reportsController.getAdminReport,
 );
@@ -21,6 +23,7 @@ router.get(
 router.get(
   "/admin/export",
   isAdmin,
+  isPremium,
   validate({ query: adminExportSchema }),
   reportsController.getAdminReportExport,
 );
