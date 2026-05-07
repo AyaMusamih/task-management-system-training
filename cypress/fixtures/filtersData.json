@@ -1,0 +1,9 @@
+{
+  "stages": [
+    { "name": "Needs Action", "expected": ["To Do", "In Progress"] },
+    { "name": "In Review", "expected": ["Tested", "Staged"] },
+    { "name": "Completed", "expected": ["Done", "Deployed"] },
+    { "name": "Backlog", "expected": ["Scoped Backlog", "Sprint Backlog"] }
+  ],
+  "priorities": ["Critical", "High", "Medium", "Low"]
+}
