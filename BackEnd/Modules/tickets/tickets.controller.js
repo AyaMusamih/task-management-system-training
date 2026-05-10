@@ -46,6 +46,21 @@ const getTickets = async (req, res, next) => {
   }
 };
 
+const getTicketById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const result = await ticketService.getTicketById(id, req.user);
+    const resultWithFlags = attachPermissionFlags(result, req.user);
+
+    res.status(200).json({
+      success: true,
+      ...resultWithFlags,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const addTicket = async (req, res, next) => {
   try {
     const {
@@ -67,7 +82,7 @@ const addTicket = async (req, res, next) => {
       sprintId,
     };
 
-    const newTicket = await ticketService.createTicket(payload, req.user.id);
+    const newTicket = await ticketService.createTicket(payload, req.user);
     res.status(201).json({
       success: true,
       data: newTicket,
@@ -85,7 +100,7 @@ const updateTicket = async (req, res, next) => {
       ...data,
       deadline: deadline ? new Date(deadline) : deadline,
     };
-    const updated = await ticketService.updateTicket(id, payload);
+    const updated = await ticketService.updateTicket(id, payload, req.user);
     res.status(200).json({ success: true, data: updated });
   } catch (err) {
     next(err);
@@ -100,7 +115,7 @@ const updateTicketStatus = async (req, res, next) => {
       id,
       status,
       req.ticket,
-      req.user.role,
+      req.user,
     );
 
     res.status(200).json({ success: true, data: updated });
@@ -112,8 +127,7 @@ const updateTicketStatus = async (req, res, next) => {
 const deleteTicket = async (req, res, next) => {
   try {
     const { id } = req.params;
-    // TODO: Audit log ticket soft-delete.
-    await ticketService.deleteTicket(id);
+    await ticketService.deleteTicket(id, req.user);
     res
       .status(200)
       .json({ success: true, message: "Ticket deleted successfully" });
@@ -125,8 +139,7 @@ const deleteTicket = async (req, res, next) => {
 const restoreTicket = async (req, res, next) => {
   try {
     const { id } = req.params;
-    // TODO: Audit log ticket restore.
-    await ticketService.restoreTicket(id);
+    await ticketService.restoreTicket(id, req.user);
     res.status(200).json({ success: true, message: "Ticket restored" });
   } catch (err) {
     next(err);
@@ -136,7 +149,6 @@ const restoreTicket = async (req, res, next) => {
 const deletePermanent = async (req, res, next) => {
   try {
     const { id } = req.params;
-    // TODO: Audit log ticket permanent delete.
     await ticketService.deletePermanent(id);
     res
       .status(200)
@@ -159,6 +171,7 @@ const deleteAllPermanent = async (req, res, next) => {
 
 module.exports = {
   getTickets,
+  getTicketById,
   addTicket,
   updateTicket,
   updateTicketStatus,
