@@ -84,9 +84,9 @@ const getActionMeta = (action, oldValue = {}, newValue = {}, allAssignees = [], 
                 label: (
                     <span className="flex flex-col gap-0.5">
                         <span><strong>{actorName}</strong> added a comment</span>
-                        {next.content && (
+                        {(next.content || next.preview) && (
                             <span className="text-text-hint italic truncate max-w-[220px]">
-                                "{next.content}"
+                                "{next.content || next.preview}"
                             </span>
                         )}
                     </span>
@@ -100,7 +100,7 @@ const getActionMeta = (action, oldValue = {}, newValue = {}, allAssignees = [], 
                 label: (
                     <>
                         <strong>{actorName}</strong> changed status from{" "}
-                        <span className="text-text-primary">{getStatusLabel(old.status)}</span>
+                        <span className="text-text-primary font-semibold">{getStatusLabel(old.status)}</span>
                         {" to "}
                         <span className="text-text-primary font-semibold">{getStatusLabel(next.status)}</span>
                     </>
@@ -160,7 +160,13 @@ const getActionMeta = (action, oldValue = {}, newValue = {}, allAssignees = [], 
                     icon: <AlertCircle className="w-3.5 h-3.5" />,
                     label: (
                         <>
-                            <strong>{actorName}</strong> changed deadline to{" "}
+                            <strong>{actorName}</strong> changed deadline from{" "}
+                            <span className="text-text-primary font-semibold">
+                                {old.deadline
+                                    ? new Date(old.deadline).toLocaleDateString()
+                                    : "—"}
+                            </span>{" "}
+                            to{" "}
                             <span className="text-text-primary font-semibold">
                                 {next.deadline
                                     ? new Date(next.deadline).toLocaleDateString()
