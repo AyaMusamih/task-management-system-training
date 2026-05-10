@@ -71,7 +71,7 @@ const getTicketComments = async (ticketId, user) => {
 
 	const comments = await prisma.comment.findMany({
 		where: { ticketId: ticket.id },
-		orderBy: { createdAt: "asc" },
+		orderBy: [{ createdAt: "desc" }, {id: "asc"}],
 		select: {
 			id: true,
 			content: true,
