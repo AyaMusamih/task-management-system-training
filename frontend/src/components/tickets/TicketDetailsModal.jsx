@@ -154,7 +154,7 @@ const Avatar = ({ name = "", className = "" }) => {
 };
 
 // ─── CommentsPanel 
-const CommentsPanel = ({ ticketId, ticket, isAdmin = false }) => {
+const CommentsPanel = ({ ticketId, ticket, isAdmin = false, fetchAudit, onCommentAdded }) => {
     const user = JSON.parse(localStorage.getItem("user")) || null;
     const canComment = isAdmin || ticket?.assignee?.id === user?.id;
 
@@ -205,6 +205,15 @@ const CommentsPanel = ({ ticketId, ticket, isAdmin = false }) => {
             const res = await addTicketComment(ticketId, newComment.trim());
             setComments((prev) => [res.data, ...prev]);
             setNewComment("");
+
+            if (onCommentAdded) onCommentAdded(res.data);
+
+            if (fetchAudit) {
+                setTimeout(async () => {
+                    await fetchAudit();
+                }, 400);
+            }
+
             showToast({
                 title: "Comment Added",
                 description: "Your comment was added successfully",
@@ -388,8 +397,8 @@ const TicketDetailsModal = ({ ticketId, closeModal, onRefresh }) => {
         }
     }, [ticketId]);
 
-    const fetchAudit = useCallback(async () => {
-        setAuditLoading(true);
+    const fetchAudit = useCallback(async (showLoading = true) => {
+        if (showLoading) setAuditLoading(true);
         setAuditError(null);
 
         try {
@@ -488,7 +497,14 @@ const TicketDetailsModal = ({ ticketId, closeModal, onRefresh }) => {
                     auditLoading={auditLoading}
                     auditError={auditError}
                     onRetryAudit={fetchAudit}
-                    onSaved={() => { fetchTicket(); fetchAudit(); onRefresh?.(); }}
+                    onSaved={async () => {
+                        await fetchTicket();
+
+                        setTimeout(async () => {
+                            await fetchAudit();
+                            onRefresh?.();
+                        }, 300);
+                    }}
                     onDelete={() => setShowConfirm(true)}
                     deleteLoading={deleteLoading}
                 />
@@ -496,6 +512,23 @@ const TicketDetailsModal = ({ ticketId, closeModal, onRefresh }) => {
                     ticketId={ticket.id}
                     ticket={ticket}
                     isAdmin={true}
+                    fetchAudit={async () => {
+                        await fetchAudit(false);
+                        onRefresh?.();
+                    }}
+                    onCommentAdded={(commentData) => {
+                        setAudit((prev) => [
+                            {
+                                id: `temp-${Date.now()}`,
+                                action: "COMMENT_ADDED",
+                                oldValue: {},
+                                newValue: { content: commentData?.content || "" },
+                                user: user,
+                                createdAt: new Date().toISOString(),
+                            },
+                            ...prev,
+                        ]);
+                    }}
                 />
             </>
         );
