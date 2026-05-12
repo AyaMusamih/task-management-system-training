@@ -110,27 +110,15 @@ const Login = () => {
             }, 1500);
 
         } catch (err) {
-            const status = err?.status;
-
-            if (status === 429) {
-                setErrors({
-                    general: "Too many failed attempts. Please wait 2 minutes before trying again."
-                });
-
+            if (err?.type === "rateLimit" || err?.status === 429) {
                 const cooldown = 2 * 60;
-
                 setRetryAfter(cooldown);
-
-                localStorage.setItem(
-                    "login_lock_until",
-                    String(Date.now() + cooldown * 1000)
-                );
-
-            } else if (err?.type === "validation") {
-                setErrors(err.errors);
-
+                setErrors({ general: "Too many failed attempts. Please wait 2 minutes before trying again." });
+                localStorage.setItem("login_lock_until", String(Date.now() + cooldown * 1000));
+            } else if (err?.type === "validation" && err?.fields) {
+                setErrors(err.fields);
             } else {
-                setErrors({ general: err.message });
+                setErrors({ general: err?.message ?? "Login failed. Please try again." });
             }
         } finally {
             setLoading(false);

@@ -6,6 +6,7 @@ import Button from "../../components/shared/Button";
 import AuthLayout from "./AuthLayout";
 import GoogleIcon from "../../assets/images/GoogleIcon.png";
 import { CircleAlert, CircleCheck, ShieldAlert, ShieldCheck } from 'lucide-react';
+import { toastError } from "../../utils/toastHelpers";
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -106,8 +107,12 @@ const Signup = () => {
       }, 1500);
 
     } catch (err) {
-      if (err.type === "validation") setErrors(err.errors);
-      else setErrors({ general: err.message });
+      if (err?.type === "validation" && err?.fields) {
+        setErrors(err.fields);
+      } else {
+        setErrors({ general: err?.message ?? "Something went wrong." });
+        toastError(err);
+      }
     } finally {
       setLoading(false);
     }

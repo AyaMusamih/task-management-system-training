@@ -1,17 +1,17 @@
 import { useState, useEffect, useCallback } from "react";
-import { Trash2, CircleCheckBig, XCircle, MessageSquareText, SendHorizontal, MessageSquare, MessageSquareX } from "lucide-react";
+import { Trash2, MessageSquareText, SendHorizontal, MessageSquare, MessageSquareX } from "lucide-react";
 import Button from "../shared/Button";
 import ConfirmDialog from "../shared/ConfirmDialog";
 import TicketDetailsWrapper from "./TicketDetailsWrapper";
 import AdminTicketPanel, { AdminTicketPanelSkeleton } from "./AdminTicketPanel";
 import UserTicketPanel from "./UserTicketPanel";
-import { showToast } from "../../utils/showToast";
 import { getTicketById, softDeleteTicket } from "../../services/tickets.service";
 import { getUsers } from "../../services/user.service";
 import { getSprints } from "../../services/sprints.service";
 import TicketDetailsEmptyImg from "../../assets/images/TicketDetailsEmpty.png";
 import TicketDetailsErrorImg from "../../assets/images/TicketDetailsError.png";
 import { getTicketComments, getTicketAudit, addTicketComment } from "../../services/tickets.service";
+import { toastSuccess, toastError } from "../../utils/toastHelpers";
 
 // ─── Helpers 
 
@@ -192,12 +192,7 @@ const CommentsPanel = ({ ticketId, ticket, isAdmin = false }) => {
 
     const handleAddComment = async () => {
         if (!newComment.trim()) {
-            showToast({
-                title: "Empty Comment",
-                description: "Comment cannot be empty",
-                icon: <XCircle className="w-4 h-4" />,
-                type: "error",
-            });
+            toastError("Comment cannot be empty.", "Empty Comment");
             return;
         }
         setSubmitting(true);
@@ -205,36 +200,9 @@ const CommentsPanel = ({ ticketId, ticket, isAdmin = false }) => {
             const res = await addTicketComment(ticketId, newComment.trim());
             setComments((prev) => [res.data, ...prev]);
             setNewComment("");
-            showToast({
-                title: "Comment Added",
-                description: "Your comment was added successfully",
-                icon: <CircleCheckBig className="w-4 h-4" />,
-                type: "success",
-            });
+            toastSuccess("Comment Added", "Your comment was added successfully.");
         } catch (err) {
-            const status = err?.status;
-
-            let message = "Failed to process comment request";
-
-            if (status === 403) {
-                message = err?.message || "You are not allowed to comment on this ticket";
-            } else if (status === 404) {
-                message = err?.message || "Ticket not found";
-            } else if (status === 400) {
-                message =
-                    err?.errors?.[0]?.msg ||
-                    err?.message ||
-                    "Invalid comment input";
-            } else {
-                message = err?.message || message;
-            }
-
-            showToast({
-                title: "Failed to Add Comment",
-                description: message,
-                icon: <XCircle className="w-4 h-4" />,
-                type: "error",
-            });
+            toastError(err, "Failed to Add Comment");
         } finally {
             setSubmitting(false);
         }
@@ -423,29 +391,12 @@ const TicketDetailsModal = ({ ticketId, closeModal, onRefresh }) => {
         setDeleteLoading(true);
         try {
             await softDeleteTicket(ticket.id);
-            showToast({
-                title: "Moved to Trash",
-                description: `Ticket "${ticket.title}" has been moved to trash successfully.`,
-                icon: <CircleCheckBig className="w-4 h-4" />,
-                type: "success",
-            });
+            toastSuccess("Moved to Trash", `Ticket "${ticket.title}" has been moved to trash.`);
             setShowConfirm(false);
             closeModal?.();
             onRefresh?.();
         } catch (err) {
-            let message = "Something went wrong";
-            const status = err.status;
-            if (status === 403) message = err.message || "Admin access only";
-            else if (status === 400) message = err.message || "Ticket already deleted";
-            else if (status === 401) message = err.message || "Token expired";
-            else if (status === 404) message = err.message || "Ticket not found";
-            else message = err.message;
-            showToast({
-                title: "Failed to Delete Ticket",
-                description: message,
-                icon: <XCircle className="w-4 h-4" />,
-                type: "error",
-            });
+            toastError(err, "Failed to Delete Ticket");
         } finally {
             setDeleteLoading(false);
         }

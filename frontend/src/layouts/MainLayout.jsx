@@ -4,10 +4,10 @@ import Sidebar from '../components/layout/Sidebar';
 import Modal from "../components/shared/Modal";
 import { Menu } from "lucide-react";
 import ConfirmDialog from "../components/shared/ConfirmDialog";
-import { AlarmClock, TriangleAlert, BadgeInfo, LogOut, CircleCheckBig } from "lucide-react";
-import { showToast } from "../utils/showToast";
+import { AlarmClock, TriangleAlert, LogOut } from "lucide-react";
 import { logoutUser } from "../services/auth.service";
 import ConnectionLostIcon from "../assets/images/ConnectionLostIcon.png";
+import { toastSuccess, toastInfo, toastWarning } from "../utils/toastHelpers";
 
 const MainLayout = () => {
     const [modalState, setModalState] = useState(null);
@@ -26,12 +26,7 @@ const MainLayout = () => {
         const success = await logoutUser();
 
         if (success) {
-            showToast({
-                title: "Logout successfully!",
-                description: "You’ve been logged out. Come back anytime!",
-                icon: <CircleCheckBig className="w-4 h-4" />,
-                type: "success",
-            });
+            toastSuccess("Logged Out", "You've been logged out. Come back anytime!");
 
             navigate("/login");
         }
@@ -91,13 +86,7 @@ const MainLayout = () => {
 
     useEffect(() => {
         if (Refreshed) {
-            showToast({
-                title: "Session Refreshed",
-                description: "Your session was automatically renewed.",
-                icon: <BadgeInfo className="w-4 h-4" />,
-                type: "info",
-            });
-
+            toastInfo("Session Refreshed", "Your session was automatically renewed.");
             setRefreshed(false);
         }
     }, [Refreshed]);
@@ -124,13 +113,7 @@ const MainLayout = () => {
 
     useEffect(() => {
         if (sessionExpired) {
-            showToast({
-                title: "Session expired",
-                description: "Please log in again to continue.",
-                icon: <TriangleAlert className="w-4 h-4" />,
-                type: "warning",
-            });
-
+            toastWarning("Please log in again to continue.", "Session Expired");
             handleSessionConfirm();
         }
     }, [sessionExpired]);

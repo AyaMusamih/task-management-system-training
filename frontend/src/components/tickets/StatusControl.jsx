@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { ChevronDown, Info, AlertCircle } from "lucide-react";
 import { updateTicketStatus } from "../../services/tickets.service";
-import { showToast } from "../../utils/showToast";
-import { CircleCheckBig, XCircle } from "lucide-react";
+import { toastSuccess, toastError } from "../../utils/toastHelpers";
 
 const STATUS_OPTIONS = [
     { key: "SCOPED_BACKLOG", label: "Scoped Backlog", color: "#bec4cf" },
@@ -58,35 +57,20 @@ const StatusControl = ({
             const label = STATUS_OPTIONS.find(s => s.key === newStatus)?.label;
             setStatus(res.data.status);
 
-            showToast({
-                title: "Status Updated",
-                description: `Ticket moved to ${label} successfully`,
-                icon: <CircleCheckBig className="w-4 h-4" />,
-                type: "success",
-            });
+            toastSuccess("Status Updated", `Ticket moved to ${label} successfully.`);
 
             onSuccess?.();
 
         } catch (err) {
-            let message = "Something went wrong";
-
-            if (err.status === 403) {
-                message = "You can update status only if you are assigned to this ticket";
-            } else if (err.status === 409) {
-                message = "Invalid status transition. Follow the workflow order.";
-            } else {
-                message = err.message;
-            }
+            const message =
+                err?.type === "forbidden"
+                    ? "You can update status only if you are assigned to this ticket."
+                    : err?.status === 409
+                        ? "Invalid status transition. Follow the workflow order."
+                        : err?.message ?? "Something went wrong.";
 
             setError(message);
-
-            showToast({
-                title: "Failed to Update Status",
-                description: message,
-                icon: <XCircle className="w-4 h-4" />,
-                type: "error",
-            });
-
+            toastError(err, "Failed to Update Status");
             setStatus(oldStatus);
         } finally {
             setLoading(false);

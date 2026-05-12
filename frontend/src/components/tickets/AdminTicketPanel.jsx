@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { CircleCheckBig, XCircle, Pencil, History, ArrowLeftRight, AlertCircle, UserPlus, MessageSquare, Ticket, Trash2, RotateCcw, GitBranch, Ban } from "lucide-react";
+import { Pencil, History, ArrowLeftRight, AlertCircle, UserPlus, MessageSquare, Ticket, Trash2, RotateCcw, GitBranch, Ban } from "lucide-react";
 import Button from "../shared/Button";
 import FilterStyleDropdown from "./FilterStyleDropdown";
-import { showToast } from "../../utils/showToast";
 import { updateTicket, updateTicketStatus } from "../../services/tickets.service";
+import { toastSuccess, toastError } from "../../utils/toastHelpers";
 
 const STATUS_OPTIONS = [
     { value: "SCOPED_BACKLOG", label: "Scoped Backlog" },
@@ -280,20 +280,10 @@ const AdminTicketPanel = ({
         try {
             await updateTicketStatus(ticket.id, newStatus);
             setEditStatus(newStatus);
-            showToast({
-                title: "Status Updated",
-                description: "Status changed successfully",
-                icon: <CircleCheckBig className="w-4 h-4" />,
-                type: "success",
-            });
+            toastSuccess("Status Updated", "Status changed successfully.");
             onSaved?.();
         } catch (err) {
-            showToast({
-                title: "Failed to Update Status",
-                description: err.message || "Something went wrong",
-                icon: <XCircle className="w-4 h-4" />,
-                type: "error",
-            });
+            toastError(err, "Failed to Update Status");
         } finally {
             setStatusSaving(false);
         }
@@ -304,12 +294,7 @@ const AdminTicketPanel = ({
             setTitleError("Title cannot be empty");
             setIsTitleEditing(true);
 
-            showToast({
-                title: "Title Required",
-                description: "Title cannot be empty",
-                icon: <XCircle className="w-4 h-4" />,
-                type: "error",
-            });
+            toastError("Title cannot be empty.", "Title Required");
             return;
         }
         setTitleError("");
@@ -327,12 +312,7 @@ const AdminTicketPanel = ({
             );
 
         if (!hasChanges) {
-            showToast({
-                title: "No Changes",
-                description: "There are no changes to save",
-                icon: <XCircle className="w-4 h-4" />,
-                type: "error",
-            });
+            toastError("There are no changes to save.", "No Changes");
             return;
         }
 
@@ -348,22 +328,12 @@ const AdminTicketPanel = ({
                     ? new Date(`${editDeadline}T23:59:59Z`).toISOString()
                     : null,
             });
-            showToast({
-                title: "Ticket Updated",
-                description: "Changes saved successfully",
-                icon: <CircleCheckBig className="w-4 h-4" />,
-                type: "success",
-            });
+            toastSuccess("Ticket Updated", "Changes saved successfully.");
             setIsTitleEditing(false);
             setIsDescriptionEditing(false);
             onSaved?.();
         } catch (err) {
-            showToast({
-                title: "Failed to Save",
-                description: err.message || "Something went wrong",
-                icon: <XCircle className="w-4 h-4" />,
-                type: "error",
-            });
+            toastError(err, "Failed to Save");
         } finally {
             setSaving(false);
         }

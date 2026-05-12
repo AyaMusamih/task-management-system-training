@@ -1,4 +1,5 @@
 import axiosInstance from "../api/axiosInstance";
+import { throwNormalized } from "../utils/apiError";
 
 export const getUsers = async (page = 1, limit = 100) => {
   try {
@@ -7,6 +8,6 @@ export const getUsers = async (page = 1, limit = 100) => {
     });
     return data;
   } catch (error) {
-    throw error?.response?.data || error;
+    throwNormalized(error);
   }
 };

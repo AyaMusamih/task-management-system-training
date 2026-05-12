@@ -1,4 +1,5 @@
 import axiosInstance from "../api/axiosInstance";
+import { throwNormalized } from "../utils/apiError";
 
 export const getMyReports = async (params) => {
   try {
@@ -8,48 +9,7 @@ export const getMyReports = async (params) => {
 
     return data.data;
   } catch (err) {
-    const res = err.response;
-    const data = res?.data;
-
-    //Forbidden error
-    if (res?.status === 403) {
-      throw {
-        type: "forbidden",
-        message: "You don't have permission to view this data",
-      };
-    }
-
-    // Validation errors
-    if (Array.isArray(data?.errors)) {
-      const formatted = {};
-
-      data.errors.forEach((e) => {
-        formatted[e.param] = e.msg;
-      });
-
-      throw {
-        type: "validation",
-        message: data.errors[0]?.msg || "Invalid input",
-        errors: formatted,
-        status: res?.status,
-      };
-    }
-
-    // generic backend error
-    if (data?.error) {
-      throw {
-        type: "server",
-        message: data.error,
-        status: res?.status,
-      };
-    }
-
-    // fallback
-    throw {
-      type: "server",
-      message: "Something went wrong while fetching reports",
-      status: res?.status,
-    };
+    throwNormalized(err);
   }
 };
 
@@ -58,35 +18,7 @@ export const getAdminReports = async (params) => {
     const { data } = await axiosInstance.get("/reports/admin", { params });
     return data.data;
   } catch (err) {
-    const res = err.response;
-    const data = res?.data;
-
-    if (res?.status === 403) {
-      throw {
-        type: "forbidden",
-        message: "You don't have permission to view this data",
-      };
-    }
-    if (Array.isArray(data?.errors)) {
-      const formatted = {};
-      data.errors.forEach((e) => {
-        formatted[e.param] = e.msg;
-      });
-      throw {
-        type: "validation",
-        message: data.errors[0]?.msg || "Invalid input",
-        errors: formatted,
-        status: res?.status,
-      };
-    }
-    if (data?.error) {
-      throw { type: "server", message: data.error, status: res?.status };
-    }
-    throw {
-      type: "server",
-      message: "Something went wrong while fetching reports",
-      status: res?.status,
-    };
+    throwNormalized(err);
   }
 };
 
@@ -115,32 +47,15 @@ export const getAdminReportExport = async (params) => {
     link.remove();
     window.URL.revokeObjectURL(url);
   } catch (err) {
-    const res = err.response;
-
-    if (res?.status === 403)
-      throw {
-        type: "forbidden",
-        message: "You don't have permission to export",
-      };
-
-    if (res?.data instanceof Blob) {
+    if (err?.response?.data instanceof Blob) {
       try {
-        const text = await res.data.text();
+        const text = await err.response.data.text();
         const json = JSON.parse(text);
-        throw {
-          type: "server",
-          message: json?.error || "Failed to export report",
-          status: res?.status,
-        };
+        err.response.data = json;
       } catch {
-        // JSON parse failed, fall through to generic error
+        // ignore parse failure, normalizeError will handle it
       }
     }
-
-    throw {
-      type: "server",
-      message: "Failed to export report",
-      status: res?.status,
-    };
+    throwNormalized(err);
   }
 };

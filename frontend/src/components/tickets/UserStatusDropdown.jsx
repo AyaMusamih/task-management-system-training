@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
-import { ChevronDown, CircleCheckBig, XCircle } from "lucide-react";
-import { showToast } from "../../utils/showToast";
+import { ChevronDown } from "lucide-react";
 import { updateTicketStatus } from "../../services/tickets.service";
+import { toastSuccess, toastError } from "../../utils/toastHelpers";
 
 const STATUS_OPTIONS = [
     { value: "SCOPED_BACKLOG", label: "Scoped Backlog" },
@@ -39,21 +39,11 @@ const UserStatusDropdown = ({ status, canUpdate, ticketId, onSuccess }) => {
         setLoading(true);
         try {
             await updateTicketStatus(ticketId, newStatus);
-            showToast({
-                title: "Status Updated",
-                description: `Ticket moved to ${STATUS_OPTIONS.find((s) => s.value === newStatus)?.label}`,
-                icon: <CircleCheckBig className="w-4 h-4" />,
-                type: "success",
-            });
+            toastSuccess("Status Updated", `Ticket moved to ${STATUS_OPTIONS.find((s) => s.value === newStatus)?.label}.`);
             onSuccess?.();
         } catch (err) {
             setCurrent(old);
-            showToast({
-                title: "Failed to Update Status",
-                description: err.message || "Something went wrong",
-                icon: <XCircle className="w-4 h-4" />,
-                type: "error",
-            });
+            toastError(err, "Failed to Update Status");
         } finally {
             setLoading(false);
         }

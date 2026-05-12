@@ -1,4 +1,5 @@
 import axiosInstance from "../api/axiosInstance";
+import { throwNormalized } from "../utils/apiError";
 
 // Login user
 export const loginUser = async (email, password) => {
@@ -10,19 +11,18 @@ export const loginUser = async (email, password) => {
 
     return response.data.data;
   } catch (err) {
-    const data = err.response?.data;
     const status = err.response?.status;
+    const data = err.response?.data;
 
-    if (data?.errors) {
-      const formatted = {};
-      data.errors.forEach((e) => (formatted[e.param] = e.msg));
-      throw { type: "validation", errors: formatted };
+    if (status === 429) {
+      throw {
+        type: "rateLimit",
+        status: 429,
+        message: data?.error ?? "Too many attempts.",
+      };
     }
-    throw {
-      type: "general",
-      message: data?.error || "Login failed. Please try again.",
-      status: status
-    };
+
+    throwNormalized(err);
   }
 };
 
@@ -32,16 +32,7 @@ export const signupUser = async (form) => {
     const response = await axiosInstance.post("/auth/register", form);
     return response.data.data;
   } catch (err) {
-    const data = err.response?.data;
-    if (data?.errors) {
-      const formatted = {};
-      data.errors.forEach((e) => (formatted[e.param] = e.msg));
-      throw { type: "validation", errors: formatted };
-    } else if (data?.error) {
-      throw { type: "general", message: data.error };
-    } else {
-      throw { type: "general", message: "Something went wrong" };
-    }
+    throwNormalized(err);
   }
 };
 
@@ -53,19 +44,7 @@ export const forgotPassword = async (email) => {
     });
     return response.data;
   } catch (err) {
-    const data = err.response?.data;
-    if (data?.errors) {
-      const formatted = {};
-      data.errors.forEach((e) => (formatted[e.param] = e.msg));
-      throw { type: "validation", errors: formatted };
-    } else if (data?.error) {
-      throw { type: "general", message: data.error };
-    } else {
-      throw {
-        type: "general",
-        message: "Something went wrong. Please try again.",
-      };
-    }
+    throwNormalized(err);
   }
 };
 
@@ -78,28 +57,20 @@ export const resetPassword = async (token, newPassword) => {
     });
     return response.data;
   } catch (err) {
-    const data = err.response?.data;
-    if (data?.errors) {
-      const formatted = {};
-      data.errors.forEach((e) => (formatted[e.param] = e.msg));
-      throw { type: "validation", errors: formatted };
-    } else if (data?.error) {
-      throw { type: "general", message: data.error };
-    } else {
-      throw {
-        type: "general",
-        message: "Something went wrong. Please try again.",
-      };
-    }
+    throwNormalized(err);
   }
 };
 
 //Logout
 export const logoutUser = async () => {
   try {
-    await axiosInstance.post("/auth/logout", {}, {
-      withCredentials: true
-    });
+    await axiosInstance.post(
+      "/auth/logout",
+      {},
+      {
+        withCredentials: true,
+      },
+    );
     localStorage.removeItem("accessToken");
     localStorage.removeItem("user");
     return true;

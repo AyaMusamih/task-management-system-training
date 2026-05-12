@@ -5,6 +5,7 @@ import Input from "../../components/shared/Input";
 import Button from "../../components/shared/Button";
 import AuthLayout from "./AuthLayout";
 import { CircleCheck } from "lucide-react";
+import { toastError } from "../../utils/toastHelpers";
 
 const ResetPassword = () => {
     const [searchParams] = useSearchParams();
@@ -55,10 +56,11 @@ const ResetPassword = () => {
             await resetPassword(token, password);
             setSuccess(true);
         } catch (err) {
-            if (err.type === "validation") {
-                setErrors(err.errors);
+            if (err?.type === "validation" && err?.fields) {
+                setErrors(err.fields);
             } else {
-                setErrors({ general: err.message || "Something went wrong. Please try again." });
+                setErrors({ general: err?.message ?? "Something went wrong. Please try again." });
+                toastError(err);
             }
         } finally {
             setLoading(false);
