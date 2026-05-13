@@ -58,7 +58,6 @@ const Chip = ({ label, className }) => (
     </span>
 );
 
-
 const FilterDropdown = ({ label, options, value, onChange }) => {
     const [open, setOpen] = useState(false);
     const ref = useRef(null);
@@ -107,8 +106,40 @@ const FilterDropdown = ({ label, options, value, onChange }) => {
     );
 };
 
-
 const PRIORITY_OPTIONS = ["CRITICAL", "HIGH", "MEDIUM", "LOW"];
+
+// ─── Skeleton Components ───────────────────────────────────────────────────────
+
+const SkeletonBox = ({ className = "" }) => (
+    <div className={`skeleton rounded-lg ${className}`} />
+);
+
+const SkeletonFilters = () => (
+    <div className="mx-3 sm:mx-[16px] mt-[32px] mb-[25px] rounded-[10px] bg-background py-[7px]">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-4 py-[10px] gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+                {/* Date range skeleton */}
+                <SkeletonBox className="h-8 w-20 rounded-full" />
+                {/* Filter pills */}
+                <SkeletonBox className="h-8 w-20 rounded-full" />
+                <SkeletonBox className="h-8 w-20 rounded-full" />
+                <SkeletonBox className="h-8 w-20 rounded-full" />
+            </div>
+            {/* Search skeleton */}
+            <SkeletonBox className="h-9 w-full sm:w-[280px] lg:w-[442px]" />
+        </div>
+    </div>
+);
+
+const SkeletonTableHeader = () => (
+    <div className="flex items-center justify-between px-4 sm:px-[16px] mb-6">
+        <SkeletonBox className="h-7 w-40" />
+        {/* Delete All button skeleton */}
+        <SkeletonBox className="h-9 w-28" />
+    </div>
+);
+
+// ──────────────────────────────────────────────────────────────────────────────
 
 const DeletedTickets = () => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -184,6 +215,7 @@ const DeletedTickets = () => {
         next.delete("page");
         setSearchParams(next);
     };
+
     const handleDateChange = (key, value) => {
         const next = new URLSearchParams(searchParams);
         const start = key === "date_from" ? value : activeStartDate;
@@ -250,17 +282,12 @@ const DeletedTickets = () => {
         } catch (err) {
             let message = "Something went wrong";
             const status = err.status;
-            if (status === 403) {
-                message = err.message || "Admin access only";
-            } else if (status === 400) {
-                message = err.message || "Ticket is not deleted";
-            } else if (status === 401) {
-                message = err.message || "Token expired";
-            } else if (status === 404) {
-                message = err.message || "Ticket not found";
-            } else {
-                message = err?.message || "Something went wrong";
-            }
+            if (status === 403) message = err.message || "Admin access only";
+            else if (status === 400) message = err.message || "Ticket is not deleted";
+            else if (status === 401) message = err.message || "Token expired";
+            else if (status === 404) message = err.message || "Ticket not found";
+            else message = err?.message || "Something went wrong";
+
             showToast({
                 title: "Failed to Delete Permanently",
                 description: message,
@@ -323,83 +350,92 @@ const DeletedTickets = () => {
             </div>
 
             {/* Filters */}
-            <div className="mx-3 sm:mx-[16px] mt-[32px] mb-[25px] rounded-[10px] bg-background py-[7px]">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-4 py-[10px] gap-2">
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <div className="flex items-center gap-3 bg-background border border-divider/40 rounded-lg px-3 py-2">
-                            <div className="flex flex-col">
-                                <span className="text-[12px] text-text-hint">Deleted From</span>
-                                <input
-                                    type="date"
-                                    value={activeStartDate}
-                                    onChange={(e) => handleDateChange("date_from", e.target.value)}
-                                    className="bg-transparent text-sm text-text-primary outline-none"
-                                />
+            {loading ? (
+                <SkeletonFilters />
+            ) : (
+                <div className="mx-3 sm:mx-[16px] mt-[32px] mb-[25px] rounded-[10px] bg-background py-[7px]">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-4 py-[10px] gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <div className="flex items-center gap-3 bg-background border border-divider/40 rounded-lg px-3 py-2">
+                                <div className="flex flex-col">
+                                    <span className="text-[12px] text-text-hint">Deleted From</span>
+                                    <input
+                                        type="date"
+                                        value={activeStartDate}
+                                        onChange={(e) => handleDateChange("date_from", e.target.value)}
+                                        className="bg-transparent text-sm text-text-primary outline-none"
+                                    />
+                                </div>
+                                <div className="w-px h-8 bg-divider/40" />
+                                <div className="flex flex-col">
+                                    <span className="text-[12px] text-text-hint">To</span>
+                                    <input
+                                        type="date"
+                                        value={activeEndDate}
+                                        onChange={(e) => handleDateChange("date_to", e.target.value)}
+                                        className="bg-transparent text-sm text-text-primary outline-none"
+                                    />
+                                </div>
                             </div>
-                            <div className="w-px h-8 bg-divider/40" />
-                            <div className="flex flex-col">
-                                <span className="text-[12px] text-text-hint">To</span>
-                                <input
-                                    type="date"
-                                    value={activeEndDate}
-                                    onChange={(e) => handleDateChange("date_to", e.target.value)}
-                                    className="bg-transparent text-sm text-text-primary outline-none"
-                                />
-                            </div>
+                            <FilterDropdown
+                                label="Assignee"
+                                options={allAssignees.map((a) => ({ value: String(a.id), label: a.name }))}
+                                value={activeAssignee
+                                    ? allAssignees.find((a) => String(a.id) === String(activeAssignee))?.name ?? null
+                                    : null}
+                                onChange={(v) => setParam("assignee", v)}
+                            />
+                            <FilterDropdown
+                                label="Priority"
+                                options={PRIORITY_OPTIONS}
+                                value={activePriority}
+                                onChange={(v) => setParam("priority", v)}
+                            />
+                            <FilterDropdown
+                                label="Sprint"
+                                options={allSprints.map((s) => ({ value: String(s.id), label: s.name }))}
+                                value={activeSprintFilter
+                                    ? allSprints.find((s) => String(s.id) === activeSprintFilter)?.name ?? null
+                                    : null}
+                                onChange={(v) => setParam("sprint", v)}
+                            />
                         </div>
-                        <FilterDropdown
-                            label="Assignee"
-                            options={allAssignees.map((a) => ({ value: String(a.id), label: a.name }))}
-                            value={activeAssignee
-                                ? allAssignees.find((a) => String(a.id) === String(activeAssignee))?.name ?? null
-                                : null}
-                            onChange={(v) => setParam("assignee", v)}
-                        />
-                        <FilterDropdown
-                            label="Priority"
-                            options={PRIORITY_OPTIONS}
-                            value={activePriority}
-                            onChange={(v) => setParam("priority", v)}
-                        />
-                        <FilterDropdown
-                            label="Sprint"
-                            options={allSprints.map((s) => ({ value: String(s.id), label: s.name }))}
-                            value={activeSprintFilter
-                                ? allSprints.find((s) => String(s.id) === activeSprintFilter)?.name ?? null
-                                : null}
-                            onChange={(v) => setParam("sprint", v)}
-                        />
-                    </div>
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-card-left border border-divider/50 rounded-lg w-full sm:w-[280px] lg:w-[442px]">
-                        <Search className="w-3.5 h-3.5 text-[#6B7280] shrink-0" />
-                        <input
-                            type="text"
-                            placeholder="Search tasks..."
-                            value={searchQuery}
-                            onChange={(e) => setParam("search", e.target.value || null)}
-                            className="bg-transparent outline-none text-hint text-[#6B7280] placeholder:text-[#6B7280] w-full"
-                        />
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-card-left border border-divider/50 rounded-lg w-full sm:w-[280px] lg:w-[442px]">
+                            <Search className="w-3.5 h-3.5 text-[#6B7280] shrink-0" />
+                            <input
+                                type="text"
+                                placeholder="Search tasks..."
+                                value={searchQuery}
+                                onChange={(e) => setParam("search", e.target.value || null)}
+                                className="bg-transparent outline-none text-hint text-[#6B7280] placeholder:text-[#6B7280] w-full"
+                            />
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
 
             <div className="mx-3 sm:mx-[16px] my-[7px] bg-background rounded-[10px] flex flex-col flex-1 min-h-0">
                 <div className="flex-1 pt-4 pb-0 min-h-0">
 
-                    <div className="flex items-center justify-between px-4 sm:px-[16px] mb-6">
-                        <h2 className="font-poppins font-semibold text-[18px] sm:text-[20px] text-text-primary">
-                            Deleted Tickets
-                        </h2>
-                        {tickets.length > 0 && (
-                            <button
-                                onClick={() => setShowDeleteAll(true)}
-                                className="flex items-center gap-1.5 px-3 py-2 rounded-[8px] border-2 border-error-red text-white-btn hover:bg-error-red/10 transition-colors cursor-pointer"
-                            >
-                                <Trash2 className="w-4 h-4" />
-                                <span className="text-sm font-medium">Delete All</span>
-                            </button>
-                        )}
-                    </div>
+                    {/* Table header with Delete All button */}
+                    {loading ? (
+                        <SkeletonTableHeader />
+                    ) : (
+                        <div className="flex items-center justify-between px-4 sm:px-[16px] mb-6">
+                            <h2 className="font-poppins font-semibold text-[18px] sm:text-[20px] text-text-primary">
+                                Deleted Tickets
+                            </h2>
+                            {tickets.length > 0 && (
+                                <button
+                                    onClick={() => setShowDeleteAll(true)}
+                                    className="flex items-center gap-1.5 px-3 py-2 rounded-[8px] border-2 border-error-red text-white-btn hover:bg-error-red/10 transition-colors cursor-pointer"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                    <span className="text-sm font-medium">Delete All</span>
+                                </button>
+                            )}
+                        </div>
+                    )}
 
                     {/* Table */}
                     <div className="overflow-x-auto px-4">

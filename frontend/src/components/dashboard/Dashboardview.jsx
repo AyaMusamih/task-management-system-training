@@ -131,6 +131,62 @@ const DateRangeFilter = ({ from, to, onChange }) => {
     );
 };
 
+// ─── Skeleton Components ───────────────────────────────────────────────────────
+
+const SkeletonBox = ({ className = "" }) => (
+    <div className={`skeleton rounded-lg ${className}`} />
+);
+
+const SkeletonFilters = ({ isAdmin }) => (
+    <div className="mx-3 sm:mx-[16px] mt-[32px] mb-[25px] rounded-[10px] bg-background py-[7px]">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-4 py-[10px] gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+                {/* Date range skeleton */}
+                <SkeletonBox className="h-8 w-20 rounded-full" />
+                {/* Filter pills */}
+                <SkeletonBox className="h-8 w-20 rounded-full" />
+                {isAdmin && <SkeletonBox className="h-8 w-20 rounded-full" />}
+                <SkeletonBox className="h-8 w-20 rounded-full" />
+                <SkeletonBox className="h-8 w-20 rounded-full" />
+            </div>
+            {/* Search skeleton */}
+            <SkeletonBox className="h-9 w-full sm:w-[280px] lg:w-[442px] rounded-lg" />
+        </div>
+    </div>
+);
+
+const SkeletonTabsAndButtons = ({ isAdmin, TABS, activeTab }) => (
+    <div className="flex items-center justify-between px-2 sm:px-4 lg:px-0 lg:pr-[32px] py-3 sm:py-[16px]">
+        <div className="flex gap-1">
+            {TABS.map(({ key, label }) => (
+                <div
+                    key={key}
+                    className={`ml-2 px-3 py-1 skeleton rounded-md`}
+                    style={{ width: "64px", height: "28px" }}
+                />
+            ))}
+        </div>
+        <div className="flex flex-col sm:flex-row items-center gap-2 shrink-0">
+            {isAdmin && <SkeletonBox className="h-9 w-24 rounded-lg" />}
+            {isAdmin && <SkeletonBox className="h-9 w-28 rounded-lg" />}
+        </div>
+    </div>
+);
+
+const SkeletonStatusChips = ({ activeTab }) => {
+    if (activeTab === "scoped") return null;
+    const count = activeTab === "sprint" ? 7 : 8;
+    return (
+        <div className="flex gap-2 px-3 sm:px-[16px] mb-3 overflow-x-auto scrollbar-none pb-3">
+            {Array.from({ length: count }).map((_, i) => (
+                <div key={i} className="skeleton rounded-full h-7 shrink-0" style={{ width: `${70 + (i % 3) * 15}px` }} />
+            ))}
+        </div>
+    );
+};
+
+// ──────────────────────────────────────────────────────────────────────────────
+
 const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, header }) => {
     const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
@@ -198,7 +254,6 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
     useEffect(() => {
         if (location.state?.toast) {
             const toastData = location.state.toast;
-
             showToast({
                 ...toastData,
                 icon: iconMap[toastData.icon],
@@ -223,7 +278,6 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
             }
 
             if (activeSprintFilter) params.sprintId = activeSprintFilter;
-
             if (activeStartDate) params.startDate = activeStartDate;
             if (activeEndDate) params.endDate = activeEndDate;
 
@@ -237,7 +291,6 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
         }
     }, [activeTab, activeStatus, activePriority, activeAssignee, searchQuery, currentPage, isAdmin, activeStageGroup, activeSprintFilter, activeStartDate, activeEndDate]);
 
-    // Register refresh function with parent (AdminDashboard)
     useEffect(() => {
         if (onRegisterRefresh) {
             onRegisterRefresh(fetchTickets);
@@ -306,7 +359,6 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
 
     const handleDateChange = (key, value) => {
         const next = new URLSearchParams(searchParams);
-
         const start = key === "date_from" ? value : activeStartDate;
         const end = key === "date_to" ? value : activeEndDate;
 
@@ -333,7 +385,6 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
         setSearchParams(next);
     };
 
-    // Pass current assignees list to onCreateTicket so the modal can populate the dropdown
     const handleCreateClick = () => {
         onCreateTicket?.(allAssignees, currentSprint ?? null);
     };
@@ -373,125 +424,138 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
             </div>
 
             {/* Tabs + Create button */}
-            <div className="flex items-center justify-between px-2 sm:px-4 lg:px-0 lg:pr-[32px] py-3 sm:py-[16px]">
-                <div className="flex gap-1">
-                    {TABS.map(({ key, label }) => (
-                        <button
-                            key={key}
-                            onClick={() => handleTabChange(key)}
-                            className={`ml-2 px-3 py-1 mb-[-1px] font-inter font-medium text-[14px] sm:text-[16px] transition-colors duration-150 relative cursor-pointer
-                                ${activeTab === key
-                                    ? "text-text-primary after:absolute after:bottom-[-17px] after:left-3 after:right-3 after:h-0.5 after:bg-accent-blue"
-                                    : "text-text-hint hover:text-text-primary"
-                                }`}
-                        >
-                            {label}
-                        </button>
-                    ))}
+            {loading ? (
+                <SkeletonTabsAndButtons isAdmin={isAdmin} TABS={TABS} activeTab={activeTab} />
+            ) : (
+                <div className="flex items-center justify-between px-2 sm:px-4 lg:px-0 lg:pr-[32px] py-3 sm:py-[16px]">
+                    <div className="flex gap-1">
+                        {TABS.map(({ key, label }) => (
+                            <button
+                                key={key}
+                                onClick={() => handleTabChange(key)}
+                                className={`ml-2 px-3 py-1 mb-[-1px] font-inter font-medium text-[14px] sm:text-[16px] transition-colors duration-150 relative cursor-pointer
+                                    ${activeTab === key
+                                        ? "text-text-primary after:absolute after:bottom-[-17px] after:left-3 after:right-3 after:h-0.5 after:bg-accent-blue"
+                                        : "text-text-hint hover:text-text-primary"
+                                    }`}
+                            >
+                                {label}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-center gap-2 shrink-0">
+                        {isAdmin && (
+                            <button
+                                onClick={handleOpenSprints}
+                                className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-orange-400/40 text-orange-400 hover:bg-orange-400/10 transition-colors cursor-pointer"
+                            >
+                                <ClockArrowDown className="w-4 h-4" />
+                                <span className="text-sm font-medium">Sprints</span>
+                            </button>
+                        )}
+                        {isAdmin && (
+                            <Button
+                                onClick={handleCreateClick}
+                                className="flex items-center justify-center gap-1.5 cursor-pointer bg-accent-blue hover:bg-accent-blue/80 transition-colors !rounded-lg"
+                            >
+                                <Plus className="w-4 h-4 text-text-primary" />
+                                <span className="text-white-btn font-inter text-[12px] sm:text-[13.5px] font-medium">Create Task</span>
+                            </Button>
+                        )}
+                    </div>
                 </div>
-
-                <div className="flex flex-col sm:flex-row items-center gap-2 shrink-0">
-
-                    {/* Sprints Button */}
-                    {isAdmin && (
-                        <button
-                            onClick={handleOpenSprints}
-                            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-orange-400/40 text-orange-400 hover:bg-orange-400/10 transition-colors cursor-pointer"
-                        >
-                            <ClockArrowDown className="w-4 h-4" />
-                            <span className="text-sm font-medium">Sprints</span>
-                        </button>
-                    )}
-
-                    {isAdmin && (
-                        <Button
-                            onClick={handleCreateClick}
-                            className="flex items-center justify-center gap-1.5 cursor-pointer bg-accent-blue hover:bg-accent-blue/80 transition-colors !rounded-lg"
-                        >
-                            <Plus className="w-4 h-4 text-text-primary" />
-                            <span className="text-white-btn font-inter text-[12px] sm:text-[13.5px] font-medium">Create Task</span>
-                        </Button>
-                    )}
-                </div>
-            </div>
+            )}
 
             <div className="border-b border-[#00000033] mx-3 sm:mx-[20px]" />
 
             {/* Filters */}
-            <div className="mx-3 sm:mx-[16px] mt-[32px] mb-[25px] rounded-[10px] bg-background py-[7px]">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-4 py-[10px] gap-2">
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <DateRangeFilter
-                            from={activeStartDate}
-                            to={activeEndDate}
-                            onChange={handleDateChange}
-                        />
-                        <FilterDropdown
-                            label="Stage"
-                            options={stageGroupOptions}
-                            value={activeStageGroupLabel}
-                            onChange={handleStageGroupChange}
-                        />
-                        {isAdmin && (
-                            <FilterDropdown
-                                label="Assignee"
-                                options={assignees.map((a) => ({ value: String(a.id), label: a.name }))}
-                                value={activeAssigneeName}
-                                onChange={(id) => setParam("assignee", id)}
+            {loading ? (
+                <SkeletonFilters isAdmin={isAdmin} />
+            ) : (
+                <div className="mx-3 sm:mx-[16px] mt-[32px] mb-[25px] rounded-[10px] bg-background py-[7px]">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-4 py-[10px] gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <DateRangeFilter
+                                from={activeStartDate}
+                                to={activeEndDate}
+                                onChange={handleDateChange}
                             />
-                        )}
-                        <FilterDropdown
-                            label="Priority"
-                            options={PRIORITY_OPTIONS}
-                            value={activePriority}
-                            onChange={(v) => setParam("priority", v)}
-                        />
-                        <FilterDropdown
-                            label="Sprint"
-                            options={allSprints.map((s) => ({ value: String(s.id), label: s.name }))}
-                            value={activeSprintFilter
-                                ? allSprints.find((s) => String(s.id) === activeSprintFilter)?.name ?? null
-                                : null}
-                            onChange={(v) => setParam("sprint", v)}
-                        />
-                    </div>
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-card-left border border-divider/50 rounded-lg w-full sm:w-[280px] lg:w-[442px]">
-                        <Search className="w-3.5 h-3.5 text-[#6B7280] shrink-0" />
-                        <input
-                            type="text"
-                            placeholder="Search tasks..."
-                            value={searchQuery}
-                            onChange={handleSearch}
-                            className="bg-transparent outline-none text-hint text-[#6B7280] placeholder:text-[#6B7280] w-full"
-                        />
+                            <FilterDropdown
+                                label="Stage"
+                                options={stageGroupOptions}
+                                value={activeStageGroupLabel}
+                                onChange={handleStageGroupChange}
+                            />
+                            {isAdmin && (
+                                <FilterDropdown
+                                    label="Assignee"
+                                    options={assignees.map((a) => ({ value: String(a.id), label: a.name }))}
+                                    value={activeAssigneeName}
+                                    onChange={(id) => setParam("assignee", id)}
+                                />
+                            )}
+                            <FilterDropdown
+                                label="Priority"
+                                options={PRIORITY_OPTIONS}
+                                value={activePriority}
+                                onChange={(v) => setParam("priority", v)}
+                            />
+                            <FilterDropdown
+                                label="Sprint"
+                                options={allSprints.map((s) => ({ value: String(s.id), label: s.name }))}
+                                value={activeSprintFilter
+                                    ? allSprints.find((s) => String(s.id) === activeSprintFilter)?.name ?? null
+                                    : null}
+                                onChange={(v) => setParam("sprint", v)}
+                            />
+                        </div>
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-card-left border border-divider/50 rounded-lg w-full sm:w-[280px] lg:w-[442px]">
+                            <Search className="w-3.5 h-3.5 text-[#6B7280] shrink-0" />
+                            <input
+                                type="text"
+                                placeholder="Search tasks..."
+                                value={searchQuery}
+                                onChange={handleSearch}
+                                className="bg-transparent outline-none text-hint text-[#6B7280] placeholder:text-[#6B7280] w-full"
+                            />
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
 
             {/* Content area */}
             <div className="mx-3 sm:mx-[16px] my-[7px] bg-background rounded-[10px] flex flex-col flex-1 min-h-0">
                 <div className="flex-1 pt-4 pb-0 min-h-0">
 
                     <div className="flex items-center px-4 sm:px-[16px] mb-6">
-                        <h2 className="font-poppins font-semibold text-[18px] sm:text-[20px] text-text-primary">Tickets</h2>
+                        {loading ? (
+                            <div className="skeleton rounded-md h-7 w-24" />
+                        ) : (
+                            <h2 className="font-poppins font-semibold text-[18px] sm:text-[20px] text-text-primary">Tickets</h2>
+                        )}
                     </div>
 
                     {/* Status chips */}
-                    {activeTab !== "scoped" && (
-                        <div className="flex gap-2 px-3 sm:px-[16px] mb-3 overflow-x-auto scrollbar-none pb-3">
-                            {STAGES.filter(({ key }) =>
-                                activeTab === "sprint" ? key !== "SCOPED_BACKLOG" : true
-                            ).map(({ key, label }) => (
-                                <button
-                                    key={key}
-                                    onClick={() => handleStatusChip(key)}
-                                    className={`px-3 py-1 rounded-full text-hint font-medium border transition-colors duration-150 cursor-pointer whitespace-nowrap shrink-0
-                    ${activeStatus === key ? STAGE_CHIP_ACTIVE[key] : STAGE_CHIP_STYLES[key]}`}
-                                >
-                                    {label}
-                                </button>
-                            ))}
-                        </div>
+                    {loading ? (
+                        <SkeletonStatusChips activeTab={activeTab} />
+                    ) : (
+                        activeTab !== "scoped" && (
+                            <div className="flex gap-2 px-3 sm:px-[16px] mb-3 overflow-x-auto scrollbar-none pb-3">
+                                {STAGES.filter(({ key }) =>
+                                    activeTab === "sprint" ? key !== "SCOPED_BACKLOG" : true
+                                ).map(({ key, label }) => (
+                                    <button
+                                        key={key}
+                                        onClick={() => handleStatusChip(key)}
+                                        className={`px-3 py-1 rounded-full text-hint font-medium border transition-colors duration-150 cursor-pointer whitespace-nowrap shrink-0
+                                            ${activeStatus === key ? STAGE_CHIP_ACTIVE[key] : STAGE_CHIP_STYLES[key]}`}
+                                    >
+                                        {label}
+                                    </button>
+                                ))}
+                            </div>
+                        )
                     )}
 
                     <TicketsTable
