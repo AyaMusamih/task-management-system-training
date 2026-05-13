@@ -390,7 +390,9 @@ const DeletedTickets = () => {
                         <h2 className="font-poppins font-semibold text-[18px] sm:text-[20px] text-text-primary">
                             Deleted Tickets
                         </h2>
-                        {tickets.length > 0 && (
+                        {loading ? (
+                            <div className="h-10 w-[140px] rounded-[8px] skeleton animate-pulse" />
+                        ) : tickets.length > 0 && (
                             <button
                                 onClick={() => setShowDeleteAll(true)}
                                 className="flex items-center gap-1.5 px-3 py-2 rounded-[8px] border-2 border-error-red text-white-btn hover:bg-error-red/10 transition-colors cursor-pointer"

@@ -46,9 +46,6 @@ const getActionMeta = (action, oldValue = {}, newValue = {}, allAssignees = [], 
     const old = oldValue ?? {};
     const next = newValue ?? {};
 
-    console.log("old", old);
-    console.log("next", next);
-
     const getAssigneeName = (id) =>
         id ? (allAssignees.find((a) => a.id.toString() === id.toString())?.name ?? `#${id}`) : null;
 
@@ -479,7 +476,7 @@ const AdminTicketPanel = ({
                         className="w-full text-field-label text-text-secondary bg-input-bg border border-divider/50 rounded-lg px-3 py-2 outline-none focus:border-accent-blue resize-none"
                     />
                 ) : (
-                    <p className="whitespace-pre-wrap text-text-primary" style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: '16px' }}>
+                    <p className="whitespace-pre-wrap break-words text-text-primary" style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: '16px' }}>
                         {editDescription || "No description"}
                     </p>
                 )}
@@ -543,11 +540,7 @@ const AdminTicketPanel = ({
                         </button>
                     </div>
                 ) : audit.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-6 gap-3">
-                        <div className="w-9 h-9 rounded-full bg-text-primary/10 flex items-center justify-center">
-                            <History className="w-4.5 h-4.5 text-accent-blue" />
-                        </div>
-
+                    <div className="min-h-[150px] flex items-center justify-center">
                         <div className="text-center flex flex-col gap-0.5">
                             <p className="text-sm font-medium text-text-primary">
                                 No activity yet
@@ -596,22 +589,34 @@ const AdminTicketPanel = ({
             </div>
 
             {/* Actions */}
-            <div className="flex pt-4 border-t border-divider/20 mt-auto">
+            <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t border-divider/20 mt-auto">
                 <Button
                     variant="secondary"
                     size="md"
                     onClick={handleSave}
                     loading={saving}
-                    className="flex-1 h-10 rounded-lg !text-[15px] cursor-pointer hover:bg-input-bg/60 hover:border-divider"
+                    className="
+            w-full sm:flex-1 h-10 rounded-lg
+            !text-[16px] sm:text-[14px] md:text-[15px]
+            cursor-pointer
+            hover:bg-input-bg/60 hover:border-divider
+        "
                 >
                     {saving ? "Saving..." : "Save Changes"}
                 </Button>
+
                 <Button
                     variant="secondary"
                     size="md"
                     onClick={onDelete}
                     disabled={deleteLoading}
-                    className="h-10 rounded-lg !text-[15px] cursor-pointer !border-error-red !text-error-red hover:bg-error-red/10 hover:border-error-red"
+                    className="
+            w-full sm:w-auto h-10 rounded-lg
+            text-[12px] sm:text-[14px] md:text-[15px]
+            cursor-pointer
+            !border-error-red !text-error-red
+            hover:bg-error-red/10 hover:border-error-red
+        "
                 >
                     Delete
                 </Button>
