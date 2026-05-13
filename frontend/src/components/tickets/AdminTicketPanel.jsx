@@ -264,7 +264,6 @@ const AdminTicketPanel = ({
     const [isTitleEditing, setIsTitleEditing] = useState(false);
     const [isDescriptionEditing, setIsDescriptionEditing] = useState(false);
     const [saving, setSaving] = useState(false);
-    const [statusSaving, setStatusSaving] = useState(false);
     const [titleError, setTitleError] = useState("");
 
     const assigneeOptions = [
@@ -277,20 +276,6 @@ const AdminTicketPanel = ({
         ...allSprints.map((s) => ({ value: s.id.toString(), label: s.name })),
     ];
 
-    const handleStatusChange = async (newStatus) => {
-        if (newStatus === editStatus) return;
-        setStatusSaving(true);
-        try {
-            await updateTicketStatus(ticket.id, newStatus);
-            setEditStatus(newStatus);
-            toastSuccess("Status Updated", "Status changed successfully.");
-            onSaved?.();
-        } catch (err) {
-            toastError(err, "Failed to Update Status");
-        } finally {
-            setStatusSaving(false);
-        }
-    };
 
     const handleSave = async () => {
         if (!editTitle.trim()) {
@@ -308,6 +293,7 @@ const AdminTicketPanel = ({
             editPriority !== (ticket.priority || "") ||
             editAssigneeId !== (ticket.assignee?.id?.toString() || "") ||
             editSprintId !== (ticket.sprint?.id?.toString() || "") ||
+            editStatus !== (ticket.status || "") ||
             editDeadline !== (
                 ticket.deadline
                     ? new Date(ticket.deadline).toISOString().split("T")[0]
@@ -321,16 +307,27 @@ const AdminTicketPanel = ({
 
         setSaving(true);
         try {
-            await updateTicket(ticket.id, {
-                title: editTitle.trim(),
-                description: editDescription.trim(),
-                priority: editPriority || undefined,
-                assigneeId: editAssigneeId || null,
-                sprintId: editSprintId || null,
-                deadline: editDeadline
-                    ? new Date(`${editDeadline}T23:59:59Z`).toISOString()
-                    : null,
-            });
+            const statusChanged = editStatus !== (ticket.status || "");
+
+            const requests = [
+                updateTicket(ticket.id, {
+                    title: editTitle.trim(),
+                    description: editDescription.trim(),
+                    priority: editPriority || undefined,
+                    assigneeId: editAssigneeId || null,
+                    sprintId: editSprintId || null,
+                    deadline: editDeadline
+                        ? new Date(`${editDeadline}T23:59:59Z`).toISOString()
+                        : null,
+                }),
+            ];
+
+            if (statusChanged) {
+                requests.push(updateTicketStatus(ticket.id, editStatus));
+            }
+
+            await Promise.all(requests);
+
             toastSuccess("Ticket Updated", "Changes saved successfully.");
             setIsTitleEditing(false);
             setIsDescriptionEditing(false);
@@ -412,8 +409,7 @@ const AdminTicketPanel = ({
                     label="Status"
                     options={STATUS_OPTIONS}
                     value={editStatus}
-                    onChange={handleStatusChange}
-                    disabled={statusSaving}
+                    onChange={setEditStatus}
                 />
                 <FilterStyleDropdown
                     staticLabel="Sprint"
