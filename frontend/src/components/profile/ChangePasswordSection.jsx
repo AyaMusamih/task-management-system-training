@@ -2,10 +2,10 @@ import { useState } from "react";
 import Input from "../shared/Input";
 import Button from "../shared/Button";
 import { changePassword } from "../../services/profile.service";
-import { CircleCheckBig, CircleCheck, ShieldAlert, ShieldCheck, XCircle } from "lucide-react";
-import { showToast } from "../../utils/showToast";
+import { CircleCheck, ShieldAlert, ShieldCheck } from "lucide-react";
 import { Pencil } from "lucide-react";
 import { useRef } from "react";
+import { toastSuccess, toastError } from "../../utils/toastHelpers";
 
 const ChangePasswordSection = () => {
     const [form, setForm] = useState({
@@ -78,12 +78,7 @@ const ChangePasswordSection = () => {
                 block: "center",
             });
 
-            showToast({
-                title: "Validation Error",
-                description: "Please fix the errors below before saving",
-                icon: <XCircle className="w-4 h-4" />,
-                type: "error",
-            });
+            toastError("Please fix the errors below before saving", "Validation Error");
 
             return;
         }
@@ -95,41 +90,21 @@ const ChangePasswordSection = () => {
                 confirmPassword: form.confirmPassword,
             });
 
-            showToast({
-                title: "Password changed successfully",
-                description: "Your new password has been saved.",
-                icon: <CircleCheckBig className="w-4 h-4" />,
-                type: "success",
-            });
+            toastSuccess("Password Changed", "Your new password has been saved.");
 
             setForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
             setSubmitted(false);
             setIsEditing(false)
             setErrors({});
         } catch (err) {
-            if (err.type === "validation") {
-                setErrors(err.errors);
-                showToast({
-                    title: "Validation Error",
-                    description: "Please check your inputs",
-                    icon: <XCircle className="w-4 h-4" />,
-                    type: "error",
-                });
-            } else if (err.type === "currentPassword") {
+            if (err?.type === "validation" && err?.fields) {
+                setErrors(err.fields);
+                toastError(err, "Validation Error");
+            } else if (err?.status === 401 || err?.type === "auth") {
                 setErrors((prev) => ({ ...prev, currentPassword: err.message }));
-                showToast({
-                    title: "Incorrect Password",
-                    description: err.message,
-                    icon: <XCircle className="w-4 h-4" />,
-                    type: "error",
-                });
+                toastError(err, "Incorrect Password");
             } else {
-                showToast({
-                    title: "Failed to change password",
-                    description: err.message || "Something went wrong",
-                    icon: <XCircle className="w-4 h-4" />,
-                    type: "error",
-                });
+                toastError(err, "Failed to Change Password");
             }
         } finally {
             setLoading(false);

@@ -5,6 +5,7 @@ import Input from "../../components/shared/Input";
 import Button from "../../components/shared/Button";
 import AuthLayout from "./AuthLayout";
 import { ChevronLeft } from "lucide-react"
+import { toastError } from "../../utils/toastHelpers";
 
 const ForgotPassword = () => {
     const [email, setEmail] = useState("");
@@ -35,10 +36,11 @@ const ForgotPassword = () => {
             await forgotPassword(email);
             setEmailSent(true);
         } catch (err) {
-            if (err.type === "validation") {
-                setErrors(err.errors);
+            if (err?.type === "validation" && err?.fields) {
+                setErrors(err.fields);
             } else {
-                setErrors({ general: err.message || "Something went wrong. Please try again." });
+                setErrors({ general: err?.message ?? "Something went wrong. Please try again." });
+                toastError(err);
             }
         } finally {
             setLoading(false);

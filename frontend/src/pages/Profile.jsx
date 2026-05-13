@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from "react";
-import { Bell, Pencil, Camera, CircleCheckBig, XCircle } from "lucide-react";
+import { Bell, Pencil, Camera } from "lucide-react";
 import { getProfile, updateProfile } from "../services/profile.service";
 import Input from "../components/shared/Input";
 import Button from "../components/shared/Button";
 import ChangePasswordSection from "../components/profile/ChangePasswordSection"
-import { showToast } from "../utils/showToast";
+import { toastSuccess, toastError } from "../utils/toastHelpers";
 
 
 const getInitials = (name = "") =>
@@ -234,84 +234,14 @@ const Profile = () => {
         const validationErrors = validate({ name: formAbout.name, email: profile?.email || "" });
         const nameError = validationErrors.name ? { name: validationErrors.name } : {};
 
-        if (nameError.name) {
-            setErrorsAbout(nameError);
-            nameRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-            showToast({
-                title: "Validation Error",
-                description: "Please fix the errors below before saving",
-                icon: <XCircle className="w-4 h-4" />,
-                type: "error",
-            });
-            return;
-        }
-
-        setSavingAbout(true);
-        try {
-            const updated = await updateProfile({
-                name: formAbout.name.trim(),
-                email: profile?.email,
-            });
-
-            const stored = JSON.parse(localStorage.getItem("user") || "{}");
-            localStorage.setItem("user", JSON.stringify({ ...stored, name: updated.name }));
-
-            setProfile(updated);
-            setIsEditAbout(false);
-            setSubmittedAbout(false);
-            setErrorsAbout({});
-
-            showToast({
-                title: "Profile updated successfully",
-                description: "Your profile information has been saved.",
-                icon: <CircleCheckBig className="w-4 h-4" />,
-                type: "success",
-            });
-        } catch (err) {
-            showToast({
-                title: "Couldn't save changes. Please try again.",
-                description: err.message || "Something went wrong on our end.",
-                icon: <XCircle className="w-4 h-4" />,
-                type: "error",
-            });
-        } finally {
-            setSavingAbout(false);
-        }
-    };
-
-    // Contact handlers
-    const handleEditContact = () => {
-        setFormContact({ email: profile?.email || "" });
-        setErrorsContact({});
-        setSubmittedContact(false);
-        setIsEditContact(true);
-    };
-
-    const handleCancelContact = () => {
-        setIsEditContact(false);
-        setErrorsContact({});
-        setSubmittedContact(false);
-    };
-
-    const handleChangeContact = (e) => {
-        setFormContact((prev) => ({ ...prev, email: e.target.value }));
-        if (submittedContact) setErrorsContact((prev) => ({ ...prev, email: undefined }));
-    };
-
-    const handleSaveContact = async () => {
-        setSubmittedContact(true);
-        const validationErrors = validate({ name: profile?.name || "", email: formContact.email });
-        const emailError = validationErrors.email ? { email: validationErrors.email } : {};
-
-        if (emailError.email) {
-            setErrorsContact(emailError);
-            emailRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-            showToast({
-                title: "Validation Error",
-                description: "Please fix the errors below before saving",
-                icon: <XCircle className="w-4 h-4" />,
-                type: "error",
-            });
+        if (Object.keys(validationErrors).length > 0) {
+            setErrors(validationErrors);
+            if (validationErrors.name) {
+                nameRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+            } else if (validationErrors.email) {
+                emailRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+            toastError("Please fix the errors below before saving", "Validation Error");
             return;
         }
 
@@ -330,43 +260,19 @@ const Profile = () => {
             setSubmittedContact(false);
             setErrorsContact({});
 
-            showToast({
-                title: "Profile updated successfully",
-                description: "Your profile information has been saved.",
-                icon: <CircleCheckBig className="w-4 h-4" />,
-                type: "success",
-            });
+            toastSuccess("Profile Updated", "Your profile information has been saved.");
         } catch (err) {
-            if (err.status === 409) {
-                setErrorsContact({ email: "This email is already taken by another account" });
-                showToast({
-                    title: "Email already in use",
-                    description: "Please use a different email address.",
-                    icon: <XCircle className="w-4 h-4" />,
-                    type: "error",
-                });
+            if (err?.type === "conflict" || err?.status === 409) {
+                setErrors((prev) => ({ ...prev, email: "This email is already taken by another account" }));
+                toastError(err, "Email Already In Use");
                 return;
             }
-
-            if (err.data?.errors) {
-                const mapped = {};
-                err.data.errors.forEach((e) => { mapped[e.param] = e.msg; });
-                setErrorsContact(mapped);
-                showToast({
-                    title: "Couldn't save changes. Please try again.",
-                    description: "Fix the highlighted fields and try saving again.",
-                    icon: <XCircle className="w-4 h-4" />,
-                    type: "error",
-                });
+            if (err?.type === "validation" && err?.fields) {
+                setErrors(err.fields);
+                toastError(err, "Validation Error");
                 return;
             }
-
-            showToast({
-                title: "Couldn't save changes. Please try again.",
-                description: err.message || "Something went wrong on our end.",
-                icon: <XCircle className="w-4 h-4" />,
-                type: "error",
-            });
+            toastError(err, "Couldn't Save Changes");
         } finally {
             setSavingContact(false);
         }

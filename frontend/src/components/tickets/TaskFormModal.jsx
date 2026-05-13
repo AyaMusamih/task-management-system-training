@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
-import { showToast } from "../../utils/showToast";
-import { CircleCheckBig, XCircle } from "lucide-react";
 import Button from "../shared/Button";
 import { createTicket, updateTicket } from "../../services/tickets.service";
 import { getSprints } from "../../services/sprints.service";
+import { toastSuccess, toastError } from "../../utils/toastHelpers";
 
 const PRIORITY_OPTIONS = ["Low", "Medium", "High", "Critical"];
 const PRIORITY_VALUES = { Low: "LOW", Medium: "MEDIUM", High: "HIGH", Critical: "CRITICAL" };
@@ -189,7 +188,7 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], onSucce
         const validationErrors = validate(fields);
         if (Object.keys(validationErrors).length > 0) {
             setErrors(validationErrors);
-            showToast({ title: "Validation Error", description: "Please fix the errors", icon: <XCircle className="w-4 h-4" />, type: "error" });
+            toastError("Please fix the errors before submitting.", "Validation Error");
             return;
         }
 
@@ -209,28 +208,22 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], onSucce
 
             if (isEdit) {
                 await updateTicket(ticket.id, payload);
-                showToast({ title: "Task Updated", description: "Task updated successfully", icon: <CircleCheckBig className="w-4 h-4" />, type: "success" });
+                toastSuccess("Task Updated", "Task updated successfully.");
             } else {
                 await createTicket(payload);
-                showToast({ title: "Task Created", description: "Task created successfully", icon: <CircleCheckBig className="w-4 h-4" />, type: "success" });
+                toastSuccess("Task Created", "Task created successfully.");
             }
 
             onSuccess?.();
         } catch (err) {
-            const apiErrors = err?.errors;
-            if (apiErrors && Array.isArray(apiErrors)) {
-                const mapped = {};
-                apiErrors.forEach((e) => { mapped[e.param] = e.msg; });
-                setErrors(mapped);
-                showToast({ title: "Validation Error", description: "Please fix the errors", icon: <XCircle className="w-4 h-4" />, type: "error" });
-            } else if (err?.error === "You can update status only if assigned to this ticket") {
-                setErrors((prev) => ({ ...prev, status: "You can update status only if assigned to this ticket" }));
-                showToast({ title: "Validation Error", description: "Please fix the errors", icon: <XCircle className="w-4 h-4" />, type: "error" });
+            if (err?.type === "validation" && err?.fields) {
+                setErrors(err.fields);
+                toastError(err, "Validation Error");
+            } else if (err?.type === "forbidden") {
+                setErrors((prev) => ({ ...prev, status: err.message }));
+                toastError(err, "Permission Error");
             } else {
-                const msg = isEdit
-                    ? "Failed to update task. Please try again"
-                    : "Failed to create task. Please try again";
-                showToast({ title: "Error", description: msg, icon: <XCircle className="w-4 h-4" />, type: "error" });
+                toastError(err, isEdit ? "Failed to Update Task" : "Failed to Create Task");
             }
         } finally {
             setLoading(false);

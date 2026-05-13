@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { ChevronLeft, XCircle, CircleCheckBig } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import SprintsModalContent from "./SprintsModalContent";
-import { showToast } from "../../utils/showToast";
 import Button from "../shared/Button";
 import Input from "../shared/Input";
 import { createSprint, updateSprint } from "../../services/sprints.service";
+import { toastSuccess, toastError } from "../../utils/toastHelpers";
 
 const SprintFormContent = ({ sprint, openModal, closeModal, onSuccess }) => {
     const isEdit = !!sprint;
@@ -67,12 +67,7 @@ const SprintFormContent = ({ sprint, openModal, closeModal, onSuccess }) => {
         const validationErrors = validate({ name, startDate, endDate });
         if (Object.keys(validationErrors).length > 0) {
             setErrors(validationErrors);
-            showToast({
-                title: "Validation Error",
-                description: "Please fix the errors",
-                icon: <XCircle className="w-4 h-4" />,
-                type: "error",
-            });
+            toastError("Please fix the errors before submitting.", "Validation Error");
             return;
         }
 
@@ -90,29 +85,15 @@ const SprintFormContent = ({ sprint, openModal, closeModal, onSuccess }) => {
                 await createSprint(payload);
             }
 
-            showToast({
-                title: isEdit ? "Sprint Updated" : "Sprint Created",
-                description: isEdit
-                    ? "Sprint updated successfully"
-                    : "Sprint created successfully",
-                icon: <CircleCheckBig className="w-4 h-4" />,
-                type: "success",
-            });
+            toastSuccess(
+                isEdit ? "Sprint Updated" : "Sprint Created",
+                isEdit ? "Sprint updated successfully." : "Sprint created successfully."
+            );
 
             onSuccess?.();
             handleBack();
         } catch (err) {
-            const message =
-                err?.error ||
-                err?.errors?.[0]?.msg ||
-                err?.message ||
-                "Please try again";
-            showToast({
-                title: "Something went wrong",
-                description: message,
-                icon: <XCircle className="w-4 h-4" />,
-                type: "error",
-            });
+            toastError(err, "Something Went Wrong");
         } finally {
             setLoading(false);
         }

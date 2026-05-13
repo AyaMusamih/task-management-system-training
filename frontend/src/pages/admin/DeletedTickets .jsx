@@ -14,14 +14,12 @@ import ConfirmDialog from "../../components/shared/ConfirmDialog";
 import Loading from "../../components/common-ui/Loading";
 import Error from "../../components/common-ui/Error";
 import Empty from "../../components/common-ui/Empty";
-import { showToast } from "../../utils/showToast";
-import { CircleCheckBig, XCircle } from "lucide-react";
 import ErrorIcon from "../../assets/images/ErrorIcon_trash.png";
 import EmptyIcon from "../../assets/images/EmptyIcon_trash.png";
 import { getDeletedTickets, restoreTicket, permanentDeleteTicket, deleteAllPermanent } from "../../services/tickets.service";
 import { getSprints } from "../../services/sprints.service";
 import { getUsers } from "../../services/user.service";
-
+import { toastSuccess, toastError } from "../../utils/toastHelpers";
 
 const PRIORITY_STYLES = {
     CRITICAL: "bg-red-600/15 text-red-500 border border-red-600/40",
@@ -169,7 +167,8 @@ const DeletedTickets = () => {
             setTickets(res.items || []);
             setPagination(res.paginationMeta || null);
         } catch (err) {
-            setError(err?.error || err?.message || "Failed to load trash");
+            setError(err?.message ?? "Failed to load trash.");
+            toastError(err, "Failed to Load Trash");
         } finally {
             setLoading(false);
         }
@@ -189,12 +188,7 @@ const DeletedTickets = () => {
         const start = key === "date_from" ? value : activeStartDate;
         const end = key === "date_to" ? value : activeEndDate;
         if (start && end && new Date(start) > new Date(end)) {
-            showToast({
-                title: "Invalid Date Range",
-                description: "From date must be before To date",
-                icon: <XCircle className="w-4 h-4" />,
-                type: "error",
-            });
+            toastError("From date must be before To date.", "Invalid Date Range");
             return;
         }
         if (value) next.set(key === "date_from" ? "startDate" : "endDate", value);
@@ -214,21 +208,11 @@ const DeletedTickets = () => {
         setRestoreLoading(true);
         try {
             await restoreTicket(restoreTarget.id);
-            showToast({
-                title: "Ticket Restored",
-                description: `Ticket "${restoreTarget.title}" has been restored successfully.`,
-                icon: <CircleCheckBig className="w-4 h-4" />,
-                type: "success",
-            });
+            toastSuccess("Ticket Restored", `Ticket "${restoreTarget.title}" has been restored successfully.`);
             setRestoreTarget(null);
             fetchTickets();
         } catch (err) {
-            showToast({
-                title: "Failed to Restore",
-                description: err.message || "Something went wrong",
-                icon: <XCircle className="w-4 h-4" />,
-                type: "error",
-            });
+            toastError(err, "Failed to Restore");
         } finally {
             setRestoreLoading(false);
         }
@@ -239,34 +223,11 @@ const DeletedTickets = () => {
         setDeleteLoading(true);
         try {
             await permanentDeleteTicket(deleteTarget.id);
-            showToast({
-                title: "Deleted Permanently",
-                description: `Ticket "${deleteTarget.title}" has been permanently deleted.`,
-                icon: <CircleCheckBig className="w-4 h-4" />,
-                type: "success",
-            });
+            toastSuccess("Deleted Permanently", `Ticket "${deleteTarget.title}" has been permanently deleted.`);
             setDeleteTarget(null);
             fetchTickets();
         } catch (err) {
-            let message = "Something went wrong";
-            const status = err.status;
-            if (status === 403) {
-                message = err.message || "Admin access only";
-            } else if (status === 400) {
-                message = err.message || "Ticket is not deleted";
-            } else if (status === 401) {
-                message = err.message || "Token expired";
-            } else if (status === 404) {
-                message = err.message || "Ticket not found";
-            } else {
-                message = err?.message || "Something went wrong";
-            }
-            showToast({
-                title: "Failed to Delete Permanently",
-                description: message,
-                icon: <XCircle className="w-4 h-4" />,
-                type: "error",
-            });
+            toastError(err, "Failed to Delete Permanently");
         } finally {
             setDeleteLoading(false);
         }
@@ -276,21 +237,11 @@ const DeletedTickets = () => {
         setDeleteAllLoading(true);
         try {
             await deleteAllPermanent();
-            showToast({
-                title: "Trash Emptied",
-                description: "All deleted tickets have been permanently removed.",
-                icon: <CircleCheckBig className="w-4 h-4" />,
-                type: "success",
-            });
+            toastSuccess("Trash Emptied", "All deleted tickets have been permanently removed.");
             setShowDeleteAll(false);
             fetchTickets();
         } catch (err) {
-            showToast({
-                title: "Failed to Empty Trash",
-                description: err?.message || "Something went wrong",
-                icon: <XCircle className="w-4 h-4" />,
-                type: "error",
-            });
+            toastError(err, "Failed to Empty Trash");
         } finally {
             setDeleteAllLoading(false);
         }

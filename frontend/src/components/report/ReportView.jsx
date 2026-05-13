@@ -1,11 +1,10 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Download, Bell, XCircle, CircleCheckBig } from "lucide-react";
+import { Download, Bell } from "lucide-react";
 import StatsCard from "./StatsCard"
 import FilterDropdown from "../report/FilterDropdown"
 import WeeklyChart from "./admin/WeeklyChart"
 import Button from "../shared/Button";
-import { showToast } from "../../utils/showToast";
 import TeamBreakdownTable from "./admin/TeamBreakdownTable";
 import UserTicketsTable from "./user/UserTicketsTable";
 import Error from "../common-ui/Error";
@@ -15,6 +14,7 @@ import EmptyIcon from "../../assets/images/EmptyIcon_reports.png";
 import { getMyReports, getAdminReports, getAdminReportExport } from "../../services/report.service";
 import { getSprints } from "../../services/sprints.service";
 import { getUsers } from "../../services/user.service";
+import { toastSuccess, toastError, toastWarning } from "../../utils/toastHelpers";
 
 const ReportView = ({ isAdmin, header }) => {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -65,12 +65,7 @@ const ReportView = ({ isAdmin, header }) => {
         const newTo = key === "date_to" ? value : activeTo;
 
         if (newFrom && newTo && new Date(newFrom) > new Date(newTo)) {
-            showToast({
-                title: "Invalid Date Range",
-                description: "From date must be before To date",
-                icon: <XCircle className="w-4 h-4" />,
-                type: "error",
-            });
+            toastError("From date must be before To date.", "Invalid Date Range");
             return;
         }
 
@@ -104,30 +99,9 @@ const ReportView = ({ isAdmin, header }) => {
                 date_to: activeTo || undefined,
                 assignee_id: activeAssignee || undefined,
             });
-
-            showToast({
-                title: "Export Complete",
-                description: "Report exported successfully",
-                icon: <CircleCheckBig className="w-4 h-4" />,
-                type: "success",
-            });
-
+            toastSuccess("Export Complete", "Report exported successfully.");
         } catch (err) {
-            if (err?.type === "forbidden") {
-                showToast({
-                    title: "Forbidden",
-                    description: err.message,
-                    type: "error",
-                    icon: <XCircle className="w-4 h-4" />,
-                });
-                return;
-            }
-            showToast({
-                title: "Export Failed",
-                description: "Could not export the report. Please try again.",
-                type: "error",
-                icon: <XCircle className="w-4 h-4" />,
-            });
+            toastError(err, "Export Failed");
         } finally {
             setExporting(false);
         }
@@ -317,38 +291,16 @@ const ReportView = ({ isAdmin, header }) => {
             }
 
         } catch (err) {
-            let message = "Something went wrong";
-
             if (err?.type === "forbidden") {
-                showToast({
-                    title: "Forbidden",
-                    description: err.message,
-                    type: "error",
-                    icon: <XCircle className="w-4 h-4" />,
-                });
+                toastWarning(err, "Access Denied");
                 return;
             }
-
             if (err?.type === "validation") {
-                showToast({
-                    title: "Validation Error",
-                    description: err.message,
-                    type: "error",
-                    icon: <XCircle className="w-4 h-4" />,
-                });
-                setError(null);
+                toastError(err, "Validation Error");
                 return;
             }
-            message = "Failed to load reports";
-            setError(message);
-
-            showToast({
-                title: "Error",
-                description: message,
-                type: "error",
-                icon: <XCircle className="w-4 h-4" />,
-            });
-
+            setError(err?.message ?? "Failed to load reports.");
+            toastError(err, "Failed to Load Reports");
         } finally {
             setLoading(false);
         }

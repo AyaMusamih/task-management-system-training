@@ -3,9 +3,8 @@ import { Plus, SquarePen, Trash2 } from "lucide-react";
 import SprintFormContent from "./SprintFormContent";
 import ConfirmDialog from "../shared/ConfirmDialog";
 import { getSprints, deleteSprint } from "../../services/sprints.service";
-import { showToast } from "../../utils/showToast";
-import { CircleCheckBig, XCircle } from "lucide-react";
 import Loading from "../common-ui/Loading";
+import { toastSuccess, toastError } from "../../utils/toastHelpers";
 
 const SprintsModalContent = ({ openModal, closeModal, onSprintsChange }) => {
     const [sprints, setSprints] = useState([]);
@@ -19,12 +18,7 @@ const SprintsModalContent = ({ openModal, closeModal, onSprintsChange }) => {
             const res = await getSprints();
             setSprints(res.data?.items || []);
         } catch (err) {
-            showToast({
-                title: "Failed to load sprints",
-                description: err?.error || "Please try again",
-                icon: <XCircle className="w-4 h-4" />,
-                type: "error",
-            });
+            toastError(err, "Failed to Load Sprints");
         } finally {
             setLoading(false);
         }
@@ -72,22 +66,12 @@ const SprintsModalContent = ({ openModal, closeModal, onSprintsChange }) => {
         setDeleteLoading(true);
         try {
             await deleteSprint(deleteTarget.id);
-            showToast({
-                title: "Sprint Deleted",
-                description: `"${deleteTarget.name}" has been permanently deleted.`,
-                icon: <CircleCheckBig className="w-4 h-4" />,
-                type: "success",
-            });
+            toastSuccess("Sprint Deleted", `"${deleteTarget.name}" has been permanently deleted.`);
             setDeleteTarget(null);
             fetchSprints();
             onSprintsChange?.();
         } catch (err) {
-            showToast({
-                title: "Failed to Delete Sprint",
-                description: err?.message || "Please try again",
-                icon: <XCircle className="w-4 h-4" />,
-                type: "error",
-            });
+            toastError(err, "Failed to Delete Sprint");
         } finally {
             setDeleteLoading(false);
         }

@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useNavigate, useParams, useOutletContext, useLocation } from "react-router-dom";
-import { Search, ChevronDown, Plus, ChevronLeft, ChevronRight, Bell, CircleAlert, CircleCheckBig, ClockArrowDown, XCircle } from "lucide-react";
+import { Search, ChevronDown, Plus, ChevronLeft, ChevronRight, Bell, ClockArrowDown } from "lucide-react";
 import { getTickets } from "../../services/tickets.service";
 import { getUsers } from "../../services/user.service";
 import TicketsTable from "../tickets/TicketsTable";
 import TicketDetailsModal from "../tickets/TicketDetailsModal";
 import Button from "../shared/Button";
-import { showToast } from "../../utils/showToast";
 import SprintsModalContent from "../tickets/SprintsModalContent"
 import { getSprints } from "../../services/sprints.service";
+import { toastError } from "../../utils/toastHelpers";
 
 const STAGES = [
     { key: "SCOPED_BACKLOG", label: "Scoped Backlog" },
@@ -100,10 +100,6 @@ const FilterDropdown = ({ label, options, value, onChange }) => {
     );
 };
 
-const iconMap = {
-    success: <CircleCheckBig className="w-4 h-4" />,
-    error: <CircleAlert className="w-4 h-4" />,
-};
 
 const DateRangeFilter = ({ from, to, onChange }) => {
     return (
@@ -198,11 +194,15 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
     useEffect(() => {
         if (location.state?.toast) {
             const toastData = location.state.toast;
-
-            showToast({
-                ...toastData,
-                icon: iconMap[toastData.icon],
-            });
+            if (toastData.type === "success") {
+                import("../../utils/toastHelpers").then(({ toastSuccess }) => {
+                    toastSuccess(toastData.title, toastData.description);
+                });
+            } else {
+                import("../../utils/toastHelpers").then(({ toastError }) => {
+                    toastError(toastData.description, toastData.title);
+                });
+            }
             window.history.replaceState({}, document.title);
         }
     }, [location.state]);
@@ -231,7 +231,8 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
             setTickets(res.items || res);
             setPagination(res.paginationMeta || null);
         } catch (err) {
-            setError(err.response?.data?.error || err.message || "Failed to load tickets");
+            setError(err?.message ?? "Failed to load tickets.");
+            toastError(err, "Failed to Load Tickets");
         } finally {
             setLoading(false);
         }
@@ -311,12 +312,7 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
         const end = key === "date_to" ? value : activeEndDate;
 
         if (start && end && new Date(start) > new Date(end)) {
-            showToast({
-                title: "Invalid Date Range",
-                description: "From date must be before To date",
-                icon: <XCircle className="w-4 h-4" />,
-                type: "error",
-            });
+            toastError("From date must be before To date.", "Invalid Date Range");
             return;
         }
 
