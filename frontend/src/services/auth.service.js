@@ -104,7 +104,6 @@ export const logoutUser = async () => {
     localStorage.removeItem("user");
     return true;
   } catch (err) {
-    console.error("Logout failed:", err);
     return false;
   }
 };

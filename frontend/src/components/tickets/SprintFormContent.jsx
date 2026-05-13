@@ -17,8 +17,6 @@ const SprintFormContent = ({ sprint, openModal, closeModal, onSuccess }) => {
 
     useEffect(() => {
         if (sprint) {
-            console.log("sprint", sprint);
-
             setName(sprint.name || "");
             setStartDate(
                 sprint.startDate

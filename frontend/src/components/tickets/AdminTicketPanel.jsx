@@ -46,9 +46,6 @@ const getActionMeta = (action, oldValue = {}, newValue = {}, allAssignees = [], 
     const old = oldValue ?? {};
     const next = newValue ?? {};
 
-    console.log("old", old);
-    console.log("next", next);
-
     const getAssigneeName = (id) =>
         id ? (allAssignees.find((a) => a.id.toString() === id.toString())?.name ?? `#${id}`) : null;
 

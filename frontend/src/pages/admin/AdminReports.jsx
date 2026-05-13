@@ -23,9 +23,7 @@ const AdminReports = () => {
             isAdmin={true}
             basePath="/admin"
             header={header}
-            onCreateTicket={(assignees, sprint) => {
-                console.log("Create Ticket", assignees, sprint);
-            }}
+            onCreateTicket={() => {}}
         />
     );
 };

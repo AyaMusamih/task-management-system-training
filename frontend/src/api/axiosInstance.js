@@ -70,7 +70,6 @@ axiosInstance.interceptors.response.use(
         }
 
         const response = await refreshClient.post("/auth/refresh");
-        console.log(response.data.data + "\n Refresh Error!");
 
         const newToken = response.data.data;
 
