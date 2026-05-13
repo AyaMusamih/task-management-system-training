@@ -61,7 +61,7 @@ const UserTicketPanel = ({ ticket, onStatusSuccess }) => {
 
             <div className="flex flex-col gap-2 flex-1">
                 <h3 className="text-text-primary" style={{ fontFamily: 'Poppins', fontWeight: 600, fontSize: '20px' }}>Description</h3>
-                <p className="whitespace-pre-wrap text-text-primary" style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: '16px' }}>
+                <p className="whitespace-pre-wrap break-words text-text-primary" style={{ fontFamily: 'Inter', fontWeight: 700, fontSize: '16px' }}>
                     {ticket.description || "No description"}
                 </p>
             </div>
