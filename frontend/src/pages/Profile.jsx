@@ -53,7 +53,7 @@ const ProfileField = ({ label, loading, skeletonWidth = "w-48", children }) => (
     </div>
 );
 
-const ProfileHeader = ({ profile, isEdit, loading, onEditClick }) => {
+const ProfileHeader = ({ profile, loading }) => {
     const [coverHover, setCoverHover] = useState(false);
     const [avatarHover, setAvatarHover] = useState(false);
 
@@ -154,17 +154,6 @@ const ProfileHeader = ({ profile, isEdit, loading, onEditClick }) => {
                         )}
                     </div>
                 </div>
-
-                {!isEdit && (
-                    <button
-                        onClick={onEditClick}
-                        className="self-center sm:self-auto mt-2 sm:mt-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-field-typed cursor-pointer transition-colors hover:brightness-90"
-                        style={{ backgroundColor: "#DFE3E6", color: "#2C2F31" }}
-                    >
-                        <Pencil className="w-4 h-4" style={{ color: "#2C2F31" }} />
-                        Edit Profile
-                    </button>
-                )}
             </div>
         </div>
     );
@@ -175,12 +164,20 @@ const Profile = () => {
     const [loading, setLoading] = useState(true);
     const [fetchError, setFetchError] = useState(null);
 
-    const [isEdit, setIsEdit] = useState(false);
-    const [form, setForm] = useState({ name: "", email: "" });
-    const [errors, setErrors] = useState({});
-    const [saving, setSaving] = useState(false);
-    const [submitted, setSubmitted] = useState(false);
+    // About section
+    const [isEditAbout, setIsEditAbout] = useState(false);
+    const [formAbout, setFormAbout] = useState({ name: "" });
+    const [errorsAbout, setErrorsAbout] = useState({});
+    const [savingAbout, setSavingAbout] = useState(false);
+    const [submittedAbout, setSubmittedAbout] = useState(false);
     const nameRef = useRef(null);
+
+    // Contact section
+    const [isEditContact, setIsEditContact] = useState(false);
+    const [formContact, setFormContact] = useState({ email: "" });
+    const [errorsContact, setErrorsContact] = useState({});
+    const [savingContact, setSavingContact] = useState(false);
+    const [submittedContact, setSubmittedContact] = useState(false);
     const emailRef = useRef(null);
 
     const fetchProfile = async () => {
@@ -198,31 +195,44 @@ const Profile = () => {
 
     useEffect(() => { fetchProfile(); }, []);
 
+    // Validate on change after submit
     useEffect(() => {
-        if (submitted) setErrors(validate(form));
-    }, [form, submitted]);
+        if (submittedAbout) {
+            const errs = validate({ name: formAbout.name, email: profile?.email || "" });
+            setErrorsAbout({ name: errs.name });
+        }
+    }, [formAbout, submittedAbout]);
 
-    const handleEditClick = () => {
-        setForm({ name: profile?.name || "", email: profile?.email || "" });
-        setErrors({});
-        setSubmitted(false);
-        setIsEdit(true);
+    useEffect(() => {
+        if (submittedContact) {
+            const errs = validate({ name: profile?.name || "", email: formContact.email });
+            setErrorsContact({ email: errs.email });
+        }
+    }, [formContact, submittedContact]);
+
+    // About handlers
+    const handleEditAbout = () => {
+        setFormAbout({ name: profile?.name || "" });
+        setErrorsAbout({});
+        setSubmittedAbout(false);
+        setIsEditAbout(true);
     };
 
-    const handleCancel = () => {
-        setIsEdit(false);
-        setErrors({});
-        setSubmitted(false);
+    const handleCancelAbout = () => {
+        setIsEditAbout(false);
+        setErrorsAbout({});
+        setSubmittedAbout(false);
     };
 
-    const handleChange = (field) => (e) => {
-        setForm((prev) => ({ ...prev, [field]: e.target.value }));
-        if (submitted) setErrors((prev) => ({ ...prev, [field]: undefined }));
+    const handleChangeAbout = (e) => {
+        setFormAbout((prev) => ({ ...prev, name: e.target.value }));
+        if (submittedAbout) setErrorsAbout((prev) => ({ ...prev, name: undefined }));
     };
 
-    const handleSave = async () => {
-        setSubmitted(true);
-        const validationErrors = validate(form);
+    const handleSaveAbout = async () => {
+        setSubmittedAbout(true);
+        const validationErrors = validate({ name: formAbout.name, email: profile?.email || "" });
+        const nameError = validationErrors.name ? { name: validationErrors.name } : {};
 
         if (Object.keys(validationErrors).length > 0) {
             setErrors(validationErrors);
@@ -235,20 +245,20 @@ const Profile = () => {
             return;
         }
 
-        setSaving(true);
+        setSavingContact(true);
         try {
             const updated = await updateProfile({
-                name: form.name.trim(),
-                email: form.email.trim(),
+                name: profile?.name,
+                email: formContact.email.trim(),
             });
 
             const stored = JSON.parse(localStorage.getItem("user") || "{}");
-            localStorage.setItem("user", JSON.stringify({ ...stored, name: updated.name, email: updated.email }));
+            localStorage.setItem("user", JSON.stringify({ ...stored, email: updated.email }));
 
             setProfile(updated);
-            setIsEdit(false);
-            setSubmitted(false);
-            setErrors({});
+            setIsEditContact(false);
+            setSubmittedContact(false);
+            setErrorsContact({});
 
             toastSuccess("Profile Updated", "Your profile information has been saved.");
         } catch (err) {
@@ -264,7 +274,7 @@ const Profile = () => {
             }
             toastError(err, "Couldn't Save Changes");
         } finally {
-            setSaving(false);
+            setSavingContact(false);
         }
     };
 
@@ -317,30 +327,64 @@ const Profile = () => {
 
                         <ProfileHeader
                             profile={profile}
-                            isEdit={isEdit}
                             loading={loading}
-                            onEditClick={handleEditClick}
                         />
 
                         {/* About You */}
                         <SectionTitle>About You</SectionTitle>
                         <Section>
-                            {isEdit ? (
+                            <div className="flex justify-between items-start">
+                                <div className="flex flex-col gap-0.5">
+                                    <p className="text-profile-sections">Full name</p>
+                                    <p className="text-input text-text-primary">
+                                        Update your display name
+                                    </p>
+                                </div>
+                                {!isEditAbout && (
+                                    <button
+                                        onClick={handleEditAbout}
+                                        className="w-8 h-8 flex items-center justify-center rounded-md bg-admin-btn/40 hover:bg-admin-btn/60 cursor-pointer"
+                                    >
+                                        <Pencil className="w-4 h-4 text-text-primary" />
+                                    </button>
+                                )}
+                            </div>
+
+                            {isEditAbout ? (
                                 <>
                                     <Input
                                         ref={nameRef}
                                         label="Full name"
                                         type="text"
-                                        value={form.name}
-                                        onChange={handleChange("name")}
+                                        value={formAbout.name}
+                                        onChange={handleChangeAbout}
                                         placeholder="Enter your full name"
-                                        error={errors.name}
-                                        success={form.name && !errors.name && submitted}
-                                        disabled={saving}
+                                        error={errorsAbout.name}
+                                        success={formAbout.name && !errorsAbout.name && submittedAbout}
+                                        disabled={savingAbout}
                                     />
                                     <div className="flex flex-col gap-0.5">
                                         <p className="text-field-label text-text-secondary">Member since</p>
                                         <p className="text-profile-info">{memberSince}</p>
+                                    </div>
+                                    <div className="flex justify-end">
+                                        <div className="flex items-center gap-2.5">
+                                            <Button
+                                                variant="ghost"
+                                                onClick={handleCancelAbout}
+                                                disabled={savingAbout}
+                                                className="px-9 h-10 rounded-lg !bg-input-bg !text-text-primary !text-[14px] cursor-pointer !border-0 !w-auto"
+                                            >
+                                                Cancel
+                                            </Button>
+                                            <Button
+                                                onClick={handleSaveAbout}
+                                                loading={savingAbout}
+                                                className="px-8 h-10 rounded-lg !bg-text-primary hover:!bg-text-primary/90 !text-[14px] cursor-pointer !text-background !w-auto whitespace-nowrap"
+                                            >
+                                                {savingAbout ? "Saving…" : "Update Name"}
+                                            </Button>
+                                        </div>
                                     </div>
                                 </>
                             ) : (
@@ -358,7 +402,24 @@ const Profile = () => {
                         {/* Contact */}
                         <SectionTitle>Contact</SectionTitle>
                         <Section>
-                            {isEdit ? (
+                            <div className="flex justify-between items-start">
+                                <div className="flex flex-col gap-0.5">
+                                    <p className="text-profile-sections">Email address</p>
+                                    <p className="text-input text-text-primary">
+                                        Update your email address
+                                    </p>
+                                </div>
+                                {!isEditContact && (
+                                    <button
+                                        onClick={handleEditContact}
+                                        className="w-8 h-8 flex items-center justify-center rounded-md bg-admin-btn/40 hover:bg-admin-btn/60 cursor-pointer"
+                                    >
+                                        <Pencil className="w-4 h-4 text-text-primary" />
+                                    </button>
+                                )}
+                            </div>
+
+                            {isEditContact ? (
                                 <>
                                     <div className="flex flex-col gap-0.5 mb-3">
                                         <p className="text-profile-sections">Current email</p>
@@ -371,13 +432,32 @@ const Profile = () => {
                                         ref={emailRef}
                                         label="New Email address"
                                         type="email"
-                                        value={form.email}
-                                        onChange={handleChange("email")}
+                                        value={formContact.email}
+                                        onChange={handleChangeContact}
                                         placeholder="Enter new email address"
-                                        error={errors.email}
-                                        success={form.email && !errors.email && submitted}
-                                        disabled={saving}
+                                        error={errorsContact.email}
+                                        success={formContact.email && !errorsContact.email && submittedContact}
+                                        disabled={savingContact}
                                     />
+                                    <div className="flex justify-end">
+                                        <div className="flex items-center gap-2.5">
+                                            <Button
+                                                variant="ghost"
+                                                onClick={handleCancelContact}
+                                                disabled={savingContact}
+                                                className="px-6 h-10 rounded-lg !bg-input-bg !text-text-primary !text-[14px] cursor-pointer !border-0 !w-auto"
+                                            >
+                                                Cancel
+                                            </Button>
+                                            <Button
+                                                onClick={handleSaveContact}
+                                                loading={savingContact}
+                                                className="px-9 h-10 rounded-lg !bg-text-primary hover:!bg-text-primary/90 !text-[14px] cursor-pointer !text-background !w-auto whitespace-nowrap"
+                                            >
+                                                {savingContact ? "Saving…" : "Update Email"}
+                                            </Button>
+                                        </div>
+                                    </div>
                                 </>
                             ) : (
                                 <ProfileField label="Email address*" loading={loading}>
@@ -389,29 +469,6 @@ const Profile = () => {
                         {/* Security / Change Password */}
                         <SectionTitle>Security</SectionTitle>
                         <ChangePasswordSection />
-
-                        {/* Save / Cancel */}
-                        {isEdit && (
-                            <div className="mx-6 mt-4 flex items-center justify-end gap-3">
-                                <div className="mx-6 mt-4 flex items-center justify-end gap-2.5">
-                                    <Button
-                                        variant="ghost"
-                                        onClick={handleCancel}
-                                        disabled={saving}
-                                        className="px-6 h-10 rounded-lg !bg-background !text-text-primary !text-[14px] cursor-pointer !border-0 !w-auto"
-                                    >
-                                        Cancel
-                                    </Button>
-                                    <Button
-                                        onClick={handleSave}
-                                        loading={saving}
-                                        className="px-6 h-10 rounded-lg !bg-text-primary hover:!bg-text-primary/90 !text-[14px] cursor-pointer !text-background !w-auto whitespace-nowrap"
-                                    >
-                                        {saving ? "Saving…" : "Save changes"}
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
                     </>
                 )}
             </div>

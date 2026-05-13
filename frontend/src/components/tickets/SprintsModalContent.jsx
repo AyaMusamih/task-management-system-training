@@ -80,15 +80,19 @@ const SprintsModalContent = ({ openModal, closeModal, onSprintsChange }) => {
     return (
         <div className="space-y-3">
 
-            <button
-                onClick={handleAdd}
-                className="w-10 h-10 flex items-center justify-center rounded-full bg-accent-blue hover:bg-accent-blue/80 cursor-pointer"
-            >
-                <Plus className="w-5 h-5 text-white" />
-            </button>
+            {loading ? (
+                <div className="w-10 h-10 rounded-full skeleton animate-pulse" />
+            ) : (
+                <button
+                    onClick={handleAdd}
+                    className="w-10 h-10 flex items-center justify-center rounded-full bg-accent-blue hover:bg-accent-blue/80 cursor-pointer transition-all duration-200"
+                >
+                    <Plus className="w-5 h-5 text-white" />
+                </button>
+            )}
 
             {loading ? (
-                <Loading variant="skeleton" rows={5} />
+                <Loading variant="skeleton" rows={10} />
             ) : sprints.length === 0 ? (
                 <p className="text-text-hint text-hint text-center py-6">No sprints yet. Create one!</p>
             ) : (

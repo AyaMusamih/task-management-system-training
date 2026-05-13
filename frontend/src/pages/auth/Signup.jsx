@@ -262,7 +262,7 @@ const Signup = () => {
           type="button"
           className="google-button w-full flex items-center justify-center gap-3 text-google-btn bg-input-bg"
           disabled={loading}
-          onClick={() => console.log("Google login")}
+          onClick={() => {}}
         >
           <img src={GoogleIcon} alt="Google" className="w-5 h-5" />
           Continue with Google

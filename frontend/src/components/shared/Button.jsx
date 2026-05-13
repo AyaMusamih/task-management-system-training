@@ -33,7 +33,7 @@ const Button = ({
   };
 
   const disabledStyles =
-    disabled ? `opacity-50 cursor-not-allowed pointer-events-none ${disabledClassName || "bg-input-bg"}` : loading ? "opacity-50 cursor-not-allowed pointer-events-none" : success ? "bg-success-green hover:bg-success-dark" : error ? "bg-error-red hover:bg-error-dark" : "";
+    disabled ? `opacity-50 cursor-not-allowed pointer-events-none ${disabledClassName || "bg-input-bg"}` : loading ? "opacity-50 cursor-not-allowed pointer-events-none" : success ? "bg-success-green hover:bg-success-dark" : "";
 
   return (
     <div className="relative w-full group">
