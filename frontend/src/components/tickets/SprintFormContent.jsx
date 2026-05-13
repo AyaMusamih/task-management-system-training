@@ -17,15 +17,17 @@ const SprintFormContent = ({ sprint, openModal, closeModal, onSuccess }) => {
 
     useEffect(() => {
         if (sprint) {
+            console.log("sprint", sprint);
+
             setName(sprint.name || "");
             setStartDate(
                 sprint.startDate
-                    ? new Date(sprint.startDate).toISOString().split("T")[0]
+                    ? new Date(sprint.startDate).toLocaleDateString("en-CA")
                     : ""
             );
             setEndDate(
                 sprint.endDate
-                    ? new Date(sprint.endDate).toISOString().split("T")[0]
+                    ? new Date(sprint.endDate).toLocaleDateString("en-CA")
                     : ""
             );
         }
@@ -118,6 +120,8 @@ const SprintFormContent = ({ sprint, openModal, closeModal, onSuccess }) => {
         }
     };
 
+    const isFormEmpty = !name.trim() || !startDate || !endDate;
+
     return (
         <div className="space-y-4">
 
@@ -163,11 +167,11 @@ const SprintFormContent = ({ sprint, openModal, closeModal, onSuccess }) => {
                     label="End Date"
                     type="date"
                     value={endDate}
+                    min={startDate || new Date().toLocaleDateString("en-CA")}
                     onChange={(e) => {
                         setEndDate(e.target.value);
                         setErrors((prev) => ({ ...prev, endDate: undefined }));
                     }}
-                    min={startDate || new Date().toLocaleDateString("en-CA")}
                     className={`!bg-info-bg ${endDate ? "text-text-filled" : "text-text-placeholder"}`}
                     error={errors.endDate}
                 />
@@ -178,6 +182,8 @@ const SprintFormContent = ({ sprint, openModal, closeModal, onSuccess }) => {
                 size="lg"
                 onClick={handleSubmit}
                 loading={loading}
+                disabled={isFormEmpty || loading}
+                disabledClassName="bg-accent-blue"
                 className="w-full mt-2 !rounded-xl bg-accent-blue text-white font-poppins text-[15px] font-medium cursor-pointer"
             >
                 {loading
