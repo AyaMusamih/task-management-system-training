@@ -43,7 +43,7 @@ const StatusControl = ({
     };
 
     const handleSelect = async (newStatus) => {
-        // if (newStatus === status) return;
+        console.log("newStatus:", newStatus, "| current status:", status);
 
         setOpen(false);
         setError(null);
