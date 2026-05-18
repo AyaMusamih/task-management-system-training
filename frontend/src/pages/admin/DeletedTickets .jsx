@@ -468,10 +468,10 @@ const DeletedTickets = () => {
                 {/* Footer */}
                 <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 mt-auto">
                     <span className="text-hint text-text-hint hidden sm:inline">
-                        {loading ? "Loading..." : error ? "—" : `Showing ${tickets.length} of ${total} tasks`}
+                        {loading ? "Loading..." : error ? "—" : `Showing ${(currentPage - 1) * (pagination?.limit ?? 20) + 1}–${Math.min(currentPage * (pagination?.limit ?? 20), total)} tasks`}
                     </span>
                     <span className="text-hint text-text-hint sm:hidden">
-                        {!loading && !error && `${tickets.length} / ${total}`}
+                        {!loading && !error && `${(currentPage - 1) * (pagination?.limit ?? 20) + 1}–${Math.min(currentPage * (pagination?.limit ?? 20), total)}`}
                     </span>
                     <div className="flex items-center gap-2">
                         <button
