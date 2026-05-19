@@ -10,7 +10,7 @@ const Loading = ({
     if (variant === "skeleton") {
         return (
             <div className={`flex flex-col justify-center space-y-2 py-2${className}`}>
-                {Array.from({ length: rows }).map((_, index) => (
+                {Array.from({ length: rows })?.map((_, index) => (
                     <div
                         key={index}
                         className="h-10 skeleton rounded-md"

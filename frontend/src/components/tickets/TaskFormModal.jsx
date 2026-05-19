@@ -92,7 +92,7 @@ const StyledSelect = ({ value, onChange, options, placeholder, hasError, disable
                 <>
                     <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
                     <div className="absolute top-full mt-1 left-0 right-0 z-[100] bg-background border border-divider/50 rounded-xl py-1.5 shadow-2xl max-h-48 overflow-y-auto custom-scrollbar">
-                        {options.map((opt) => (
+                        {options?.map((opt) => (
                             <button
                                 key={opt.value}
                                 type="button"
@@ -138,7 +138,7 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], onSucce
                 const res = await getSprints(1, 100);
                 const all = res.data?.items || [];
                 setSprintOptions(
-                    all.map((s) => ({
+                    all?.map((s) => ({
                         value: s.id.toString(),
                         label: s.isActive ? `${s.name} (Active)` : s.name,
                     }))
@@ -230,7 +230,7 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], onSucce
         }
     };
 
-    const assigneeOptions = assignees.map((a) => ({
+    const assigneeOptions = assignees?.map((a) => ({
         value: a.id?.toString(),
         label: a.name,
     }));
@@ -328,7 +328,7 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], onSucce
             <div>
                 <FieldLabel>Priority</FieldLabel>
                 <div className="flex gap-2">
-                    {PRIORITY_OPTIONS.map((label) => {
+                    {PRIORITY_OPTIONS?.map((label) => {
                         const val = PRIORITY_VALUES[label];
                         const isActive = fields.priority === val;
                         return (

@@ -35,7 +35,7 @@ const STATUS_LABELS = {
 
 const getInitials = (name) => {
     if (!name) return "?";
-    return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
+    return name.split(" ")?.map((n) => n[0]).join("").slice(0, 2).toUpperCase();
 };
 
 const AVATAR_COLORS = [
@@ -81,7 +81,7 @@ const TicketsTable = ({ tickets, showAssignee = true, showContext = false, onRow
             <div className="md:hidden flex flex-col divide-y divide-divider/20">
                 {isLoading ? (
                     <Loading variant="skeleton" rows={8} />
-                ) : tickets.map((ticket) => (
+                ) : tickets?.map((ticket) => (
                     <div
                         key={ticket.id}
                         onClick={() => handleRowClick(ticket)}
@@ -171,7 +171,7 @@ const TicketsTable = ({ tickets, showAssignee = true, showContext = false, onRow
                                     />
                                 </td>
                             </tr>
-                        ) : tickets.map((ticket) => (
+                        ) : tickets?.map((ticket) => (
                             <tr
                                 key={ticket.id}
                                 onClick={() => handleRowClick(ticket)}

@@ -8,7 +8,7 @@ import { toastSuccess, toastError } from "../utils/toastHelpers";
 
 
 const getInitials = (name = "") =>
-    name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
+    name.split(" ")?.map((n) => n[0]).join("").slice(0, 2).toUpperCase();
 
 const validate = ({ name, email }) => {
     const errors = {};

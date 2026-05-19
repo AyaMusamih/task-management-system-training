@@ -34,7 +34,7 @@ const FilterStyleDropdown = ({ label, staticLabel, options, value, onChange, dis
             {open && !disabled && (
                 <div className="absolute top-full mt-1 left-0 z-50 bg-input-bg border border-divider/50 rounded-lg py-1 min-w-40 shadow-xl max-h-48 overflow-y-auto
                     [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-input-bg [&::-webkit-scrollbar-thumb]:bg-white/30 [&::-webkit-scrollbar-thumb]:rounded-full">
-                    {options.map((opt) => (
+                    {options?.map((opt) => (
                         <button
                             key={opt.value}
                             onClick={() => { onChange(opt.value); setOpen(false); }}

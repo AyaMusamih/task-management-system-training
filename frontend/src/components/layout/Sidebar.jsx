@@ -32,7 +32,7 @@ const SidebarContent = ({ links, initials, user, onClose, onLogoutClick }) => {
 
             {/* Nav */}
             <nav className="flex flex-col gap-1 flex-1">
-                {links.map(({ name, path, icon: Icon }) => (
+                {links?.map(({ name, path, icon: Icon }) => (
                     <NavLink
                         key={path}
                         to={path}
@@ -100,7 +100,7 @@ const Sidebar = ({ user, isOpen, onClose, onLogoutClick }) => {
     const links = user?.role === "ADMIN" ? adminLinks : userLinks;
 
     const initials = user?.name
-        ? user.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
+        ? user.name.split(" ")?.map((n) => n[0]).join("").slice(0, 2).toUpperCase()
         : "?";
 
     return (

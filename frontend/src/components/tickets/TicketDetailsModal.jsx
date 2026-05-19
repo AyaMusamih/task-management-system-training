@@ -16,7 +16,7 @@ import { toastSuccess, toastError } from "../../utils/toastHelpers";
 // ─── Helpers 
 
 const getInitials = (name = "") =>
-    name.split(" ").slice(0, 2).map((w) => w[0]?.toUpperCase() ?? "").join("");
+    name.split(" ").slice(0, 2)?.map((w) => w[0]?.toUpperCase() ?? "").join("");
 
 const getRelativeTime = (dateStr) => {
     const date = new Date(dateStr);
@@ -73,7 +73,7 @@ const CommentsPanelSkeleton = () => (
             </div>
         </div>
         <div className="px-6 pb-6 flex flex-col gap-4 mt-2">
-            {[...Array(4)].map((_, i) => (
+            {[...Array(4)]?.map((_, i) => (
                 <div key={i} className="flex gap-3">
                     <div className="w-8 h-8 rounded-full skeleton flex-shrink-0" />
                     <div className="flex-1 flex flex-col gap-1.5 pt-1">
@@ -299,7 +299,7 @@ const CommentsPanel = ({ ticketId, ticket, isAdmin = false, fetchAudit, onCommen
                     </div>
                 )}
 
-                {sortedComments.map((item) => {
+                {sortedComments?.map((item) => {
                     const authorName = item.author?.name || "Unknown";
                     return (
                         <div key={`comment-${item.id}`} className="flex gap-3">
