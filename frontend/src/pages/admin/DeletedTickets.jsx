@@ -35,7 +35,7 @@ const AVATAR_COLORS = [
 ];
 
 const getInitials = (name = "") =>
-    name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase() || "?";
+    name.split(" ")?.map((n) => n[0]).join("").slice(0, 2).toUpperCase() || "?";
 
 const getAvatarColor = (name = "") => {
     let hash = 0;
@@ -89,7 +89,7 @@ const FilterDropdown = ({ label, options, value, onChange }) => {
                     >
                         All
                     </button>
-                    {options.map((opt) => (
+                    {options?.map((opt) => (
                         <button
                             key={opt.value ?? opt}
                             onClick={() => { onChange(opt.value ?? opt); setOpen(false); }}
@@ -300,7 +300,7 @@ const DeletedTickets = () => {
                         </div>
                         <FilterDropdown
                             label="Assignee"
-                            options={allAssignees.map((a) => ({ value: String(a.id), label: a.name }))}
+                            options={allAssignees?.map((a) => ({ value: String(a.id), label: a.name }))}
                             value={activeAssignee
                                 ? allAssignees.find((a) => String(a.id) === String(activeAssignee))?.name ?? null
                                 : null}
@@ -314,7 +314,7 @@ const DeletedTickets = () => {
                         />
                         <FilterDropdown
                             label="Sprint"
-                            options={allSprints.map((s) => ({ value: String(s.id), label: s.name }))}
+                            options={allSprints?.map((s) => ({ value: String(s.id), label: s.name }))}
                             value={activeSprintFilter
                                 ? allSprints.find((s) => String(s.id) === activeSprintFilter)?.name ?? null
                                 : null}
@@ -399,7 +399,7 @@ const DeletedTickets = () => {
                                         </td>
                                     </tr>
                                 ) : (
-                                    tickets.map((ticket) => (
+                                    tickets?.map((ticket) => (
                                         <tr
                                             key={ticket.id}
                                             className="border-b border-divider/20 hover:bg-white/[0.02] transition-colors duration-100"

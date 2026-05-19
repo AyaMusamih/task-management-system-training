@@ -112,7 +112,7 @@ const StatusControl = ({
                 {open && canUpdate && (
                     <div className="absolute mt-2 w-full bg-[#1A2332] border border-white/10 rounded-lg shadowlg z-50">
 
-                        {getAllowedStatuses().map((s) => (
+                        {getAllowedStatuses()?.map((s) => (
                             <div
                                 key={s.key}
                                 onClick={() => handleSelect(s.key)}

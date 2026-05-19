@@ -10,7 +10,7 @@ import AdminReports from './pages/admin/AdminReports';
 import UserReports from './pages/user/UserReports';
 import AllTickets from './pages/admin/AllTickets';
 import TaskManagement from './pages/admin/TaskManagement';
-import DeletedTickets from './pages/admin/DeletedTickets ';
+import DeletedTickets from './pages/admin/DeletedTickets';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import UserDashboard from './pages/user/UserDashboard';
 import NotFound from './pages/NotFound';

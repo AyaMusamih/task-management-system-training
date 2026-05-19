@@ -45,7 +45,7 @@ const ReportView = ({ isAdmin, header }) => {
     const [allSprints, setAllSprints] = useState([]);
     const [allAssignees, setAllAssignees] = useState([]);
     const activeStatusLabel = STAGES.find((g) => g.key === activeStatus)?.label ?? null;
-    const statusGroupOptions = STAGES.map((g) => ({ value: g.key, label: g.label }));
+    const statusGroupOptions = STAGES?.map((g) => ({ value: g.key, label: g.label }));
     const activeAssigneeName = activeAssignee
         ? allAssignees.find((a) => String(a.id) === String(activeAssignee))?.name ?? null
         : null;
@@ -125,7 +125,7 @@ const ReportView = ({ isAdmin, header }) => {
     }, [isAdmin]);
 
     const formattedTickets = useMemo(() => {
-        return recentTickets.map(t => ({
+        return recentTickets?.map(t => ({
             id: t.id,
             title: t.title,
             status: t.status,
@@ -265,7 +265,7 @@ const ReportView = ({ isAdmin, header }) => {
                 setSummary(res.summary);
                 setDelta(res.summary.period_delta);
 
-                setMembers((res.members || []).map((m) => ({
+                setMembers((res.members || [])?.map((m) => ({
                     id: m.user_id,
                     name: m.name,
                     assigned: m.assigned,
@@ -275,7 +275,7 @@ const ReportView = ({ isAdmin, header }) => {
                     completionRate: Math.round(m.completion_rate * 100),
                 })));
 
-                setChart((res.chart || []).map((c) => ({
+                setChart((res.chart || [])?.map((c) => ({
                     week: c.week,
                     completed: c.completed,
                     inProgress: c.in_progress,
@@ -372,7 +372,7 @@ const ReportView = ({ isAdmin, header }) => {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between px-4 py-[12px] gap-2">
                     <div className="flex items-center gap-2 flex-wrap">
                         {loading
-                            ? Array.from({ length: isAdmin ? 4 : 3 }).map((_, i) => (
+                            ? Array.from({ length: isAdmin ? 4 : 3 })?.map((_, i) => (
                                 <FiltersSkeleton key={i} />
                             ))
                             :
@@ -391,14 +391,14 @@ const ReportView = ({ isAdmin, header }) => {
                                 {isAdmin && (
                                     <FilterDropdown
                                         label="Assignee"
-                                        options={allAssignees.map((a) => ({ value: String(a.id), label: a.name }))}
+                                        options={allAssignees?.map((a) => ({ value: String(a.id), label: a.name }))}
                                         value={activeAssigneeName}
                                         onChange={(id) => setParam("assignee_id", id)}
                                     />
                                 )}
                                 <FilterDropdown
                                     label="Sprint"
-                                    options={allSprints.map((s) => ({ value: String(s.id), label: s.name }))}
+                                    options={allSprints?.map((s) => ({ value: String(s.id), label: s.name }))}
                                     value={activeSprintFilter
                                         ? allSprints.find((s) => String(s.id) === activeSprintFilter)?.name ?? null
                                         : null}
@@ -409,7 +409,7 @@ const ReportView = ({ isAdmin, header }) => {
                     </div>
                     <div>
                         {loading
-                            ? Array.from({ length: isAdmin ? 1 : 0 }).map((_, i) => (
+                            ? Array.from({ length: isAdmin ? 1 : 0 })?.map((_, i) => (
                                 <ExportBtnSkeleton key={i} />
                             ))
                             :
@@ -433,7 +433,7 @@ const ReportView = ({ isAdmin, header }) => {
             {!shouldHideCards && (
                 <div className={`grid gap-2 mb-8 px-4 ${isAdmin ? "grid-cols-2 md:grid-cols-4" : "grid-cols-2 md:grid-cols-3"}`}>
                     {loading
-                        ? Array.from({ length: isAdmin ? 4 : 3 }).map((_, i) => (
+                        ? Array.from({ length: isAdmin ? 4 : 3 })?.map((_, i) => (
                             <StatsCardSkeleton key={i} />
                         ))
                         : stats.map((s, i) => (
@@ -453,7 +453,7 @@ const ReportView = ({ isAdmin, header }) => {
             {isAdmin && !shouldHideContent && (
                 <div className="px-4 mb-7">
                     {loading
-                        ? Array.from({ length: isAdmin ? 1 : 0 }).map((_, i) => (
+                        ? Array.from({ length: isAdmin ? 1 : 0 })?.map((_, i) => (
                             <ChartsSkeleton key={i} />
                         ))
                         :

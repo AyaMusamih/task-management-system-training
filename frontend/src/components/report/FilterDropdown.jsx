@@ -33,7 +33,7 @@ const FilterDropdown = ({ label, options, value, onChange }) => {
                     >
                         All
                     </button>
-                    {options.map((opt) => (
+                    {options?.map((opt) => (
                         <button
                             key={opt.value ?? opt}
                             onClick={() => { onChange(opt.value ?? opt); setOpen(false); }}

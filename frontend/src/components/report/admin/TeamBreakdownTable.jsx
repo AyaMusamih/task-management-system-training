@@ -27,7 +27,7 @@ const AVATAR_COLORS = [
 
 const getInitials = (name) => {
     if (!name) return "?";
-    return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase();
+    return name.split(" ")?.map((n) => n[0]).join("").slice(0, 2).toUpperCase();
 };
 const getAvatarColor = (name = "") => {
     let hash = 0;
@@ -64,7 +64,7 @@ export default function TeamBreakdownTable({
                                 </td>
                             </tr>
                         ) : (
-                            members.map((member) => (
+                            members?.map((member) => (
                                 <tr key={member.id} className="border-b border-divider/50">
                                     <td className="py-3 px-4">
                                         <div className="flex items-center gap-3">

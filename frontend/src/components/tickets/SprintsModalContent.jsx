@@ -96,7 +96,7 @@ const SprintsModalContent = ({ openModal, closeModal, onSprintsChange }) => {
             ) : sprints.length === 0 ? (
                 <p className="text-text-hint text-hint text-center py-6">No sprints yet. Create one!</p>
             ) : (
-                sprints.map((sprint) => (
+                sprints?.map((sprint) => (
                     <div
                         key={sprint.id}
                         className="flex items-center justify-between bg-[#080B12] px-4 py-2 rounded-xl text-white"

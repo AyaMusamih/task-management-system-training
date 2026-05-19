@@ -222,7 +222,7 @@ export const AdminTicketPanelSkeleton = () => (
         <div className="border-t border-divider/20 mt-1" />
         <div className="flex flex-col gap-2">
             <div className="h-5 w-32 skeleton rounded-md" />
-            {[...Array(4)].map((_, i) => (
+            {[...Array(4)]?.map((_, i) => (
                 <div key={i} className="flex items-center justify-between gap-3 py-0.5">
                     <div className="flex items-center gap-2 flex-1">
                         <div className="w-3.5 h-3.5 skeleton rounded-sm shrink-0" />
@@ -268,12 +268,12 @@ const AdminTicketPanel = ({
 
     const assigneeOptions = [
         { value: "", label: "Unassigned" },
-        ...allAssignees.map((a) => ({ value: a.id.toString(), label: a.name })),
+        ...allAssignees?.map((a) => ({ value: a.id.toString(), label: a.name })),
     ];
 
     const sprintOptions = [
         { value: "", label: "No Sprint" },
-        ...allSprints.map((s) => ({ value: s.id.toString(), label: s.name })),
+        ...allSprints?.map((s) => ({ value: s.id.toString(), label: s.name })),
     ];
 
 
@@ -469,7 +469,7 @@ const AdminTicketPanel = ({
 
                 {auditLoading ? (
                     <div className="flex flex-col gap-1.5">
-                        {[...Array(4)].map((_, i) => (
+                        {[...Array(4)]?.map((_, i) => (
                             <div
                                 key={i}
                                 className="flex items-center justify-between gap-3 py-0.5"
@@ -518,7 +518,7 @@ const AdminTicketPanel = ({
                     </div>
                 ) : (
                     <div className="flex flex-col gap-1.5">
-                        {audit.map((log) => {
+                        {audit?.map((log) => {
                             const actorName = log.user?.name || "Unknown";
                             const meta = getActionMeta(
                                 log.action,
@@ -531,7 +531,7 @@ const AdminTicketPanel = ({
                             const time = getRelativeTime(log.createdAt);
 
                             if (meta.multi) {
-                                return meta.changes.map((change, i) => (
+                                return meta.changes?.map((change, i) => (
                                     <ActivityRow
                                         key={`${log.id}-${i}`}
                                         icon={change.icon}

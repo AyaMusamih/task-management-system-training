@@ -68,7 +68,7 @@ export default function UserTicketsTable({
                                 </td>
                             </tr>
                         ) : (
-                            tickets.map((ticket) => (
+                            tickets?.map((ticket) => (
                                 <tr key={ticket.id} className="border-b border-divider/50">
                                     <td className="py-3 px-4 text-field-label text-text-primary">{ticket.title}</td>
                                     <td className="py-3 px-4">
