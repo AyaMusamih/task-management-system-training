@@ -1,14 +1,23 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, lazy, Suspense } from "react";
 import { useSearchParams, useNavigate, useParams, useOutletContext, useLocation } from "react-router-dom";
 import { Search, ChevronDown, Plus, ChevronLeft, ChevronRight, Bell, ClockArrowDown } from "lucide-react";
 import { getTickets } from "../../services/tickets.service";
 import { getUsers } from "../../services/user.service";
-import TicketsTable from "../tickets/TicketsTable";
-import TicketDetailsModal from "../tickets/TicketDetailsModal";
 import Button from "../shared/Button";
-import SprintsModalContent from "../tickets/SprintsModalContent"
 import { getSprints } from "../../services/sprints.service";
-import { toastError } from "../../utils/toastHelpers";
+import { toastError, toastSuccess } from "../../utils/toastHelpers"; // ← single static import, no dynamic imports needed
+
+// ─── Lazy-loaded heavy components ────────────────────────────────────────────
+const TicketsTable        = lazy(() => import("../tickets/TicketsTable"));
+const TicketDetailsModal  = lazy(() => import("../tickets/TicketDetailsModal"));
+const SprintsModalContent = lazy(() => import("../tickets/SprintsModalContent"));
+
+// ─── Minimal inline fallback ─────────────────────────────────────────────────
+const TableFallback = () => (
+    <div className="flex-1 flex items-center justify-center py-16 text-text-hint text-hint">
+        Loading…
+    </div>
+);
 
 const STAGES = [
     { key: "SCOPED_BACKLOG", label: "Scoped Backlog" },
@@ -23,35 +32,36 @@ const STAGES = [
 
 const STAGE_GROUPS = [
     { key: "needs_action", label: "Needs Action", statuses: ["TODO", "IN_PROGRESS"] },
-    { key: "in_review", label: "In Review", statuses: ["TESTED", "STAGED"] },
-    { key: "completed", label: "Completed", statuses: ["DONE", "DEPLOYED"] },
-    { key: "backlog", label: "Backlog", statuses: ["SCOPED_BACKLOG", "SPRINT_BACKLOG"] },
+    { key: "in_review",    label: "In Review",    statuses: ["TESTED", "STAGED"] },
+    { key: "completed",    label: "Completed",    statuses: ["DONE", "DEPLOYED"] },
+    { key: "backlog",      label: "Backlog",      statuses: ["SCOPED_BACKLOG", "SPRINT_BACKLOG"] },
 ];
 
 const STAGE_CHIP_STYLES = {
     SCOPED_BACKLOG: "border border-[#6B7280]/60 text-[#6B7280] bg-transparent hover:bg-[#6B7280]/10",
     SPRINT_BACKLOG: "border border-[#A78BFA]/60 text-[#A78BFA] bg-transparent hover:bg-[#A78BFA]/10",
-    TODO: "border border-[#60A5FA]/60 text-[#60A5FA] bg-transparent hover:bg-[#60A5FA]/10",
-    IN_PROGRESS: "border border-[#F59E0B]/60 text-[#F59E0B] bg-transparent hover:bg-[#F59E0B]/10",
-    DONE: "border border-[#22C55E]/60 text-[#22C55E] bg-transparent hover:bg-[#22C55E]/10",
-    TESTED: "border border-[#06B6D4]/60 text-[#06B6D4] bg-transparent hover:bg-[#06B6D4]/10",
-    STAGED: "border border-[#F97316]/60 text-[#F97316] bg-transparent hover:bg-[#F97316]/10",
-    DEPLOYED: "border border-[#16A34A]/60 text-[#16A34A] bg-transparent hover:bg-[#16A34A]/10",
+    TODO:           "border border-[#60A5FA]/60 text-[#60A5FA] bg-transparent hover:bg-[#60A5FA]/10",
+    IN_PROGRESS:    "border border-[#F59E0B]/60 text-[#F59E0B] bg-transparent hover:bg-[#F59E0B]/10",
+    DONE:           "border border-[#22C55E]/60 text-[#22C55E] bg-transparent hover:bg-[#22C55E]/10",
+    TESTED:         "border border-[#06B6D4]/60 text-[#06B6D4] bg-transparent hover:bg-[#06B6D4]/10",
+    STAGED:         "border border-[#F97316]/60 text-[#F97316] bg-transparent hover:bg-[#F97316]/10",
+    DEPLOYED:       "border border-[#16A34A]/60 text-[#16A34A] bg-transparent hover:bg-[#16A34A]/10",
 };
 
 const STAGE_CHIP_ACTIVE = {
     SCOPED_BACKLOG: "bg-[#6B7280]/20 border-[#6B7280] text-[#6B7280]",
     SPRINT_BACKLOG: "bg-[#A78BFA]/20 border-[#A78BFA] text-[#A78BFA]",
-    TODO: "bg-[#60A5FA26] border-[#60A5FA] text-[#60A5FA]",
-    IN_PROGRESS: "bg-[#F59E0B26] border-[#F59E0B] text-[#F59E0B]",
-    DONE: "bg-[#22C55E26] border-[#22C55E] text-[#22C55E]",
-    TESTED: "bg-[#06B6D426] border-[#06B6D4] text-[#06B6D4]",
-    STAGED: "bg-[#F9731626] border-[#F97316] text-[#F97316]",
-    DEPLOYED: "bg-[#16A34A26] border-[#16A34A] text-[#16A34A]",
+    TODO:           "bg-[#60A5FA26] border-[#60A5FA] text-[#60A5FA]",
+    IN_PROGRESS:    "bg-[#F59E0B26] border-[#F59E0B] text-[#F59E0B]",
+    DONE:           "bg-[#22C55E26] border-[#22C55E] text-[#22C55E]",
+    TESTED:         "bg-[#06B6D426] border-[#06B6D4] text-[#06B6D4]",
+    STAGED:         "bg-[#F9731626] border-[#F97316] text-[#F97316]",
+    DEPLOYED:       "bg-[#16A34A26] border-[#16A34A] text-[#16A34A]",
 };
 
 const PRIORITY_OPTIONS = ["CRITICAL", "HIGH", "MEDIUM", "LOW"];
 
+// ─── FilterDropdown ───────────────────────────────────────────────────────────
 const FilterDropdown = ({ label, options, value, onChange }) => {
     const [open, setOpen] = useState(false);
     const ref = useRef(null);
@@ -77,14 +87,14 @@ const FilterDropdown = ({ label, options, value, onChange }) => {
             </button>
             {open && (
                 <div className="absolute top-full mt-1 left-0 z-50 bg-input-bg border border-divider/50 rounded-lg py-1 min-w-36 shadow-xl max-h-48 overflow-y-auto
-  [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-input-bg [&::-webkit-scrollbar-thumb]:bg-white/30 [&::-webkit-scrollbar-thumb]:rounded-full">
+                    [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-input-bg [&::-webkit-scrollbar-thumb]:bg-white/30 [&::-webkit-scrollbar-thumb]:rounded-full">
                     <button
                         onClick={() => { onChange(null); setOpen(false); }}
                         className="w-full text-left px-3 py-1.5 text-hint text-text-hint hover:bg-white/5 cursor-pointer"
                     >
                         All
                     </button>
-                    {options.map((opt) => (
+                    {options?.map((opt) => (
                         <button
                             key={opt.value ?? opt}
                             onClick={() => { onChange(opt.value ?? opt); setOpen(false); }}
@@ -100,7 +110,7 @@ const FilterDropdown = ({ label, options, value, onChange }) => {
     );
 };
 
-
+// ─── DateRangeFilter ─────────────────────────────────────────────────────────
 const DateRangeFilter = ({ from, to, onChange }) => {
     return (
         <div className="flex items-center gap-3 bg-background border border-divider/40 rounded-lg px-3 py-2">
@@ -127,39 +137,39 @@ const DateRangeFilter = ({ from, to, onChange }) => {
     );
 };
 
+// ─── DashboardView ────────────────────────────────────────────────────────────
 const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, header }) => {
     const [searchParams, setSearchParams] = useSearchParams();
-    const navigate = useNavigate();
-    const location = useLocation();
-    const { id } = useParams();
+    const navigate  = useNavigate();
+    const location  = useLocation();
+    const { id }    = useParams();
     const { openModal, closeModal } = useOutletContext();
 
     const TABS = isAdmin
         ? [{ key: "sprint", label: "Sprint" }, { key: "scoped", label: "Scoped" }, { key: "all", label: "All" }]
         : [{ key: "sprint", label: "Sprint" }, { key: "scoped", label: "Scoped" }];
 
-    const activeTab = searchParams.get("view") || "sprint";
+    const activeTab        = searchParams.get("view")       || "sprint";
     const activeStageGroup = searchParams.get("stageGroup") || null;
-    const activeStatus = searchParams.get("status") || null;
-    const activePriority = searchParams.get("priority") || null;
-    const activeAssignee = searchParams.get("assignee") || null;
-    const searchQuery = searchParams.get("search") || "";
-    const currentPage = parseInt(searchParams.get("page") || "1", 10);
-    const activeStartDate = searchParams.get("startDate") || "";
-    const activeEndDate = searchParams.get("endDate") || "";
+    const activeStatus     = searchParams.get("status")     || null;
+    const activePriority   = searchParams.get("priority")   || null;
+    const activeAssignee   = searchParams.get("assignee")   || null;
+    const searchQuery      = searchParams.get("search")     || "";
+    const currentPage      = parseInt(searchParams.get("page") || "1", 10);
+    const activeStartDate  = searchParams.get("startDate")  || "";
+    const activeEndDate    = searchParams.get("endDate")    || "";
 
-    const [tickets, setTickets] = useState([]);
+    const [tickets,    setTickets]    = useState([]);
     const [pagination, setPagination] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-
+    const [loading,    setLoading]    = useState(true);
+    const [error,      setError]      = useState(null);
     const [allAssignees, setAllAssignees] = useState([]);
 
     useEffect(() => {
         if (!isAdmin) return;
         getUsers(1, 100)
             .then((res) => setAllAssignees(res.data?.users || []))
-            .catch(() => { });
+            .catch(() => {});
     }, [isAdmin]);
 
     const [allSprints, setAllSprints] = useState([]);
@@ -168,43 +178,37 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
     const refreshSprints = useCallback(() => {
         getSprints(1, 100)
             .then((res) => setAllSprints(res.data?.items || []))
-            .catch(() => { });
+            .catch(() => {});
     }, []);
 
-    useEffect(() => {
-        refreshSprints();
-    }, [refreshSprints]);
+    useEffect(() => { refreshSprints(); }, [refreshSprints]);
 
     const handleOpenSprints = () => {
         openModal({
             title: "Sprints",
             content: (
-                <SprintsModalContent
-                    openModal={openModal}
-                    closeModal={() => {
-                        refreshSprints();
-                        closeModal();
-                    }}
-                    onSprintsChange={refreshSprints}
-                />
+                <Suspense fallback={<TableFallback />}>
+                    <SprintsModalContent
+                        openModal={openModal}
+                        closeModal={() => { refreshSprints(); closeModal(); }}
+                        onSprintsChange={refreshSprints}
+                    />
+                </Suspense>
             ),
         });
     };
 
+    // ── Toast from navigation state ──────────────────────────────────────────
+    // toastSuccess/toastError are already statically imported — no dynamic import needed.
     useEffect(() => {
-        if (location.state?.toast) {
-            const toastData = location.state.toast;
-            if (toastData.type === "success") {
-                import("../../utils/toastHelpers").then(({ toastSuccess }) => {
-                    toastSuccess(toastData.title, toastData.description);
-                });
-            } else {
-                import("../../utils/toastHelpers").then(({ toastError }) => {
-                    toastError(toastData.description, toastData.title);
-                });
-            }
-            window.history.replaceState({}, document.title);
+        if (!location.state?.toast) return;
+        const { type, title, description } = location.state.toast;
+        if (type === "success") {
+            toastSuccess(title, description);
+        } else {
+            toastError(description, title);
         }
+        window.history.replaceState({}, document.title);
     }, [location.state]);
 
     const fetchTickets = useCallback(async () => {
@@ -212,20 +216,19 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
         setError(null);
         try {
             const params = { view: activeTab, page: currentPage };
-            if (activeStatus) params.status = activeStatus;
-            if (activePriority) params.priority = activePriority;
+            if (activeStatus)              params.status   = activeStatus;
+            if (activePriority)            params.priority = activePriority;
             if (activeAssignee && isAdmin) params.assignee = activeAssignee;
-            if (searchQuery) params.search = searchQuery;
+            if (searchQuery)               params.search   = searchQuery;
 
             if (activeStageGroup && !activeStatus) {
                 const group = STAGE_GROUPS.find((g) => g.key === activeStageGroup);
                 if (group) params.status = group.statuses.join(",");
             }
 
-            if (activeSprintFilter) params.sprintId = activeSprintFilter;
-
-            if (activeStartDate) params.startDate = activeStartDate;
-            if (activeEndDate) params.endDate = activeEndDate;
+            if (activeSprintFilter) params.sprintId  = activeSprintFilter;
+            if (activeStartDate)    params.startDate = activeStartDate;
+            if (activeEndDate)      params.endDate   = activeEndDate;
 
             const res = await getTickets(params);
             setTickets(res.items || res);
@@ -236,13 +239,11 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
         } finally {
             setLoading(false);
         }
-    }, [activeTab, activeStatus, activePriority, activeAssignee, searchQuery, currentPage, isAdmin, activeStageGroup, activeSprintFilter, activeStartDate, activeEndDate]);
+    }, [activeTab, activeStatus, activePriority, activeAssignee, searchQuery,
+        currentPage, isAdmin, activeStageGroup, activeSprintFilter, activeStartDate, activeEndDate]);
 
-    // Register refresh function with parent (AdminDashboard)
     useEffect(() => {
-        if (onRegisterRefresh) {
-            onRegisterRefresh(fetchTickets);
-        }
+        if (onRegisterRefresh) onRegisterRefresh(fetchTickets);
     }, [onRegisterRefresh, fetchTickets]);
 
     useEffect(() => { fetchTickets(); }, [fetchTickets]);
@@ -256,24 +257,25 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
         openModal({
             transparent: true,
             content: (
-                <TicketDetailsModal
-                    ticketId={id}
-                    assignees={allAssignees}
-                    onRefresh={fetchTickets}
-                    openModal={openModal}
-                    closeModal={closeModal}
-                />
+                <Suspense fallback={<TableFallback />}>
+                    <TicketDetailsModal
+                        ticketId={id}
+                        assignees={allAssignees}
+                        onRefresh={fetchTickets}
+                        openModal={openModal}
+                        closeModal={closeModal}
+                    />
+                </Suspense>
             ),
         });
     }, [id, openModal, closeModal, fetchTickets, allAssignees]);
 
-    const assignees = allAssignees;
     const currentSprint = tickets.find((t) => t.sprint)?.sprint;
 
+    // ── param helpers ────────────────────────────────────────────────────────
     const setParam = (key, value) => {
         const next = new URLSearchParams(searchParams);
-        if (value) next.set(key, value);
-        else next.delete(key);
+        if (value) next.set(key, value); else next.delete(key);
         next.delete("page");
         setSearchParams(next);
     };
@@ -286,8 +288,7 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
 
     const handleStageGroupChange = (groupKey) => {
         const next = new URLSearchParams(searchParams);
-        if (groupKey) next.set("stageGroup", groupKey);
-        else next.delete("stageGroup");
+        if (groupKey) next.set("stageGroup", groupKey); else next.delete("stageGroup");
         next.delete("status");
         next.delete("page");
         setSearchParams(next);
@@ -296,8 +297,7 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
     const handleStatusChip = (statusKey) => {
         const next = new URLSearchParams(searchParams);
         const isSame = activeStatus === statusKey;
-        if (isSame) next.delete("status");
-        else next.set("status", statusKey);
+        if (isSame) next.delete("status"); else next.set("status", statusKey);
         next.delete("stageGroup");
         next.delete("page");
         setSearchParams(next);
@@ -307,18 +307,16 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
 
     const handleDateChange = (key, value) => {
         const next = new URLSearchParams(searchParams);
-
         const start = key === "date_from" ? value : activeStartDate;
-        const end = key === "date_to" ? value : activeEndDate;
+        const end   = key === "date_to"   ? value : activeEndDate;
 
         if (start && end && new Date(start) > new Date(end)) {
             toastError("From date must be before To date.", "Invalid Date Range");
             return;
         }
 
-        if (value) next.set(key === "date_from" ? "startDate" : "endDate", value);
-        else next.delete(key === "date_from" ? "startDate" : "endDate");
-
+        const paramKey = key === "date_from" ? "startDate" : "endDate";
+        if (value) next.set(paramKey, value); else next.delete(paramKey);
         next.delete("page");
         setSearchParams(next);
     };
@@ -329,32 +327,29 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
         setSearchParams(next);
     };
 
-    // Pass current assignees list to onCreateTicket so the modal can populate the dropdown
     const handleCreateClick = () => {
         onCreateTicket?.(allAssignees, currentSprint ?? null);
     };
 
-    const showAssignee = isAdmin;
-    const showContext = activeTab === "all" && isAdmin;
-
-    const viewLabel = activeTab === "sprint" ? "Sprint" : activeTab === "scoped" ? "Scoped" : "All Tickets";
-    const total = pagination?.total ?? 0;
-    const totalPages = pagination?.totalPages ?? 1;
-
+    // ── derived values ───────────────────────────────────────────────────────
+    const showAssignee          = isAdmin;
+    const showContext           = activeTab === "all" && isAdmin;
+    const viewLabel             = activeTab === "sprint" ? "Sprint" : activeTab === "scoped" ? "Scoped" : "All Tickets";
+    const total                 = pagination?.total      ?? 0;
+    const totalPages            = pagination?.totalPages ?? 1;
     const activeStageGroupLabel = STAGE_GROUPS.find((g) => g.key === activeStageGroup)?.label ?? null;
-    const stageGroupOptions = STAGE_GROUPS.map((g) => ({ value: g.key, label: g.label }));
-    const activeAssigneeName = activeAssignee
+    const stageGroupOptions     = STAGE_GROUPS.map((g) => ({ value: g.key, label: g.label }));
+    const activeAssigneeName    = activeAssignee
         ? allAssignees.find((a) => String(a.id) === String(activeAssignee))?.name ?? null
         : null;
 
+    // ── render ───────────────────────────────────────────────────────────────
     return (
         <div className="flex flex-col h-full bg-card-left">
 
             {/* Header */}
             <div className="flex items-start justify-between px-4 sm:px-6 lg:px-[16px] lg:pr-[32px] pt-4 sm:pt-[16px] pb-3">
-                <div className="flex-1 min-w-0">
-                    {header}
-                </div>
+                <div className="flex-1 min-w-0">{header}</div>
                 <div className="flex items-center gap-2 ml-3 shrink-0">
                     {!isAdmin && currentSprint && (
                         <span className="hidden sm:inline-flex px-3 py-1 rounded-full text-hint border border-[#60A5FA]/60 text-[#60A5FA] bg-[#60A5FA]/10">
@@ -368,10 +363,10 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
                 </div>
             </div>
 
-            {/* Tabs + Create button */}
+            {/* Tabs + action buttons */}
             <div className="flex items-center justify-between px-2 sm:px-4 lg:px-0 lg:pr-[32px] py-3 sm:py-[16px]">
                 <div className="flex gap-1">
-                    {TABS.map(({ key, label }) => (
+                    {TABS?.map(({ key, label }) => (
                         <button
                             key={key}
                             onClick={() => handleTabChange(key)}
@@ -387,8 +382,6 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-center gap-2 shrink-0">
-
-                    {/* Sprints Button */}
                     {isAdmin && (
                         <button
                             onClick={handleOpenSprints}
@@ -398,7 +391,6 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
                             <span className="text-sm font-medium">Sprints</span>
                         </button>
                     )}
-
                     {isAdmin && (
                         <Button
                             onClick={handleCreateClick}
@@ -431,7 +423,7 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
                         {isAdmin && (
                             <FilterDropdown
                                 label="Assignee"
-                                options={assignees.map((a) => ({ value: String(a.id), label: a.name }))}
+                                options={allAssignees?.map((a) => ({ value: String(a.id), label: a.name }))}
                                 value={activeAssigneeName}
                                 onChange={(id) => setParam("assignee", id)}
                             />
@@ -444,7 +436,7 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
                         />
                         <FilterDropdown
                             label="Sprint"
-                            options={allSprints.map((s) => ({ value: String(s.id), label: s.name }))}
+                            options={allSprints?.map((s) => ({ value: String(s.id), label: s.name }))}
                             value={activeSprintFilter
                                 ? allSprints.find((s) => String(s.id) === activeSprintFilter)?.name ?? null
                                 : null}
@@ -464,7 +456,7 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
                 </div>
             </div>
 
-            {/* Content area */}
+            {/* Content */}
             <div className="mx-3 sm:mx-[16px] my-[7px] bg-background rounded-[10px] flex flex-col flex-1 min-h-0">
                 <div className="flex-1 pt-4 pb-0 min-h-0">
 
@@ -477,12 +469,12 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
                         <div className="flex gap-2 px-3 sm:px-[16px] mb-3 overflow-x-auto scrollbar-none pb-3">
                             {STAGES.filter(({ key }) =>
                                 activeTab === "sprint" ? key !== "SCOPED_BACKLOG" : true
-                            ).map(({ key, label }) => (
+                            )?.map(({ key, label }) => (
                                 <button
                                     key={key}
                                     onClick={() => handleStatusChip(key)}
                                     className={`px-3 py-1 rounded-full text-hint font-medium border transition-colors duration-150 cursor-pointer whitespace-nowrap shrink-0
-                    ${activeStatus === key ? STAGE_CHIP_ACTIVE[key] : STAGE_CHIP_STYLES[key]}`}
+                                        ${activeStatus === key ? STAGE_CHIP_ACTIVE[key] : STAGE_CHIP_STYLES[key]}`}
                                 >
                                     {label}
                                 </button>
@@ -490,19 +482,21 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
                         </div>
                     )}
 
-                    <TicketsTable
-                        tickets={tickets}
-                        basePath={basePath}
-                        showAssignee={showAssignee}
-                        showContext={showContext}
-                        onRowClick={(ticket) =>
-                            navigate(`${basePath}/tickets/${ticket.id}${location.search}`)
-                        }
-                        isLoading={loading}
-                        error={error}
-                        onRetry={fetchTickets}
-                        viewLabel={viewLabel}
-                    />
+                    <Suspense fallback={<TableFallback />}>
+                        <TicketsTable
+                            tickets={tickets}
+                            basePath={basePath}
+                            showAssignee={showAssignee}
+                            showContext={showContext}
+                            onRowClick={(ticket) =>
+                                navigate(`${basePath}/tickets/${ticket.id}${location.search}`)
+                            }
+                            isLoading={loading}
+                            error={error}
+                            onRetry={fetchTickets}
+                            viewLabel={viewLabel}
+                        />
+                    </Suspense>
                 </div>
 
                 {/* Footer: count + pagination */}
