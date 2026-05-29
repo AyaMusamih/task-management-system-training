@@ -201,14 +201,14 @@ const Profile = () => {
             const errs = validate({ name: formAbout.name, email: profile?.email || "" });
             setErrorsAbout({ name: errs.name });
         }
-    }, [formAbout, submittedAbout]);
+    }, [formAbout, submittedAbout, profile]);
 
     useEffect(() => {
         if (submittedContact) {
             const errs = validate({ name: profile?.name || "", email: formContact.email });
             setErrorsContact({ email: errs.email });
         }
-    }, [formContact, submittedContact]);
+    }, [formContact, submittedContact, profile]);
 
     // About handlers
     const handleEditAbout = () => {
@@ -232,15 +232,67 @@ const Profile = () => {
     const handleSaveAbout = async () => {
         setSubmittedAbout(true);
         const validationErrors = validate({ name: formAbout.name, email: profile?.email || "" });
-        const nameError = validationErrors.name ? { name: validationErrors.name } : {};
 
-        if (Object.keys(validationErrors).length > 0) {
-            setErrors(validationErrors);
-            if (validationErrors.name) {
-                nameRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-            } else if (validationErrors.email) {
-                emailRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+        if (validationErrors.name) {
+            setErrorsAbout({ name: validationErrors.name });
+            nameRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+            toastError("Please fix the errors below before saving", "Validation Error");
+            return;
+        }
+
+        setSavingAbout(true);
+        try {
+            const updated = await updateProfile({
+                name: formAbout.name.trim(),
+                email: profile?.email,
+            });
+
+            const stored = JSON.parse(localStorage.getItem("user") || "{}");
+            localStorage.setItem("user", JSON.stringify({ ...stored, name: updated.name }));
+
+            setProfile(updated);
+            setIsEditAbout(false);
+            setSubmittedAbout(false);
+            setErrorsAbout({});
+
+            toastSuccess("Profile Updated", "Your name has been saved.");
+        } catch (err) {
+            if (err?.type === "validation" && err?.fields) {
+                setErrorsAbout(err.fields);
+                toastError(err, "Validation Error");
+            } else {
+                toastError(err, "Couldn't Save Changes");
             }
+        } finally {
+            setSavingAbout(false);
+        }
+    };
+
+    const handleEditContact = () => {
+        setFormContact({ email: profile?.email || "" });
+        setErrorsContact({});
+        setSubmittedContact(false);
+        setIsEditContact(true);
+    };
+
+    const handleCancelContact = () => {
+        setIsEditContact(false);
+        setErrorsContact({});
+        setSubmittedContact(false);
+    };
+
+    const handleChangeContact = (e) => {
+        setFormContact((prev) => ({ ...prev, email: e.target.value }));
+        if (submittedContact) setErrorsContact((prev) => ({ ...prev, email: undefined }));
+    };
+
+    const handleSaveContact = async () => {
+        setSubmittedContact(true);
+        const validationErrors = validate({ name: profile?.name || "", email: formContact.email });
+
+        if (validationErrors.email) {
+            setErrorsContact({ email: validationErrors.email });
+            emailRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
             toastError("Please fix the errors below before saving", "Validation Error");
             return;
         }
@@ -260,19 +312,17 @@ const Profile = () => {
             setSubmittedContact(false);
             setErrorsContact({});
 
-            toastSuccess("Profile Updated", "Your profile information has been saved.");
+            toastSuccess("Profile Updated", "Your email has been saved.");
         } catch (err) {
             if (err?.type === "conflict" || err?.status === 409) {
-                setErrors((prev) => ({ ...prev, email: "This email is already taken by another account" }));
+                setErrorsContact({ email: "This email is already taken by another account" });
                 toastError(err, "Email Already In Use");
-                return;
-            }
-            if (err?.type === "validation" && err?.fields) {
-                setErrors(err.fields);
+            } else if (err?.type === "validation" && err?.fields) {
+                setErrorsContact(err.fields);
                 toastError(err, "Validation Error");
-                return;
+            } else {
+                toastError(err, "Couldn't Save Changes");
             }
-            toastError(err, "Couldn't Save Changes");
         } finally {
             setSavingContact(false);
         }
@@ -301,10 +351,7 @@ const Profile = () => {
                         Manage your personal information
                     </p>
                 </div>
-                <button className="relative w-9 h-9 flex items-center justify-center rounded-md bg-admin-btn/40 hover:bg-admin-btn/60 transition-colors cursor-pointer mt-1">
-                    <Bell className="w-4 h-4 text-text-primary" />
-                    <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-                </button>
+                
             </div>
 
             <div className="flex-1 overflow-y-auto pb-10">
