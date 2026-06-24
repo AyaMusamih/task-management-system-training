@@ -10,6 +10,7 @@ const sprintShape = {
     .trim()
     .min(4, "Name is too short")
     .max(100, "Name is too long"),
+  projectId: bigIntIdSchema, 
   startDate: z
     .string()
     .datetime({ message: "Invalid ISO date string" })
@@ -30,6 +31,7 @@ const createSprintSchema = z
 
 const updateSprintSchema = z
   .object(sprintShape)
+  .omit({"projectId": true})
   .partial()
   .refine(
     (data) => {
@@ -50,7 +52,9 @@ const updateSprintParamSchema = z
   })
   .strict();
 
-const SprintRequestSchema = paginationSchema.strict();
+const SprintRequestSchema = paginationSchema.extend({
+  projectId: bigIntIdSchema.optional(),
+}).strict();
 
 module.exports = {
   createSprintSchema,
