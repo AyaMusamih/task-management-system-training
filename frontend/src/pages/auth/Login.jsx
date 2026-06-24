@@ -6,6 +6,7 @@ import Button from "../../components/shared/Button";
 import GoogleIcon from "../../assets/images/GoogleIcon.png";
 import AuthLayout from "./AuthLayout";
 import { CircleAlert } from 'lucide-react';
+import { toastSuccess } from "../../utils/toastHelpers";
 
 const Login = () => {
     const navigate = useNavigate();
@@ -91,22 +92,13 @@ const Login = () => {
                 const targetPath =
                     isSafePath
                         ? redirectPath
-                        : (user?.role === "ADMIN"
-                            ? "/admin/dashboard"
-                            : "/user/dashboard");
+                        : ("/projects");
+
 
                 localStorage.removeItem("redirect_after_login");
 
-                navigate(targetPath, {
-                    state: {
-                        toast: {
-                            title: "Logged in successfully!",
-                            description: "Welcome back!",
-                            icon: "success",
-                            type: "success",
-                        }
-                    }
-                });
+                toastSuccess("Logged in successfully!", "Welcome back!");
+                navigate(targetPath);
             }, 1500);
 
         } catch (err) {
@@ -226,7 +218,7 @@ const Login = () => {
                     type="button"
                     className="google-button w-full flex items-center justify-center gap-3 text-google-btn bg-input-bg"
                     disabled={loading}
-                    onClick={() => {}}
+                    onClick={() => { }}
                 >
                     <img src={GoogleIcon} alt="Google" className="w-5 h-5" />
                     Continue with Google

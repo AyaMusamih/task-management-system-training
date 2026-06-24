@@ -13,6 +13,7 @@ import TaskManagement from './pages/admin/TaskManagement';
 import DeletedTickets from './pages/admin/DeletedTickets';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import UserDashboard from './pages/user/UserDashboard';
+import ProjectsPage from "./pages/ProjectsPage";
 import NotFound from './pages/NotFound';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
@@ -39,10 +40,31 @@ function App() {
               <Profile />
             </ProtectedRoute>
           } />
-          
+
+          <Route
+            path="/projects"
+            element={
+              <ProtectedRoute>
+                <ProjectsPage />
+              </ProtectedRoute>
+            }
+          />
 
           {/* User */}
-          <Route path='/user/dashboard' element={
+          {/* <Route path='/user/dashboard' element={
+            <ProtectedRoute role="USER">
+              <UserDashboard />
+            </ProtectedRoute>
+          } /> */}
+
+          {/* Project-scoped dashboard (USER) */}
+          <Route path='/projects/:projectId/dashboard' element={
+            <ProtectedRoute role="USER">
+              <UserDashboard />
+            </ProtectedRoute>
+          } />
+
+          <Route path='/projects/:projectId/dashboard/tickets/:id' element={
             <ProtectedRoute role="USER">
               <UserDashboard />
             </ProtectedRoute>
@@ -61,7 +83,22 @@ function App() {
           } />
 
           {/* Admin */}
-          <Route path='/admin/dashboard' element={
+
+          {/* Admin */}
+          {/* <Route path='/admin/dashboard' element={
+            <ProtectedRoute role="ADMIN">
+              <AdminDashboard />
+            </ProtectedRoute>
+          } /> */}
+
+          {/* Project-scoped dashboard (ADMIN) */}
+          <Route path='/admin/projects/:projectId/dashboard' element={
+            <ProtectedRoute role="ADMIN">
+              <AdminDashboard />
+            </ProtectedRoute>
+          } />
+
+          <Route path='/admin/projects/:projectId/dashboard/tickets/:id' element={
             <ProtectedRoute role="ADMIN">
               <AdminDashboard />
             </ProtectedRoute>

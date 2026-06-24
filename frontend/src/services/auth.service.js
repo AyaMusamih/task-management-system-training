@@ -1,6 +1,14 @@
 import axiosInstance from "../api/axiosInstance";
 import { throwNormalized } from "../utils/apiError";
 
+export const getCurrentUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem("user"));
+  } catch {
+    return null;
+  }
+};
+
 // Login user
 export const loginUser = async (email, password) => {
   try {

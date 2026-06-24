@@ -1,11 +1,13 @@
 import axiosInstance from "../api/axiosInstance";
 import { throwNormalized } from "../utils/apiError";
 
-export const getSprints = async (page = 1, limit = 100) => {
+// Get sprints, optionally scoped to a single project via projectId
+export const getSprints = async (page = 1, limit = 100, projectId) => {
   try {
-    const { data } = await axiosInstance.get("/sprints", {
-      params: { page, limit },
-    });
+    const params = { page, limit };
+    if (projectId != null) params.projectId = projectId;
+
+    const { data } = await axiosInstance.get("/sprints", { params });
     return data;
   } catch (error) {
     throwNormalized(error);

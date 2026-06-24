@@ -1,12 +1,12 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Outlet, useOutletContext } from "react-router-dom";
 import DashboardView from "../../components/dashboard/DashboardView";
 import TaskFormModal from "../../components/tickets/TaskFormModal";
 
 const AdminDashboard = () => {
-    // access openModal/closeModal from the MainLayout outlet context
     const { openModal, closeModal } = useOutletContext();
     const refreshRef = useRef(null);
+    const [projectName, setProjectName] = useState("");
 
     const handleCreateTicket = (assignees, currentSprint) => {
         openModal({
@@ -31,7 +31,7 @@ const AdminDashboard = () => {
                 className="font-inter font-medium text-[24px] text-text-primary"
                 style={{ letterSpacing: "-0.45px" }}
             >
-                Project Dashboard
+                {projectName || "Project Dashboard"}
             </h1>
             <p
                 className="font-inter font-normal text-[15px] text-text-primary"
@@ -50,6 +50,7 @@ const AdminDashboard = () => {
                 onCreateTicket={handleCreateTicket}
                 onRegisterRefresh={(fn) => { refreshRef.current = fn; }}
                 header={header}
+                onProjectNameChange={setProjectName}
             />
             <Outlet />
         </>

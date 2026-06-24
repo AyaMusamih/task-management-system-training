@@ -6,10 +6,11 @@ import { getUsers } from "../../services/user.service";
 import Button from "../shared/Button";
 import { getSprints } from "../../services/sprints.service";
 import { toastError, toastSuccess } from "../../utils/toastHelpers"; // ← single static import, no dynamic imports needed
+import { fetchProjects } from "../../services/projects.service";
 
 // ─── Lazy-loaded heavy components ────────────────────────────────────────────
-const TicketsTable        = lazy(() => import("../tickets/TicketsTable"));
-const TicketDetailsModal  = lazy(() => import("../tickets/TicketDetailsModal"));
+const TicketsTable = lazy(() => import("../tickets/TicketsTable"));
+const TicketDetailsModal = lazy(() => import("../tickets/TicketDetailsModal"));
 const SprintsModalContent = lazy(() => import("../tickets/SprintsModalContent"));
 
 // ─── Minimal inline fallback ─────────────────────────────────────────────────
@@ -32,31 +33,31 @@ const STAGES = [
 
 const STAGE_GROUPS = [
     { key: "needs_action", label: "Needs Action", statuses: ["TODO", "IN_PROGRESS"] },
-    { key: "in_review",    label: "In Review",    statuses: ["TESTED", "STAGED"] },
-    { key: "completed",    label: "Completed",    statuses: ["DONE", "DEPLOYED"] },
-    { key: "backlog",      label: "Backlog",      statuses: ["SCOPED_BACKLOG", "SPRINT_BACKLOG"] },
+    { key: "in_review", label: "In Review", statuses: ["TESTED", "STAGED"] },
+    { key: "completed", label: "Completed", statuses: ["DONE", "DEPLOYED"] },
+    { key: "backlog", label: "Backlog", statuses: ["SCOPED_BACKLOG", "SPRINT_BACKLOG"] },
 ];
 
 const STAGE_CHIP_STYLES = {
     SCOPED_BACKLOG: "border border-[#6B7280]/60 text-[#6B7280] bg-transparent hover:bg-[#6B7280]/10",
     SPRINT_BACKLOG: "border border-[#A78BFA]/60 text-[#A78BFA] bg-transparent hover:bg-[#A78BFA]/10",
-    TODO:           "border border-[#60A5FA]/60 text-[#60A5FA] bg-transparent hover:bg-[#60A5FA]/10",
-    IN_PROGRESS:    "border border-[#F59E0B]/60 text-[#F59E0B] bg-transparent hover:bg-[#F59E0B]/10",
-    DONE:           "border border-[#22C55E]/60 text-[#22C55E] bg-transparent hover:bg-[#22C55E]/10",
-    TESTED:         "border border-[#06B6D4]/60 text-[#06B6D4] bg-transparent hover:bg-[#06B6D4]/10",
-    STAGED:         "border border-[#F97316]/60 text-[#F97316] bg-transparent hover:bg-[#F97316]/10",
-    DEPLOYED:       "border border-[#16A34A]/60 text-[#16A34A] bg-transparent hover:bg-[#16A34A]/10",
+    TODO: "border border-[#60A5FA]/60 text-[#60A5FA] bg-transparent hover:bg-[#60A5FA]/10",
+    IN_PROGRESS: "border border-[#F59E0B]/60 text-[#F59E0B] bg-transparent hover:bg-[#F59E0B]/10",
+    DONE: "border border-[#22C55E]/60 text-[#22C55E] bg-transparent hover:bg-[#22C55E]/10",
+    TESTED: "border border-[#06B6D4]/60 text-[#06B6D4] bg-transparent hover:bg-[#06B6D4]/10",
+    STAGED: "border border-[#F97316]/60 text-[#F97316] bg-transparent hover:bg-[#F97316]/10",
+    DEPLOYED: "border border-[#16A34A]/60 text-[#16A34A] bg-transparent hover:bg-[#16A34A]/10",
 };
 
 const STAGE_CHIP_ACTIVE = {
     SCOPED_BACKLOG: "bg-[#6B7280]/20 border-[#6B7280] text-[#6B7280]",
     SPRINT_BACKLOG: "bg-[#A78BFA]/20 border-[#A78BFA] text-[#A78BFA]",
-    TODO:           "bg-[#60A5FA26] border-[#60A5FA] text-[#60A5FA]",
-    IN_PROGRESS:    "bg-[#F59E0B26] border-[#F59E0B] text-[#F59E0B]",
-    DONE:           "bg-[#22C55E26] border-[#22C55E] text-[#22C55E]",
-    TESTED:         "bg-[#06B6D426] border-[#06B6D4] text-[#06B6D4]",
-    STAGED:         "bg-[#F9731626] border-[#F97316] text-[#F97316]",
-    DEPLOYED:       "bg-[#16A34A26] border-[#16A34A] text-[#16A34A]",
+    TODO: "bg-[#60A5FA26] border-[#60A5FA] text-[#60A5FA]",
+    IN_PROGRESS: "bg-[#F59E0B26] border-[#F59E0B] text-[#F59E0B]",
+    DONE: "bg-[#22C55E26] border-[#22C55E] text-[#22C55E]",
+    TESTED: "bg-[#06B6D426] border-[#06B6D4] text-[#06B6D4]",
+    STAGED: "bg-[#F9731626] border-[#F97316] text-[#F97316]",
+    DEPLOYED: "bg-[#16A34A26] border-[#16A34A] text-[#16A34A]",
 };
 
 const PRIORITY_OPTIONS = ["CRITICAL", "HIGH", "MEDIUM", "LOW"];
@@ -138,50 +139,62 @@ const DateRangeFilter = ({ from, to, onChange }) => {
 };
 
 // ─── DashboardView ────────────────────────────────────────────────────────────
-const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, header }) => {
+const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, header, onProjectNameChange }) => {
     const [searchParams, setSearchParams] = useSearchParams();
-    const navigate  = useNavigate();
-    const location  = useLocation();
-    const { id }    = useParams();
+    const navigate = useNavigate();
+    const location = useLocation();
+    const { id, projectId } = useParams();
     const { openModal, closeModal } = useOutletContext();
 
     const TABS = isAdmin
         ? [{ key: "sprint", label: "Sprint" }, { key: "scoped", label: "Scoped" }, { key: "all", label: "All" }]
         : [{ key: "sprint", label: "Sprint" }, { key: "scoped", label: "Scoped" }];
 
-    const activeTab        = searchParams.get("view")       || "sprint";
+    const activeTab = searchParams.get("view") || "sprint";
     const activeStageGroup = searchParams.get("stageGroup") || null;
-    const activeStatus     = searchParams.get("status")     || null;
-    const activePriority   = searchParams.get("priority")   || null;
-    const activeAssignee   = searchParams.get("assignee")   || null;
-    const searchQuery      = searchParams.get("search")     || "";
-    const currentPage      = parseInt(searchParams.get("page") || "1", 10);
-    const activeStartDate  = searchParams.get("startDate")  || "";
-    const activeEndDate    = searchParams.get("endDate")    || "";
+    const activeStatus = searchParams.get("status") || null;
+    const activePriority = searchParams.get("priority") || null;
+    const activeAssignee = searchParams.get("assignee") || null;
+    const searchQuery = searchParams.get("search") || "";
+    const currentPage = parseInt(searchParams.get("page") || "1", 10);
+    const activeStartDate = searchParams.get("startDate") || "";
+    const activeEndDate = searchParams.get("endDate") || "";
 
-    const [tickets,    setTickets]    = useState([]);
+    const [tickets, setTickets] = useState([]);
     const [pagination, setPagination] = useState(null);
-    const [loading,    setLoading]    = useState(true);
-    const [error,      setError]      = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [allAssignees, setAllAssignees] = useState([]);
+    const [projectName, setProjectName] = useState("");
 
     useEffect(() => {
         if (!isAdmin) return;
         getUsers(1, 100)
             .then((res) => setAllAssignees(res.data?.users || []))
-            .catch(() => {});
+            .catch(() => { });
     }, [isAdmin]);
 
     const [allSprints, setAllSprints] = useState([]);
     const activeSprintFilter = searchParams.get("sprint") || null;
 
     const refreshSprints = useCallback(() => {
-        getSprints(1, 100)
+        getSprints(1, 100, projectId)
             .then((res) => setAllSprints(res.data?.items || []))
-            .catch(() => {});
-    }, []);
+            .catch(() => { });
+    }, [projectId]);
 
     useEffect(() => { refreshSprints(); }, [refreshSprints]);
+
+    useEffect(() => {
+        if (!projectId) return;
+
+        fetchProjects().then((res) => {
+            const project = res.items?.find(p => String(p.id) === String(projectId));
+            if (project) {
+                setProjectName(project.name || project.title);
+            }
+        });
+    }, [projectId]);
 
     const handleOpenSprints = () => {
         openModal({
@@ -189,6 +202,7 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
             content: (
                 <Suspense fallback={<TableFallback />}>
                     <SprintsModalContent
+                        projectId={projectId}
                         openModal={openModal}
                         closeModal={() => { refreshSprints(); closeModal(); }}
                         onSprintsChange={refreshSprints}
@@ -216,19 +230,20 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
         setError(null);
         try {
             const params = { view: activeTab, page: currentPage };
-            if (activeStatus)              params.status   = activeStatus;
-            if (activePriority)            params.priority = activePriority;
+            if (projectId) params.projectId = projectId; // ← scope tickets to current project
+            if (activeStatus) params.status = activeStatus;
+            if (activePriority) params.priority = activePriority;
             if (activeAssignee && isAdmin) params.assignee = activeAssignee;
-            if (searchQuery)               params.search   = searchQuery;
+            if (searchQuery) params.search = searchQuery;
 
             if (activeStageGroup && !activeStatus) {
                 const group = STAGE_GROUPS.find((g) => g.key === activeStageGroup);
                 if (group) params.status = group.statuses.join(",");
             }
 
-            if (activeSprintFilter) params.sprintId  = activeSprintFilter;
-            if (activeStartDate)    params.startDate = activeStartDate;
-            if (activeEndDate)      params.endDate   = activeEndDate;
+            if (activeSprintFilter) params.sprintId = activeSprintFilter;
+            if (activeStartDate) params.startDate = activeStartDate;
+            if (activeEndDate) params.endDate = activeEndDate;
 
             const res = await getTickets(params);
             setTickets(res.items || res);
@@ -240,7 +255,7 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
             setLoading(false);
         }
     }, [activeTab, activeStatus, activePriority, activeAssignee, searchQuery,
-        currentPage, isAdmin, activeStageGroup, activeSprintFilter, activeStartDate, activeEndDate]);
+        currentPage, isAdmin, activeStageGroup, activeSprintFilter, activeStartDate, activeEndDate, projectId]);
 
     useEffect(() => {
         if (onRegisterRefresh) onRegisterRefresh(fetchTickets);
@@ -308,7 +323,7 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
     const handleDateChange = (key, value) => {
         const next = new URLSearchParams(searchParams);
         const start = key === "date_from" ? value : activeStartDate;
-        const end   = key === "date_to"   ? value : activeEndDate;
+        const end = key === "date_to" ? value : activeEndDate;
 
         if (start && end && new Date(start) > new Date(end)) {
             toastError("From date must be before To date.", "Invalid Date Range");
@@ -328,18 +343,18 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
     };
 
     const handleCreateClick = () => {
-        onCreateTicket?.(allAssignees, currentSprint ?? null);
+        onCreateTicket?.(allAssignees, currentSprint ?? null, projectId);
     };
 
     // ── derived values ───────────────────────────────────────────────────────
-    const showAssignee          = isAdmin;
-    const showContext           = activeTab === "all" && isAdmin;
-    const viewLabel             = activeTab === "sprint" ? "Sprint" : activeTab === "scoped" ? "Scoped" : "All Tickets";
-    const total                 = pagination?.total      ?? 0;
-    const totalPages            = pagination?.totalPages ?? 1;
+    const showAssignee = isAdmin;
+    const showContext = activeTab === "all" && isAdmin;
+    const viewLabel = activeTab === "sprint" ? "Sprint" : activeTab === "scoped" ? "Scoped" : "All Tickets";
+    const total = pagination?.total ?? 0;
+    const totalPages = pagination?.totalPages ?? 1;
     const activeStageGroupLabel = STAGE_GROUPS.find((g) => g.key === activeStageGroup)?.label ?? null;
-    const stageGroupOptions     = STAGE_GROUPS.map((g) => ({ value: g.key, label: g.label }));
-    const activeAssigneeName    = activeAssignee
+    const stageGroupOptions = STAGE_GROUPS.map((g) => ({ value: g.key, label: g.label }));
+    const activeAssigneeName = activeAssignee
         ? allAssignees.find((a) => String(a.id) === String(activeAssignee))?.name ?? null
         : null;
 
@@ -350,12 +365,12 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
             {/* Header */}
             <div className="flex items-start justify-between px-4 sm:px-6 lg:px-[16px] lg:pr-[32px] pt-4 sm:pt-[16px] pb-3">
                 <div className="flex-1 min-w-0">{header}</div>
-                <div className="flex items-center gap-2 ml-3 shrink-0">
-                    {!isAdmin && currentSprint && (
-                        <span className="hidden sm:inline-flex px-3 py-1 rounded-full text-hint border border-[#60A5FA]/60 text-[#60A5FA] bg-[#60A5FA]/10">
-                            {currentSprint.name}
-                        </span>
-                    )}
+                <div className="flex items-center gap-3 ml-3 shrink-0">
+
+                    <span className="hidden sm:inline-flex items-center px-6 py-1 rounded-full text-md font-medium
+bg-blue-500/10 text-blue-400 border border-blue-400/30">
+                        {projectName}
+                    </span>
                     <button className="relative w-9 h-9 flex items-center justify-center rounded-md bg-admin-btn/40 hover:bg-admin-btn/60 transition-colors cursor-pointer">
                         <Bell className="w-4 h-4 text-text-primary" />
                         <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
@@ -489,7 +504,7 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
                             showAssignee={showAssignee}
                             showContext={showContext}
                             onRowClick={(ticket) =>
-                                navigate(`${basePath}/tickets/${ticket.id}${location.search}`)
+                                navigate(`/admin/projects/${projectId}/dashboard/tickets/${ticket.id}${location.search}`)
                             }
                             isLoading={loading}
                             error={error}

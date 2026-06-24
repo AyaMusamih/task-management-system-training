@@ -1,12 +1,12 @@
 import axiosInstance from "../api/axiosInstance";
 import { throwNormalized } from "../utils/apiError";
 
+// Get tickets. Pass { projectId } to scope to a single project.
 export const getTickets = async (params = {}) => {
   try {
     const { data } = await axiosInstance.get("/tickets/getTickets", {
       params,
     });
-
     return data;
   } catch (error) {
     throwNormalized(error);
