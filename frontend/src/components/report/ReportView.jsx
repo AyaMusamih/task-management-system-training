@@ -131,10 +131,17 @@ const ReportView = ({ isAdmin, header }) => {
             status: t.status,
             priority: t.priority,
             sprint: t.sprint,
+
+            project: t.project ? {
+                id: t.project.id,
+                name: t.project.name
+            } : null,
+
             assignee: {
-                id: user?.id,
-                name: user?.name || "Me",
+                id: t.assignee?.id,
+                name: t.assignee?.name || "Unassigned",
             },
+
             deadline: t.deadline
                 ? new Date(t.deadline).toLocaleDateString("en-CA", {
                     timeZone: "UTC",
@@ -142,9 +149,10 @@ const ReportView = ({ isAdmin, header }) => {
                     day: "numeric",
                 })
                 : null,
+
             isOverdue: t.is_overdue,
         }));
-    }, [recentTickets, user]);
+    }, [recentTickets]);
 
 
     const getTrendColor = (value) => {

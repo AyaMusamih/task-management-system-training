@@ -6,7 +6,7 @@ import { getSprints, deleteSprint } from "../../services/sprints.service";
 import Loading from "../common-ui/Loading";
 import { toastSuccess, toastError } from "../../utils/toastHelpers";
 
-const SprintsModalContent = ({ openModal, closeModal, onSprintsChange }) => {
+const SprintsModalContent = ({ openModal, closeModal, onSprintsChange, projectId }) => {
     const [sprints, setSprints] = useState([]);
     const [loading, setLoading] = useState(true);
     const [deleteTarget, setDeleteTarget] = useState(null);
@@ -15,7 +15,7 @@ const SprintsModalContent = ({ openModal, closeModal, onSprintsChange }) => {
     const fetchSprints = async () => {
         setLoading(true);
         try {
-            const res = await getSprints();
+            const res = await getSprints(1, 100, projectId);
             setSprints(res.data?.items || []);
         } catch (err) {
             toastError(err, "Failed to Load Sprints");
@@ -33,6 +33,7 @@ const SprintsModalContent = ({ openModal, closeModal, onSprintsChange }) => {
             title: "Add Sprint",
             content: (
                 <SprintFormContent
+                    projectId={projectId}
                     openModal={openModal}
                     closeModal={closeModal}
                     onSuccess={() => {
@@ -49,6 +50,7 @@ const SprintsModalContent = ({ openModal, closeModal, onSprintsChange }) => {
             title: "Edit Sprint",
             content: (
                 <SprintFormContent
+                    projectId={projectId}
                     sprint={sprint}
                     openModal={openModal}
                     closeModal={closeModal}

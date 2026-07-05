@@ -2,8 +2,10 @@ import { useRef, useState } from "react";
 import { Outlet, useOutletContext } from "react-router-dom";
 import DashboardView from "../../components/dashboard/DashboardView";
 import TaskFormModal from "../../components/tickets/TaskFormModal";
+import { useParams } from "react-router-dom";
 
 const AdminDashboard = () => {
+    const { projectId } = useParams();
     const { openModal, closeModal } = useOutletContext();
     const refreshRef = useRef(null);
     const [projectName, setProjectName] = useState("");
@@ -16,6 +18,7 @@ const AdminDashboard = () => {
                     mode="create"
                     assignees={assignees}
                     currentSprint={currentSprint}
+                    projectId={projectId}
                     onSuccess={() => {
                         closeModal();
                         refreshRef.current?.();
@@ -31,7 +34,7 @@ const AdminDashboard = () => {
                 className="font-inter font-medium text-[24px] text-text-primary"
                 style={{ letterSpacing: "-0.45px" }}
             >
-                {projectName || "Project Dashboard"}
+                "Project Dashboard"
             </h1>
             <p
                 className="font-inter font-normal text-[15px] text-text-primary"

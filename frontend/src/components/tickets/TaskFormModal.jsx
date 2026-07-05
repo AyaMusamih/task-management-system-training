@@ -110,7 +110,13 @@ const StyledSelect = ({ value, onChange, options, placeholder, hasError, disable
     );
 };
 
-const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], onSuccess }) => {
+const TaskFormModal = ({
+    mode = "create",
+    ticket = null,
+    assignees = [],
+    onSuccess,
+    projectId,  
+}) => {
     const isEdit = mode === "edit";
 
     const [fields, setFields] = useState({
@@ -135,7 +141,7 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], onSucce
         const fetchSprints = async () => {
             setSprintsLoading(true);
             try {
-                const res = await getSprints(1, 100);
+                const res = await getSprints(1, 100, projectId);
                 const all = res.data?.items || [];
                 setSprintOptions(
                     all?.map((s) => ({
@@ -196,14 +202,15 @@ const TaskFormModal = ({ mode = "create", ticket = null, assignees = [], onSucce
         try {
             const payload = {
                 title: fields.title.trim(),
-                description: fields.description.trim() || undefined,
-                assigneeId: fields.assigneeId || undefined,
+                description: fields.description.trim() || "",
+                assigneeId: fields.assigneeId || null,
                 deadline: fields.deadline
                     ? new Date(`${fields.deadline}T23:59:59Z`).toISOString()
-                    : undefined,
-                priority: fields.priority || undefined,
-                status: fields.status || undefined,
-                sprintId: isScopedBacklog ? null : (fields.sprintId || undefined),
+                    : null,
+                priority: fields.priority,
+                status: fields.status,
+                sprintId: isScopedBacklog ? null : fields.sprintId,
+                projectId,
             };
 
             if (isEdit) {

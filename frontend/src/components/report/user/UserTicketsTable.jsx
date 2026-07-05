@@ -86,9 +86,19 @@ export default function UserTicketsTable({
                                     <td className="py-2 px-2">
                                         {ticket.sprint ? (
                                             <Button
-                                                onClick={() =>
-                                                    navigate(`/user/dashboard/tickets/${ticket.id}?sprint=${ticket.sprint.id}`)
-                                                }
+                                                onClick={() => {
+                                                    const projectId = ticket?.project?.id;
+                                                    const sprintId = ticket?.sprint?.id;
+
+                                                    if (!projectId || !sprintId) {
+                                                        console.warn("Missing data:", ticket);
+                                                        return;
+                                                    }
+
+                                                    navigate(
+                                                        `/projects/${projectId}/dashboard/tickets/${ticket.id}?sprint=${sprintId}`
+                                                    );
+                                                }}
                                                 loading={isLoading}
                                                 disabled={isLoading}
                                                 className="flex justify-start! w-auto! gap-2 items-center! !py-1 !px-2 rounded-lg !text-[14px] cursor-pointer whitespace-nowrap"

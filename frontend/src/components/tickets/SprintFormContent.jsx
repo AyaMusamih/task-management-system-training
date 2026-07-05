@@ -6,7 +6,7 @@ import Input from "../shared/Input";
 import { createSprint, updateSprint } from "../../services/sprints.service";
 import { toastSuccess, toastError } from "../../utils/toastHelpers";
 
-const SprintFormContent = ({ sprint, openModal, closeModal, onSuccess }) => {
+const SprintFormContent = ({ sprint, projectId, openModal, closeModal, onSuccess }) => {
     const isEdit = !!sprint;
 
     const [name, setName] = useState("");
@@ -55,7 +55,8 @@ const SprintFormContent = ({ sprint, openModal, closeModal, onSuccess }) => {
         openModal({
             title: "Sprints",
             content: (
-                <SprintsModalContent
+                <SprintFormContent
+                    projectId={projectId}
                     openModal={openModal}
                     closeModal={closeModal}
                 />
@@ -64,6 +65,10 @@ const SprintFormContent = ({ sprint, openModal, closeModal, onSuccess }) => {
     };
 
     const handleSubmit = async () => {
+        if (!projectId) {
+            toastError("Missing projectId", "Error");
+            return;
+        }
         const validationErrors = validate({ name, startDate, endDate });
         if (Object.keys(validationErrors).length > 0) {
             setErrors(validationErrors);
@@ -77,6 +82,7 @@ const SprintFormContent = ({ sprint, openModal, closeModal, onSuccess }) => {
                 name: name.trim(),
                 startDate: new Date(`${startDate}T00:00:00.000Z`).toISOString(),
                 endDate: new Date(`${endDate}T23:59:59.000Z`).toISOString(),
+                projectId,
             };
 
             if (isEdit) {
@@ -91,7 +97,7 @@ const SprintFormContent = ({ sprint, openModal, closeModal, onSuccess }) => {
             );
 
             onSuccess?.();
-            handleBack();
+            closeModal();
         } catch (err) {
             toastError(err, "Something Went Wrong");
         } finally {

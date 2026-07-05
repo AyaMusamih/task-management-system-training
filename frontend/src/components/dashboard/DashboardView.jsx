@@ -230,7 +230,7 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
         setError(null);
         try {
             const params = { view: activeTab, page: currentPage };
-            if (projectId) params.projectId = projectId; // ← scope tickets to current project
+            if (projectId) params.projectId = projectId;
             if (activeStatus) params.status = activeStatus;
             if (activePriority) params.priority = activePriority;
             if (activeAssignee && isAdmin) params.assignee = activeAssignee;
@@ -343,7 +343,7 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
     };
 
     const handleCreateClick = () => {
-        onCreateTicket?.(allAssignees, currentSprint ?? null, projectId);
+        onCreateTicket?.(allAssignees, currentSprint, projectId);
     };
 
     // ── derived values ───────────────────────────────────────────────────────
