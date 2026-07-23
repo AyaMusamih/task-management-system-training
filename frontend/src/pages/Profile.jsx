@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Bell, Pencil, Camera } from "lucide-react";
+import { Pencil, Camera } from "lucide-react";
 import { getProfile, updateProfile } from "../services/profile.service";
 import Input from "../components/shared/Input";
 import Button from "../components/shared/Button";

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, lazy, Suspense } from "react";
 import { useSearchParams, useNavigate, useParams, useOutletContext, useLocation } from "react-router-dom";
-import { Search, ChevronDown, Plus, ChevronLeft, ChevronRight, Bell, ClockArrowDown } from "lucide-react";
+import { Search, ChevronDown, Plus, ChevronLeft, ChevronRight, ClockArrowDown } from "lucide-react";
 import { getTickets } from "../../services/tickets.service";
 import { getUsers } from "../../services/user.service";
 import Button from "../shared/Button";
@@ -371,10 +371,6 @@ const DashboardView = ({ isAdmin, basePath, onCreateTicket, onRegisterRefresh, h
 bg-blue-500/10 text-blue-400 border border-blue-400/30">
                         {projectName}
                     </span>
-                    <button className="relative w-9 h-9 flex items-center justify-center rounded-md bg-admin-btn/40 hover:bg-admin-btn/60 transition-colors cursor-pointer">
-                        <Bell className="w-4 h-4 text-text-primary" />
-                        <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-                    </button>
                 </div>
             </div>
 
@@ -503,9 +499,12 @@ bg-blue-500/10 text-blue-400 border border-blue-400/30">
                             basePath={basePath}
                             showAssignee={showAssignee}
                             showContext={showContext}
-                            onRowClick={(ticket) =>
-                                navigate(`/admin/projects/${projectId}/dashboard/tickets/${ticket.id}${location.search}`)
-                            }
+                            onRowClick={(ticket) => {
+                                const prefix = projectId
+                                    ? (isAdmin ? `/admin/projects/${projectId}/dashboard` : `/projects/${projectId}/dashboard`)
+                                    : basePath;
+                                navigate(`${prefix}/tickets/${ticket.id}${location.search}`);
+                            }}
                             isLoading={loading}
                             error={error}
                             onRetry={fetchTickets}

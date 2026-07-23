@@ -4,7 +4,6 @@ import {
     LayoutDashboard,
     FolderOpen,
     BarChart2,
-    Settings,
     X,
     LogOut,
     Trash2,
@@ -85,14 +84,12 @@ const Sidebar = ({ user, isOpen, onClose, onLogoutClick }) => {
     const userLinks = [
         { name: "Projects", path: "/projects", icon: FolderOpen },
         { name: "Reports", path: "/user/reports", icon: BarChart2 },
-        { name: "Settings", path: "/settings", icon: Settings },
     ];
 
     const adminLinks = [
         { name: "Projects", path: "/projects", icon: FolderOpen },
         { name: "Reports", path: "/admin/reports", icon: BarChart2 },
         { name: "Trash", path: "/deleted-tickets", icon: Trash2 },
-        { name: "Settings", path: "/settings", icon: Settings },
     ];
 
     const links = user?.role === "ADMIN" ? adminLinks : userLinks;

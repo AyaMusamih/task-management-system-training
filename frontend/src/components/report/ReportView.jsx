@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Download, Bell } from "lucide-react";
+import { Download } from "lucide-react";
 import StatsCard from "./StatsCard"
 import FilterDropdown from "../report/FilterDropdown"
 import WeeklyChart from "./admin/WeeklyChart"
@@ -366,12 +366,6 @@ const ReportView = ({ isAdmin, header }) => {
             <div className="flex items-start justify-between px-4 sm:px-6 lg:px-[16px] lg:pr-[32px] pt-4 sm:pt-[16px] pb-3">
                 <div className="flex-1 min-w-0">
                     {header}
-                </div>
-                <div className="flex items-center gap-2 ml-3 shrink-0">
-                    <button className="relative w-9 h-9 flex items-center justify-center rounded-md bg-admin-btn/40 hover:bg-admin-btn/60 transition-colors cursor-pointer">
-                        <Bell className="w-4 h-4 text-text-primary" />
-                        <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-                    </button>
                 </div>
             </div>
 

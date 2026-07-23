@@ -11,7 +11,7 @@ import ProjectCard from "../components/projects/ProjectCard"
 import ProjectFormModal from "../components/projects/ProjectFormModal"
 import { toastSuccess, toastError } from "../utils/toastHelpers";
 import ConfirmDialog from "../components/shared/ConfirmDialog"
-import { TriangleAlert, Bell, Plus, Search } from "lucide-react"
+import { TriangleAlert, Plus, Search } from "lucide-react"
 
 const ProjectCardSkeleton = () => {
   return (
@@ -191,11 +191,6 @@ export default function ProjectsPage() {
                 : "Select a project to view its tickets and sprints."}
             </p>
           </div>
-
-          <button className="relative w-9 h-9 flex items-center justify-center rounded-md bg-admin-btn/40 hover:bg-admin-btn/60 transition-colors cursor-pointer">
-            <Bell className="w-4 h-4 text-text-primary" />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-          </button>
         </div>
 
         {/* Toolbar */}

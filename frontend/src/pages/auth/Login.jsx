@@ -207,22 +207,6 @@ const Login = () => {
                                 : "Login"}
                 </Button>
 
-                <div className="flex items-center gap-4">
-                    <div className="flex-1 h-px bg-divider" />
-                    <span className="text-[20px] text-text-primary">Or</span>
-                    <div className="flex-1 h-px bg-divider" />
-                </div>
-
-                <Button
-                    variant="secondary"
-                    type="button"
-                    className="google-button w-full flex items-center justify-center gap-3 text-google-btn bg-input-bg"
-                    disabled={loading}
-                    onClick={() => { }}
-                >
-                    <img src={GoogleIcon} alt="Google" className="w-5 h-5" />
-                    Continue with Google
-                </Button>
             </form>
         </AuthLayout>
     );
